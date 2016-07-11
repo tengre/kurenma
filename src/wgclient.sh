@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgclient.sh 2 2016-07-11 17:14:25+04:00 toor $
+# $Id: wgclient.sh 3 2016-07-11 21:00:00+04:00 toor $
 #
 _bashlyk=saklaw-shelter . bashlyk
 #
@@ -46,6 +46,8 @@ udfMain() {
 		eval $( udfOnError throw iErrorNoSuchFileOrDir "$fnLocalPub and/or $fnLocalKey and/or $fnRemotePub" )
 
 	fi
+
+	## TODO send knocks and wait for destination port availibity ( nping )
 
 	wg genkey | tee $fnKey | wg pubkey | tee $fnTmp | udfEcho - $iSerial | openssl smime -encrypt -aes256 -outform PEM $fnRemotePub | nc $host $port
 	udfDebug 1 && printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" "$(< $fnKey)" "$(< $fnTmp)"

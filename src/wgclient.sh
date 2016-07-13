@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgclient.sh 3 2016-07-11 21:00:00+04:00 toor $
+# $Id: wgclient.sh 4 2016-07-14 02:10:55+04:00 toor $
 #
 _bashlyk=saklaw-shelter . bashlyk
 #
@@ -11,14 +11,15 @@ udfMain() {
 
 	DEBUGLEVEL=1
 
-	local a dev fn fnKey fnTmp fnRemotePub fnLocalPub fnLocalKey host ini ipLocal iSerial path pathPri pathPub port encrypt s
+	local a dev fn fnKey fnTmp fnRemotePub fnLocalPub fnLocalKey host i ini ipLocal iSerial path pathPri pathPub port encrypt s
 
-	path=/etc/saklaw-shelter
+	#path=/etc/saklaw-shelter
+	path=/etc/wg
 	ini=${path}/client.wg.ini
 	pathPub=${path}/ssl/public
 	pathPri=${path}/ssl/private
 
-	udfThrowOnCommandNotFound echo ip grep openssl ping printf sed tee wg
+	udfThrowOnCommandNotFound echo ip grep knock nping openssl ping printf sed tee wg
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw  iErrorNotPermitted "You must be root to run this." )
 
@@ -28,6 +29,7 @@ udfMain() {
 	udfIni $ini ':dev;host;port ssl:encrypt;decrypt'
 
 	: ${dev:=wg0}
+	: ${i:=128}
 
 	udfDebug 1 "configuration:" && udfShowVariable dev host port encrypt decrypt
 	udfThrowOnEmptyVariable dev host port encrypt decrypt
@@ -48,6 +50,24 @@ udfMain() {
 	fi
 
 	## TODO send knocks and wait for destination port availibity ( nping )
+	echo "check server availibity:"
+	while true; do
+
+		if echo "${i}%8" | bc | grep '^0$' >/dev/null; then
+
+			knock $host 22025 23501 37565 && echo -n "!"
+
+		fi
+		sleep 8
+
+		s=$( nping --tcp -c 1 $host -p $port | grep -Po '\sLost:\s+\d+' )
+		[[ ${s##* } == "0" ]] && break
+		echo -n "."
+		i=$((i-1))
+		(( $i > 0 )) || eval $( udfOnError throw iErrorNotPermitted "${host}:${port}" )
+
+	done
+	echo "ok."
 
 	wg genkey | tee $fnKey | wg pubkey | tee $fnTmp | udfEcho - $iSerial | openssl smime -encrypt -aes256 -outform PEM $fnRemotePub | nc $host $port
 	udfDebug 1 && printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" "$(< $fnKey)" "$(< $fnTmp)"

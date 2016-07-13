@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgserver.sh 2 2016-07-11 20:31:13+04:00 toor $
+# $Id: wgserver.sh 4 2016-07-14 02:10:56+04:00 toor $
 #
 _bashlyk=saklaw-shelter . bashlyk
 #
@@ -9,11 +9,17 @@ _bashlyk=saklaw-shelter . bashlyk
 udfMain() {
 
 	DEBUGLEVEL=1
+
+	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+
 	local dev fn fnLocalKey fnRemoteCrt fnTmp ini ip ipLocal ipRemote keyPeer path pathPri pathPub timeKeepalive s
 
 	udfThrowOnCommandNotFound cut echo grep ip nc openssl sort wg
 
-	path=/etc/saklaw-shelter
+	udfExitIfAlreadyStarted
+
+	#path=/etc/saklaw-shelter
+	path=/etc/wg
 	pathPub=${path}/ssl/public
 	pathPri=${path}/ssl/private
 	ini=${path}/server.wg.ini
@@ -29,7 +35,7 @@ udfMain() {
 	udfDebug 1 && udfShowVariable dev ipLocal port portAuth OU
 	udfThrowOnEmptyVariable OU
 
-	if [[ "$1" != "init" ]]; then
+#	if [[ -z "$( wg | grep $dev )" ]]; then
 
 		ip link del dev $dev 2>/dev/null
 		ip link add dev $dev type wireguard
@@ -37,7 +43,7 @@ udfMain() {
 		wg set $dev private-key <(wg genkey) listen-port $port
 		ip link set up dev $dev
 
-	fi
+#	fi
 
 	fnLocalKey=${pathPri}/${OU}.key
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgserver.sh 4 2016-07-14 02:10:56+04:00 toor $
+# $Id: wgserver.sh 5 2016-07-19 02:41:03+04:00 toor $
 #
 _bashlyk=saklaw-shelter . bashlyk
 #
@@ -14,7 +14,7 @@ udfMain() {
 
 	local dev fn fnLocalKey fnRemoteCrt fnTmp ini ip ipLocal ipRemote keyPeer path pathPri pathPub timeKeepalive s
 
-	udfThrowOnCommandNotFound cut echo grep ip nc openssl sort wg
+	udfThrowOnCommandNotFound cut echo grep ip nc openssl ps sort wg
 
 	udfExitIfAlreadyStarted
 
@@ -35,7 +35,7 @@ udfMain() {
 	udfDebug 1 && udfShowVariable dev ipLocal port portAuth OU
 	udfThrowOnEmptyVariable OU
 
-#	if [[ -z "$( wg | grep $dev )" ]]; then
+	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipLocal )" ]]; then
 
 		ip link del dev $dev 2>/dev/null
 		ip link add dev $dev type wireguard
@@ -43,7 +43,7 @@ udfMain() {
 		wg set $dev private-key <(wg genkey) listen-port $port
 		ip link set up dev $dev
 
-#	fi
+	fi
 
 	fnLocalKey=${pathPri}/${OU}.key
 
@@ -51,6 +51,7 @@ udfMain() {
 
 	udfMakeTemp fnTmp
 
+	while [[ -n "$( ps -C nc -o args= | grep -- "-l $portAuth" )" ]]; do sleep 1; done
 	nc -l $portAuth | openssl smime -decrypt -inform PEM -inkey $fnLocalKey | tr -d '\r' > $fnTmp
 
 	[[ $(wc -l < $fnTmp) == 3 ]] || eval $( udfOnError throw iErrorNotValidArgument "client data not valid $(<$fnTmp)" )
@@ -78,6 +79,8 @@ udfMain() {
 		break
 
 	done
+
+	[[ -n "$fnRemoteCrt" ]] || eval $( udfOnError retecho iErrorNotValidArgument "not valid client" )
 
 	udfDebug 1 && printf "\nremote peer info:\n\tSerial No.\t- %s(%s)\n\twg public key\t- %s\n" "$s" "${fnRemoteCrt##*/}" "$keyPeer"
 

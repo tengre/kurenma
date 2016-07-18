@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgclient.sh 4 2016-07-14 02:10:55+04:00 toor $
+# $Id: wgclient.sh 5 2016-07-19 02:41:03+04:00 toor $
 #
 _bashlyk=saklaw-shelter . bashlyk
 #
@@ -58,9 +58,9 @@ udfMain() {
 			knock $host 22025 23501 37565 && echo -n "!"
 
 		fi
-		sleep 8
+		sleep 4
 
-		s=$( nping --tcp -c 1 $host -p $port | grep -Po '\sLost:\s+\d+' )
+		s=$( nping --tcp -c 1 $host -p $port 2>/dev/null | grep -Po '\sLost:\s+\d+' )
 		[[ ${s##* } == "0" ]] && break
 		echo -n "."
 		i=$((i-1))
@@ -68,12 +68,13 @@ udfMain() {
 
 	done
 	echo "ok."
+	sleep 8
 
 	wg genkey | tee $fnKey | wg pubkey | tee $fnTmp | udfEcho - $iSerial | openssl smime -encrypt -aes256 -outform PEM $fnRemotePub | nc $host $port
 	udfDebug 1 && printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" "$(< $fnKey)" "$(< $fnTmp)"
 
 	s=$( echo "client requested peer configuration.." | nc $host $port | openssl smime -decrypt -inform PEM -inkey $fnLocalKey | tr -d '\r' )
-	[[ $s =~ ^OK ]] || eval $( udfOnError throw iErrorNotValidArgument "bad answer from ${host}:{$port} $s" )
+	[[ $s =~ ^OK ]] || eval $( udfOnError throw iErrorNotValidArgument "bad answer from ${host}:${port} $s" )
 
 	udfDebug 1 "server answer:  $s"
 

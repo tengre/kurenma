@@ -1,0 +1,5 @@
+for bashlyk:
+- udfDebug - use stderr
+- udfOnError - stderr support
+- udfMakeTemp - fifo support
+- udfThrowOnEmptyArgument

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgclient.sh 5 2016-07-19 02:41:03+04:00 toor $
+# $Id: wgclient.sh 6 2016-07-21 02:03:06+04:00 toor $
 #
 _bashlyk=saklaw-shelter . bashlyk
 #
@@ -9,7 +9,7 @@ _bashlyk=saklaw-shelter . bashlyk
 
 udfMain() {
 
-	DEBUGLEVEL=1
+	DEBUGLEVEL=4
 
 	local a dev fn fnKey fnTmp fnRemotePub fnLocalPub fnLocalKey host i ini ipLocal iSerial path pathPri pathPub port encrypt s
 
@@ -31,7 +31,7 @@ udfMain() {
 	: ${dev:=wg0}
 	: ${i:=128}
 
-	udfDebug 1 "configuration:" && udfShowVariable dev host port encrypt decrypt
+	udfDebug 2 "configuration:" && udfShowVariable dev host port encrypt decrypt
 	udfThrowOnEmptyVariable dev host port encrypt decrypt
 
 	fnRemotePub=$pathPub/$encrypt
@@ -41,7 +41,7 @@ udfMain() {
 	if [[ -f $fnLocalPub && -f $fnLocalKey  && -f $fnRemotePub ]]; then
 
 		iSerial=$( grep -Po "Serial Number: \d+ .*" $fnLocalPub | cut -f 3 -d' ' )
-		udfDebug 1 && printf "client auth info:\n\tremote public key\t- %s\n\tlocal private key\t- %s\n\tlocal serial No.\t- %s\n" "$fnRemotePub" "$fnLocalKey" "$iSerial"
+		udfDebug 3 && printf "client auth info:\n\tremote public key\t- %s\n\tlocal private key\t- %s\n\tlocal serial No.\t- %s\n" "$fnRemotePub" "$fnLocalKey" "$iSerial"
 
 	else
 
@@ -50,7 +50,7 @@ udfMain() {
 	fi
 
 	## TODO send knocks and wait for destination port availibity ( nping )
-	echo "check server availibity:"
+	udfDebug 2 "check server availibity:"
 	while true; do
 
 		if echo "${i}%8" | bc | grep '^0$' >/dev/null; then
@@ -58,25 +58,25 @@ udfMain() {
 			knock $host 22025 23501 37565 && echo -n "!"
 
 		fi
-		sleep 4
+		sleep 1
 
-		s=$( nping --tcp -c 1 $host -p $port 2>/dev/null | grep -Po '\sLost:\s+\d+' )
-		[[ ${s##* } == "0" ]] && break
+		nc -w 8 -z ${host} ${port} 2>/dev/null && break
 		echo -n "."
 		i=$((i-1))
 		(( $i > 0 )) || eval $( udfOnError throw iErrorNotPermitted "${host}:${port}" )
 
 	done
-	echo "ok."
-	sleep 8
+	udfDebug 2 "ok."
+	sleep 4
 
-	wg genkey | tee $fnKey | wg pubkey | tee $fnTmp | udfEcho - $iSerial | openssl smime -encrypt -aes256 -outform PEM $fnRemotePub | nc $host $port
-	udfDebug 1 && printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" "$(< $fnKey)" "$(< $fnTmp)"
+	s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnTmp | udfEcho - $iSerial | openssl smime -encrypt -aes256 -outform PEM $fnRemotePub | nc -w 64 -i 16 $host $port | openssl smime -decrypt -inform PEM -inkey $fnLocalKey | tr -d '\r' )"
 
-	s=$( echo "client requested peer configuration.." | nc $host $port | openssl smime -decrypt -inform PEM -inkey $fnLocalKey | tr -d '\r' )
+	udfDebug 4 && printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" "$(< $fnKey)" "$(< $fnTmp)"
+
+	udfDebug 3 "server answer: $s"
+
 	[[ $s =~ ^OK ]] || eval $( udfOnError throw iErrorNotValidArgument "bad answer from ${host}:${port} $s" )
 
-	udfDebug 1 "server answer:  $s"
 
 	a=( ${s//:/ } )
 
@@ -104,18 +104,21 @@ udfMain() {
 
 	fi
 
-	echo "client configuration done."
+	udfDebug 1 "client configuration done."
 
-	printf "\n\nWireguard interface %s info:\n-----------------------------\n\n" "$dev"
+	udfDebug 3 && {
 
-	wg
+		printf "\n\nWireguard interface %s info:\n-----------------------------\n\n" "$dev"
+		wg
 
-	printf "\n\nWireguard interface %s configuration:\n--------------------------------------\n\n" "$dev"
+		printf "\n\nWireguard interface %s configuration:\n--------------------------------------\n\n" "$dev"
+		wg showconf $dev
 
-	wg showconf $dev | tee ${path}/${decrypt:0:-4}_${encrypt:0:-4}.${dev}.conf
+		printf "\n----\n"
 
-	printf "\n----\n"
+	} >&2
 
+	wg showconf $dev > ${path}/${decrypt:0:-4}_${encrypt:0:-4}.${dev}.conf
 	chmod 0600 ${path}/${decrypt:0:-4}_${encrypt:0:-4}.${dev}.conf
 
 }

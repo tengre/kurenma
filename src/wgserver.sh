@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgserver.sh 6 2016-07-21 02:15:47+04:00 toor $
+# $Id: wgserver.sh 7 2016-07-22 04:02:23+04:00 toor $
 #
 _bashlyk=saklaw-shelter . bashlyk
 #
@@ -53,9 +53,9 @@ udfHandleRequest() {
 	## TODO udfThrowOnEmptyArgument
 	[[ -n "$1" ]] || eval $( udfOnError retecho iErrorEmptyOrMissingArgument )
 
-	udfThrowOnEmptyVariable fnLocalKey ipLocal dev pathPub keepalive
+	udfThrowOnEmptyVariable fnServerKey ipServer dev pathCrt keepalive
 
-	local fn s keyPeer fnRemoteCrt iSerial ipRemote IFS
+	local fn s keyPeer fnClientCrt cnClient ipClient IFS
 
 	udfMakeTemp fn
 
@@ -64,7 +64,7 @@ udfHandleRequest() {
 
 		echo $s
 
-	done | openssl smime -decrypt -inform PEM -inkey $fnLocalKey | tr -d '\r' > $fn
+	done | openssl smime -decrypt -inform PEM -inkey $fnServerKey | tr -d '\r' > $fn
 	IFS=$' \t\n'
 
 	udfDebug 5 && {
@@ -85,11 +85,11 @@ udfHandleRequest() {
 	s=$( head -n 1 $fn )
 	rm -f $fn
 
-	for fn in $( ls $pathPub ); do
+	for fn in $( ls $pathCrt ); do
 
-		if [[ -f $pathPub/$fn && $fn =~ .crt ]]; then
+		if [[ -f $pathCrt/$fn && $fn =~ .crt ]]; then
 
-			iSerial="$( grep -Po "Serial Number: \d+ .*" $pathPub/$fn | cut -f 3 -d' ' )"
+			cnClient="$( grep 'Subject:' $fnClientCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )"
 
 		else
 
@@ -97,21 +97,21 @@ udfHandleRequest() {
 
 		fi
 
-		[[ $s == $iSerial ]] || continue
+		[[ $s == $cnClient ]] || continue
 
-		fnRemoteCrt=${pathPub}/$fn
+		fnClientCrt=${pathCrt}/$fn
 		break
 
 	done
 
-	if [[ -z "$fnRemoteCrt" ]]; then
+	if [[ -z "$fnClientCrt" ]]; then
 
 		echo "Error - unexpected request"
 		eval $( udfOnError retecho iErrorNotPermitted "client certificate not found" )
 
 	fi
 
-	udfDebug 4 && printf "\nremote peer info:\n\tSerial No.\t- %s(%s)\n\twg public key\t- %s\n" "$s" "${fnRemoteCrt##*/}" "$keyPeer" >&2
+	udfDebug 4 && printf "\nremote peer info:\n\tSerial No.\t- %s(%s)\n\twg public key\t- %s\n" "$s" "${fnClientCrt##*/}" "$keyPeer" >&2
 
 	if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
 
@@ -119,18 +119,18 @@ udfHandleRequest() {
 
 	fi
 
-	ipRemote=$( s="$( wg show $dev allowed-ips )"; for ((i=2; i<=254; i++)); do ip="${ipLocal%.*}.$i"; [[ $s != *${ip}/32* ]] && echo $ip && break; done )
+	ipClient=$( s="$( wg show $dev allowed-ips )"; for ((i=2; i<=254; i++)); do ip="${ipServer%.*}.$i"; [[ $s != *${ip}/32* ]] && echo $ip && break; done )
 
 	udfMakeTemp fn
-	if wg set $dev peer "$keyPeer" allowed-ips "${ipRemote}/32" persistent-keepalive $keepalive 2>$fn; then
+	if wg set $dev peer "$keyPeer" allowed-ips "${ipClient}/32" persistent-keepalive $keepalive 2>$fn; then
 
-		echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipRemote}:${ipLocal}"
+		echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${ipServer}"
 
 	else
 
 		echo "Error $(< $fn) $?"
 
-	fi | openssl smime -encrypt -outform PEM $fnRemoteCrt
+	fi | openssl smime -encrypt -outform PEM $fnClientCrt
 
 	udfDebug 1 "server configuration updated" >&2
 
@@ -146,8 +146,8 @@ udfHandleRequest() {
 
 	} >&2
 
-	wg showconf $dev > $path/${OU}.${dev}.conf
-	chmod 0600 ${path}/${OU}.${dev}.conf
+	wg showconf $dev > $path/${cnServer}.${dev}.conf
+	chmod 0600 ${path}/${cnServer}.${dev}.conf
 
 }
 #
@@ -157,7 +157,7 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-	local dev fn fnLocalKey fnRemoteCrt fnTmp ini ip ipLocal ipRemote keyPeer path pathPri pathPub timeKeepalive s
+	local dev fn fnServerKey fnTmp ini ip ipServer ipClient keyPeer path pathKey pathCrt keepalive s
 
 	udfThrowOnCommandNotFound cut echo grep ip kill nc openssl ps sort wg
 
@@ -165,34 +165,34 @@ udfMain() {
 
 	#path=/etc/saklaw-shelter
 	path=/etc/wg
-	pathPub=${path}/ssl/public
-	pathPri=${path}/ssl/private
+	pathCrt=${path}/ssl/public
+	pathKey=${path}/ssl/private
 	ini=${path}/server.wg.ini
 
-	udfIni $ini ':dev;port;portAuth;ipLocal;keepalive ssl:OU'
+	udfIni $ini ':dev;port;portAuth;ipServer;keepalive ssl:cnServer'
 
 	: ${dev:=wg0}
-	: ${ipLocal:=10.10.10.1}
+	: ${ipServer:=192.168.29.1}
 	: ${port:=12912}
 	: ${portAuth:=42912}
 	udfIsNumber $keepalive && [[ $keepalive -gt 10 && $keepalive -lt 3600 ]] || keepalive=333
 
-	udfDebug 2 && udfShowVariable dev ipLocal port portAuth OU
-	udfThrowOnEmptyVariable OU
+	udfDebug 2 && udfShowVariable dev ipServer port portAuth cnServer
+	udfThrowOnEmptyVariable cnServer
 
-	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipLocal )" ]]; then
+	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then
 
 		ip link del dev $dev 2>/dev/null
 		ip link add dev $dev type wireguard
-		ip address add ${ipLocal}/24 dev $dev
+		ip address add ${ipServer}/24 dev $dev
 		wg set $dev private-key <(wg genkey) listen-port $port
 		ip link set up dev $dev
 
 	fi
 
-	fnLocalKey=${pathPri}/${OU}.key
+	fnServerKey=${pathKey}/${cnServer}.key
 
-	[[ -n $fnLocalKey && -f $fnLocalKey ]] || eval $(udfOnError exitecho iErrorNoSuchFileOrDir "$fnLocalKey")
+	[[ -n $fnServerKey && -f $fnServerKey ]] || eval $(udfOnError exitecho iErrorNoSuchFileOrDir "$fnServerKey")
 
 	s=$( ps -C nc -o pid= -o args= | grep -w "$portAuth" | cut -f 1 -d' ' )
 	[[ -n "$s" ]] && kill -9 $s

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgclient.sh 6 2016-07-21 02:03:06+04:00 toor $
+# $Id: wgclient.sh 7 2016-07-22 04:29:44+04:00 toor $
 #
 _bashlyk=saklaw-shelter . bashlyk
 #
@@ -11,13 +11,13 @@ udfMain() {
 
 	DEBUGLEVEL=4
 
-	local a dev fn fnKey fnTmp fnRemotePub fnLocalPub fnLocalKey host i ini ipLocal iSerial path pathPri pathPub port encrypt s
+	local a cnClient cnServer dev fn fnKey fnTmp fnServerCrt fnClientCrt fnClientKey host i ini path pathKey pathCrt port s
 
 	#path=/etc/saklaw-shelter
 	path=/etc/wg
 	ini=${path}/client.wg.ini
-	pathPub=${path}/ssl/public
-	pathPri=${path}/ssl/private
+	pathCrt=${path}/ssl/public
+	pathKey=${path}/ssl/private
 
 	udfThrowOnCommandNotFound echo ip grep knock nping openssl ping printf sed tee wg
 
@@ -26,30 +26,31 @@ udfMain() {
 	udfMakeTemp fnKey
 	udfMakeTemp fnTmp
 
-	udfIni $ini ':dev;host;port ssl:encrypt;decrypt'
+	udfIni $ini ':dev;host;port ssl:cnServer;cnClient'
 
 	: ${dev:=wg0}
 	: ${i:=128}
 
-	udfDebug 2 "configuration:" && udfShowVariable dev host port encrypt decrypt
-	udfThrowOnEmptyVariable dev host port encrypt decrypt
+	udfDebug 2 "configuration:" && udfShowVariable dev host port cnServer cnClient
+	udfThrowOnEmptyVariable dev host port cnServer cnClient
 
-	fnRemotePub=$pathPub/$encrypt
-	fnLocalPub=$pathPub/${decrypt:0:-4}.crt
-	fnLocalKey=$pathPri/$decrypt
+	fnServerCrt=${pathCrt}/${cnServer}.crt
+	fnClientCrt=${pathCrt}/${cnClient}.crt
+	fnClientKey=${pathKey}/${cnClient}.key
 
-	if [[ -f $fnLocalPub && -f $fnLocalKey  && -f $fnRemotePub ]]; then
+	if [[ -f $fnClientCrt && -f $fnClientKey  && -f $fnServerCrt ]]; then
 
-		iSerial=$( grep -Po "Serial Number: \d+ .*" $fnLocalPub | cut -f 3 -d' ' )
-		udfDebug 3 && printf "client auth info:\n\tremote public key\t- %s\n\tlocal private key\t- %s\n\tlocal serial No.\t- %s\n" "$fnRemotePub" "$fnLocalKey" "$iSerial"
+		cnClient=$( grep Subject: $fnClientCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )
+
+		udfDebug 3 && printf "client auth info:\n\tremote public key\t- %s\n\tlocal private key\t- %s\n\tlocal Common Name \t- %s\n" "$fnServerCrt" "$fnClientKey" "$cnClient"
 
 	else
 
-		eval $( udfOnError throw iErrorNoSuchFileOrDir "$fnLocalPub and/or $fnLocalKey and/or $fnRemotePub" )
+		eval $( udfOnError throw iErrorNoSuchFileOrDir "$fnClientCrt and/or $fnClientKey and/or $fnServerCrt" )
 
 	fi
 
-	## TODO send knocks and wait for destination port availibity ( nping )
+	## TODO send knocks and wait for destination port availibity ( nc -z )
 	udfDebug 2 "check server availibity:"
 	while true; do
 
@@ -69,7 +70,7 @@ udfMain() {
 	udfDebug 2 "ok."
 	sleep 4
 
-	s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnTmp | udfEcho - $iSerial | openssl smime -encrypt -aes256 -outform PEM $fnRemotePub | nc -w 64 -i 16 $host $port | openssl smime -decrypt -inform PEM -inkey $fnLocalKey | tr -d '\r' )"
+	s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnTmp | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 64 -i 16 $host $port | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
 
 	udfDebug 4 && printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" "$(< $fnKey)" "$(< $fnTmp)"
 
@@ -118,8 +119,8 @@ udfMain() {
 
 	} >&2
 
-	wg showconf $dev > ${path}/${decrypt:0:-4}_${encrypt:0:-4}.${dev}.conf
-	chmod 0600 ${path}/${decrypt:0:-4}_${encrypt:0:-4}.${dev}.conf
+	wg showconf $dev > ${path}/${cnClient}_${cnServer}.${dev}.conf
+	chmod 0600 ${path}/${cnClient}_${cnServer}.${dev}.conf
 
 }
 #

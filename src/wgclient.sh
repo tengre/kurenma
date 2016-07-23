@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgclient.sh 7 2016-07-22 04:29:44+04:00 toor $
+# $Id: wgclient.sh 8 2016-07-23 23:47:58+04:00 toor $
 #
 _bashlyk=saklaw-shelter . bashlyk
 #
@@ -13,8 +13,7 @@ udfMain() {
 
 	local a cnClient cnServer dev fn fnKey fnTmp fnServerCrt fnClientCrt fnClientKey host i ini path pathKey pathCrt port s
 
-	#path=/etc/saklaw-shelter
-	path=/etc/wg
+	path=/etc/saklaw-shelter
 	ini=${path}/client.wg.ini
 	pathCrt=${path}/ssl/public
 	pathKey=${path}/ssl/private
@@ -38,9 +37,16 @@ udfMain() {
 	fnClientCrt=${pathCrt}/${cnClient}.crt
 	fnClientKey=${pathKey}/${cnClient}.key
 
+	s=$( grep Subject: $fnClientCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )
+
+	if [[ $s != $cnClient ]]; then
+
+		eval $( udfOnError throw iErrorNotValidArgument "invalid cert file $fnClientCrt" )
+
+	fi
+
 	if [[ -f $fnClientCrt && -f $fnClientKey  && -f $fnServerCrt ]]; then
 
-		cnClient=$( grep Subject: $fnClientCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )
 
 		udfDebug 3 && printf "client auth info:\n\tremote public key\t- %s\n\tlocal private key\t- %s\n\tlocal Common Name \t- %s\n" "$fnServerCrt" "$fnClientKey" "$cnClient"
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgserver.sh 7 2016-07-22 04:02:23+04:00 toor $
+# $Id: wgserver.sh 8 2016-07-23 23:47:58+04:00 toor $
 #
 _bashlyk=saklaw-shelter . bashlyk
 #
@@ -163,8 +163,7 @@ udfMain() {
 
 	udfExitIfAlreadyStarted
 
-	#path=/etc/saklaw-shelter
-	path=/etc/wg
+	path=/etc/saklaw-shelter
 	pathCrt=${path}/ssl/public
 	pathKey=${path}/ssl/private
 	ini=${path}/server.wg.ini

@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# $Id: wgclient.sh 8 2016-07-23 23:47:58+04:00 toor $
+# $Id: wgclient.sh 10 2016-07-25 01:34:53+04:00 toor $
 #
-_bashlyk=saklaw-shelter . bashlyk
+_bashlyk=kurenma . bashlyk
 #
 #
 #
@@ -13,12 +13,12 @@ udfMain() {
 
 	local a cnClient cnServer dev fn fnKey fnTmp fnServerCrt fnClientCrt fnClientKey host i ini path pathKey pathCrt port s
 
-	path=/etc/saklaw-shelter
-	ini=${path}/client.wg.ini
+	path=/etc/kurenma
+	ini=${path}/client.kurenma.ini
 	pathCrt=${path}/ssl/public
 	pathKey=${path}/ssl/private
 
-	udfThrowOnCommandNotFound echo ip grep knock nping openssl ping printf sed tee wg
+	udfThrowOnCommandNotFound echo ip grep knock openssl ping printf sed tee wg
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw  iErrorNotPermitted "You must be root to run this." )
 

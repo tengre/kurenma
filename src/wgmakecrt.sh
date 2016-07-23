@@ -1,26 +1,36 @@
 #!/bin/bash
 #
-# $Id: wgmakecrt.sh 1 2016-07-10 18:56:46+04:00 toor $
+# $Id: wgmakecrt.sh 10 2016-07-25 01:34:53+04:00 toor $
 #
-_bashlyk=openssl . bashlyk
+_bashlyk=kurenma . bashlyk
 #
 #
 #
 udfMain() {
 
-	[[ -n "$1" ]] || eval $( udfOnError throw iErrorEmptyOrMissing )
+	eval set -- $( _ sArg )
+
+	[[ -n "$1" ]] || eval $( udfOnError throw iErrorEmptyOrMissingArgument )
 
 	udfThrowOnCommandNotFound chmod openssl
 
-	local conf path pathPrv pathPub
+	local conf path pathKey pathCrt
 
-	path=/etc/wg/ssl
-	pathPrv=${path}/private
-	pathPub=${path}/public
-	conf=${path}/wg.ssl
+	path=/etc/kurenma/ssl
+	pathKey=${path}/private
+	pathCrt=${path}/public
+	conf=${path}/kurenma.ssl
 #
-	openssl req -new -nodes -keyout ${pathPrv}/${1}.key -out ${path}/${1}.csr -config $conf -verbose
-	openssl ca  -in ${path}/${1}.csr -out ${pathPub}/${1}.crt -config $conf -verbose
+	## TODO throw on not exist $conf $path{Crt,Key}
 #
-chmod 0600 ${pathPrv}/${1}.key
+	openssl req -new -nodes -keyout ${pathKey}/${1}.key -out ${path}/${1}.csr -config $conf -verbose
+	openssl ca  -in ${path}/${1}.csr -out ${pathCrt}/${1}.crt -config $conf -verbose
+#
+	chmod 0600 ${pathKey}/${1}.key
+
+}
+#
+#
+#
+udfMain
 #

@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# $Id: wgserver.sh 8 2016-07-23 23:47:58+04:00 toor $
+# $Id: wgserver.sh 10 2016-07-25 01:34:53+04:00 toor $
 #
-_bashlyk=saklaw-shelter . bashlyk
+_bashlyk=kurenma . bashlyk
 #
 #
 #
@@ -163,10 +163,10 @@ udfMain() {
 
 	udfExitIfAlreadyStarted
 
-	path=/etc/saklaw-shelter
+	path=/etc/kurenma
 	pathCrt=${path}/ssl/public
 	pathKey=${path}/ssl/private
-	ini=${path}/server.wg.ini
+	ini=${path}/server.kurenma.ini
 
 	udfIni $ini ':dev;port;portAuth;ipServer;keepalive ssl:cnServer'
 

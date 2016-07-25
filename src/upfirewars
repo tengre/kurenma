@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 #
-# $Id: upfirewars 4 2016-07-14 02:10:55+04:00 toor $
+# $Id: upfirewars 10 2016-07-25 12:24:53+04:00 toor $
 #
 #
-_bashlyk=saklaw-shelter . bashlyk
+_bashlyk=kurenma . bashlyk
 #
 #
 #
@@ -36,8 +36,7 @@ udfMain() {
 
 	local cnf csv ini ipv4White ipv4Black path s sDig
 
-	#path="/etc/saklaw-shelter"
-	path="/etc/wg"
+	path="/etc/kurenma"
 	cnf="/etc/firehol/firehol.conf"
 	ini="${path}/ipslist.ini"
 

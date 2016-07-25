@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 #
-# $Id: upfirewars 4 2016-07-14 02:10:55+04:00 toor $
+# $Id: update-firehol 11 2016-07-25 15:09:15+04:00 toor $
 #
 #
-_bashlyk=saklaw-shelter . bashlyk
+_bashlyk=kurenma . bashlyk
 #
 #
 #
@@ -32,12 +32,11 @@ udfGetValidIPsOnly() {
 #
 udfMain() {
 
-	udfThrowOnCommandNotFound cp dig host grep ipcalc mv sipcalc wgserver.sh xargs
+	udfThrowOnCommandNotFound cp dig host grep ipcalc mv sipcalc kurenmas xargs
 
 	local cnf csv ini ipv4White ipv4Black path s sDig
 
-	#path="/etc/saklaw-shelter"
-	path="/etc/wg"
+	path="/etc/kurenma"
 	cnf="/etc/firehol/firehol.conf"
 	ini="${path}/ipslist.ini"
 
@@ -83,7 +82,7 @@ udfMain() {
 
 		if echo commit | firehol try; then
 
-			wgserver.sh &
+			curenmas &
 			echo " OK."
 
 		else

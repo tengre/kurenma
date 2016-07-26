@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 10 2016-07-25 15:09:15+04:00 toor $
+# $Id: update-firehol 13 2016-07-26 21:54:34+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -82,7 +82,12 @@ udfMain() {
 
 		if echo commit | firehol try; then
 
-			curenmas &
+			if [[ -n "$*" ]]; then
+
+			    kurenmas &
+
+			fi
+
 			echo " OK."
 
 		else

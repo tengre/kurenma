@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 13 2016-07-26 21:54:47+04:00 toor $
+# $Id: kurenmas 14 2016-07-27 00:50:59+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -134,6 +134,13 @@ udfHandleRequest() {
 
 	fi
 
+	if [[ -z "$ipClient" ]]; then
+
+		echo "not allocated IP to the client" >&2
+		eval $( udfOnError retecho iErrorEmptyOrMissingArgument "not allocated IP to the client" )
+
+	fi
+
 	udfMakeTemp fn
 	if wg set $dev peer "$keyPeer" allowed-ips "${ipClient}/32" persistent-keepalive $keepalive 2>$fn; then
 
@@ -210,6 +217,7 @@ udfMain() {
 	s=$( ps -C nc -o pid= -o args= | grep -w "$portAuth" | cut -f 1 -d' ' )
 	[[ -n "$s" ]] && kill -9 $s
 
+	## TODO selfcheck required
 	udfMakeFifo fnTmp
 	cat $fnTmp | udfWaitRequest | nc -l -k -v $portAuth > $fnTmp
 

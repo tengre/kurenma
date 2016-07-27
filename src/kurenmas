@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 15 2016-07-27 16:56:29+04:00 toor $
+# $Id: kurenmas 16 2016-07-27 17:20:02+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -104,7 +104,7 @@ udfSelfCheck() {
 		udfIsNumber "$iA" || iA='-1'
 		udfIsNumber "$iB" || iB='-0'
 
-		udfDebug 4 "selfcheck checkpoint - i0=$i0 iA=$iA iB=$iB" >&2
+		udfDebug 5 "selfcheck checkpoint - i0=$i0 iA=$iA iB=$iB" >&2
 
 		(( i0 - iA > 0 )) && continue
 		(( iB - iA > 0 )) && continue
@@ -201,13 +201,6 @@ udfHandleRequest() {
 
 		fi
 
-		for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
-
-			udfDebug 5 "remove unused peer ${s}"
-			wg set $dev peer $s remove
-
-		done >&2
-
 		if [[ -s ${path}/${cnServer}.${dev}.leased ]]; then
 
 			## TODO check ip format
@@ -242,6 +235,13 @@ udfHandleRequest() {
 
 	} | openssl smime -encrypt -outform PEM $fnClientCrt
 
+	for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
+
+		udfDebug 4 "remove unused peer ${s}"
+		wg set $dev peer $s remove
+
+	done >&2
+
 	udfDebug 1 "server configuration updated" >&2
 
 	udfDebug 3 && {
@@ -264,7 +264,7 @@ udfHandleRequest() {
 #
 udfMain() {
 
-	DEBUGLEVEL=5
+	DEBUGLEVEL=4
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 

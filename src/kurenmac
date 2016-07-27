@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgclient.sh 10 2016-07-25 01:34:53+04:00 toor $
+# $Id: kurenmac 15 2016-07-27 16:18:21+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -11,7 +11,7 @@ udfMain() {
 
 	DEBUGLEVEL=4
 
-	local a cnClient cnServer dev fn fnKey fnTmp fnServerCrt fnClientCrt fnClientKey host i ini path pathKey pathCrt port s
+	local a cnClient cnServer dev fn fnAns fnKey fnPub fnServerCrt fnClientCrt fnClientKey host i ini path pathKey pathCrt port s
 
 	path=/etc/kurenma
 	ini=${path}/client.kurenma.ini
@@ -22,13 +22,10 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw  iErrorNotPermitted "You must be root to run this." )
 
-	udfMakeTemp fnKey
-	udfMakeTemp fnTmp
-
 	udfIni $ini ':dev;host;port ssl:cnServer;cnClient'
 
 	: ${dev:=wg0}
-	: ${i:=128}
+	: ${i:=256}
 
 	udfDebug 2 "configuration:" && udfShowVariable dev host port cnServer cnClient
 	udfThrowOnEmptyVariable dev host port cnServer cnClient
@@ -76,20 +73,29 @@ udfMain() {
 	udfDebug 2 "ok."
 	sleep 4
 
-	s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnTmp | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 64 -i 16 $host $port | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
+	udfMakeTemp fnKey
+	udfMakeTemp fnPub
+	udfMakeTemp fnAns
 
-	udfDebug 4 && printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" "$(< $fnKey)" "$(< $fnTmp)"
+	## TODO use loop for many times trying
+	s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 48 -i 12 $host $port | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
+
+	udfDebug 4 && printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" "$(< $fnKey)" "$(< $fnPub)"
+	rm -f $fnPub
+
+	[[ -n "$s" ]] || s="$(< $fnAns)"
+	rm -f $fnAns
 
 	udfDebug 3 "server answer: $s"
 
 	[[ $s =~ ^OK ]] || eval $( udfOnError throw iErrorNotValidArgument "bad answer from ${host}:${port} $s" )
-
 
 	a=( ${s//:/ } )
 
 	ip link del dev $dev 2>/dev/null || true
 	ip link add dev $dev type wireguard
 	wg set $dev private-key $fnKey peer "${a[1]}" allowed-ips 0.0.0.0/0 endpoint "${host}:${a[2]}"
+	rm -f $fnKey $fnPub
 	ip address add "${a[3]}"/24 dev $dev
 	ip link set up dev $dev
 

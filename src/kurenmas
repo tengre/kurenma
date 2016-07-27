@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 14 2016-07-27 00:50:59+04:00 toor $
+# $Id: kurenmas 15 2016-07-27 16:56:29+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -50,6 +50,83 @@ udfWaitRequest() {
 	fi
 }
 #
+udfCheckNetcat() {
+
+	udfIsNumber $1 || eval $( udfOnError throw iErrorNotValidArgument '$1' )
+	local i p
+
+	p="$( ps -C nc -o pid= -o args= | grep -w "$1" | xargs | cut -f 1 -d' ' )"
+
+	udfIsNumber "$p" || return 1
+
+	case "$2" in
+
+		wait)
+				udfIsNumber "$3" && i=$3 || i=8
+				sleep $i
+				;;
+
+		kill)
+				kill $p
+				;;
+
+	esac
+
+	return 0
+
+}
+#
+udfSelfCheck() {
+
+	udfIsNumber $1 || eval $( udfOnError throw iErrorNotValidArgument '$1' )
+
+	local fn i0 iA iB
+
+	fn=$( _ fnLog )
+	i0=$( sed -rn "/.* Listening on .* .*/{=}" $fn | tail -n 1 )
+
+	udfIsNumber $i0 || i0=0
+
+	while true; do
+
+		sleep 8
+
+		iA=$( sed -rn "/.* Connection from .* port .* .* accepted .*/{=}" $fn | tail -n 1 )
+
+		for i in 1 2 3 4 5 6; do
+
+			udfCheckNetcat $1 wait 4 || break 2
+
+		done
+
+		iB=$( sed -rn "/.* Connection closed, listening again/{=}" $fn | tail -n 1 )
+
+		udfIsNumber "$iA" || iA='-1'
+		udfIsNumber "$iB" || iB='-0'
+
+		udfDebug 4 "selfcheck checkpoint - i0=$i0 iA=$iA iB=$iB" >&2
+
+		(( i0 - iA > 0 )) && continue
+		(( iB - iA > 0 )) && continue
+
+		if (( iA == i0 )); then
+
+			udfDebug 4 "maybe netcat is hung - iA=$iA iB=$iB" >&2
+			udfCheckNetcat $1 kill
+			break
+
+		else
+
+			(( iA == -1 )) && i0=0 || i0=$iA
+
+		fi
+
+	done
+
+	udfDebug 4 "selfcheck done.." >&2
+	return 0
+}
+#
 udfHandleRequest() {
 
 	## TODO udfThrowOnEmptyArgument
@@ -79,7 +156,7 @@ udfHandleRequest() {
 	if [[ $( wc -l < $fn ) != 3 ]]; then
 
 		echo "Error - unexpected format"
-		eval $( udfOnError retwarn iErrorNotValidArgument "untrusted input data" )
+		eval $( udfOnError retwarn iErrorNotValidArgument "untrusted input data" ) >&2
 
 	fi
 
@@ -113,44 +190,57 @@ udfHandleRequest() {
 
 	fi
 
-	udfDebug 4 && printf "\nremote peer info:\n\tClient CN\t- %s(%s)\n\twg public key\t- %s\n" "$cnClient" "${fnClientCrt##*/}" "$keyPeer" >&2
+	{
 
-	if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
+		udfDebug 4 && \
+			printf "\nremote peer info:\n\tClient CN\t- %s(%s)\n\twg public key\t- %s\n" "$cnClient" "${fnClientCrt##*/}" "$keyPeer" >&2
 
-		wg set $dev peer $(wg show $dev latest-handshakes | sort -k 2 -b -n | head -n 1 | cut -f 1) remove
+		if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
 
-	fi
+			wg set $dev peer $(wg show $dev latest-handshakes | sort -k 2 -b -n | head -n 1 | cut -f 1) remove
 
-	if [[ -s ${path}/${cnServer}.${dev}.leased ]]; then
+		fi
 
-		## TODO check ip format
-		ipClient=$( grep -P "^${cnClient}:\S+$" ${path}/${cnServer}.${dev}.leased | tail -n 1 | cut -f 2 -d':' | xargs )
+		for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
 
-	fi
+			udfDebug 5 "remove unused peer ${s}"
+			wg set $dev peer $s remove
 
-	if [[ -z "$ipClient" ]]; then
+		done >&2
 
-		ipClient=$( s="$( wg show $dev allowed-ips )"; for ((i=2; i<=254; i++)); do ip="${ipServer%.*}.$i"; [[ $s != *${ip}/32* ]] && echo $ip && break; done )
+		if [[ -s ${path}/${cnServer}.${dev}.leased ]]; then
 
-	fi
+			## TODO check ip format
+			ipClient=$( grep -P "^${cnClient}:\S+$" ${path}/${cnServer}.${dev}.leased | tail -n 1 | cut -f 2 -d':' | xargs )
 
-	if [[ -z "$ipClient" ]]; then
+		fi
 
-		echo "not allocated IP to the client" >&2
-		eval $( udfOnError retecho iErrorEmptyOrMissingArgument "not allocated IP to the client" )
+		if [[ -z "$ipClient" ]]; then
 
-	fi
+			ipClient=$( s="$( wg show $dev allowed-ips )"; for ((i=2; i<=254; i++)); do ip="${ipServer%.*}.$i"; [[ $s != *${ip}/32* ]] && echo $ip && break; done )
 
-	udfMakeTemp fn
-	if wg set $dev peer "$keyPeer" allowed-ips "${ipClient}/32" persistent-keepalive $keepalive 2>$fn; then
+		fi
 
-		echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${ipServer}"
+		if [[ -z "$ipClient" ]]; then
 
-	else
+			echo "not allocated IP to the client"
+			eval $( udfOnError retecho iErrorEmptyOrMissingArgument "not allocated IP to the client" ) >&2
 
-		echo "Error $(< $fn) $?"
+		fi
 
-	fi | openssl smime -encrypt -outform PEM $fnClientCrt
+		udfMakeTemp fn
+
+		if wg set $dev peer "$keyPeer" allowed-ips "${ipClient}/32" persistent-keepalive $keepalive 2>$fn; then
+
+			echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${ipServer}"
+
+		else
+
+			echo "Error $(< $fn) $?"
+
+		fi
+
+	} | openssl smime -encrypt -outform PEM $fnClientCrt
 
 	udfDebug 1 "server configuration updated" >&2
 
@@ -198,7 +288,7 @@ udfMain() {
 	udfIsNumber $keepalive && [[ $keepalive -gt 10 && $keepalive -lt 3600 ]] || keepalive=333
 
 	udfDebug 2 && udfShowVariable dev ipServer port portAuth cnServer
-	udfThrowOnEmptyVariable cnServer
+	udfThrowOnEmptyVariable cnServer dev ipServer port portAuth
 
 	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then
 
@@ -214,12 +304,19 @@ udfMain() {
 
 	[[ -n $fnServerKey && -f $fnServerKey ]] || eval $(udfOnError exitecho iErrorNoSuchFileOrDir "$fnServerKey")
 
-	s=$( ps -C nc -o pid= -o args= | grep -w "$portAuth" | cut -f 1 -d' ' )
-	[[ -n "$s" ]] && kill -9 $s
+	udfCheckNetcat $portAuth kill
 
-	## TODO selfcheck required
-	udfMakeFifo fnTmp
-	cat $fnTmp | udfWaitRequest | nc -l -k -v $portAuth > $fnTmp
+	while true; do
+
+		udfDebug 5 "Daemon for Wireguard clients (re)started.."
+		udfSelfCheck $portAuth &
+		udfAddPid2Clean $!
+		udfMakeFifo fnTmp
+		cat $fnTmp | udfWaitRequest | nc -l -k -v $portAuth > $fnTmp
+		## TODO exit command required for done
+		rm -f $fnTmp
+
+	done
 
 }
 #

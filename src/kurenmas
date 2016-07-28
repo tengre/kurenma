@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 16 2016-07-27 17:20:02+04:00 toor $
+# $Id: kurenmas 17 2016-07-28 16:06:06+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -22,7 +22,7 @@ udfWaitRequest() {
 	#
 	while read s; do
 
-		udfDebug 5 "input: ${s:0:10} ${i}" >&2
+		udfDebug 5 "input: ${s:0:10}.. ${i}" >&2
 		csv+="${s}:"
 		i=$((i+1))
 
@@ -44,8 +44,8 @@ udfWaitRequest() {
 
 	else
 
-		udfDebug 5 "unexpected data from client.." >&2
-		echo "unexpected.."
+		udfDebug 5 "connection does not imply data exchange.. $csv" >&2
+		[[ -n "$csv" ]] && echo "unexpected.."
 
 	fi
 }
@@ -80,50 +80,41 @@ udfSelfCheck() {
 
 	udfIsNumber $1 || eval $( udfOnError throw iErrorNotValidArgument '$1' )
 
-	local fn i0 iA iB
+	local fn iA iB iC=0
 
 	fn=$( _ fnLog )
-	i0=$( sed -rn "/.* Listening on .* .*/{=}" $fn | tail -n 1 )
-
-	udfIsNumber $i0 || i0=0
 
 	while true; do
 
-		sleep 8
+		sleep 16
 
-		iA=$( sed -rn "/.* Connection from .* port .* .* accepted .*/{=}" $fn | tail -n 1 )
+		iB=$( sed -rn "/.* Connection from .* port .* .* accepted .*/{=}" $fn | tail -n 1 )
 
-		for i in 1 2 3 4 5 6; do
+		sleep 16
 
-			udfCheckNetcat $1 wait 4 || break 2
+		iA=$( sed -rn "/.* (Listening on .* .*|Connection closed, listening again.)/{=}" $fn | tail -n 1 )
 
-		done
+		udfIsNumber "$iA" || iA=0
+		udfIsNumber "$iB" || iB='-1'
 
-		iB=$( sed -rn "/.* Connection closed, listening again/{=}" $fn | tail -n 1 )
+		(( iA - iB > 0 )) && continue
 
-		udfIsNumber "$iA" || iA='-1'
-		udfIsNumber "$iB" || iB='-0'
+		udfDebug 4 "selfcheck checkpoint - iA=$iA iB=$iB" >&2
 
-		udfDebug 5 "selfcheck checkpoint - i0=$i0 iA=$iA iB=$iB" >&2
+		if (( iA == iC )); then
 
-		(( i0 - iA > 0 )) && continue
-		(( iB - iA > 0 )) && continue
-
-		if (( iA == i0 )); then
-
-			udfDebug 4 "maybe netcat is hung - iA=$iA iB=$iB" >&2
+			udfDebug 4 "maybe netcat is hung - iA=$iA iB=$iB - try restart.." >&2
 			udfCheckNetcat $1 kill
-			break
 
 		else
 
-			(( iA == -1 )) && i0=0 || i0=$iA
+			(( iA == -1 )) && iC=0 || iC=$iA
+			sleep 16
 
 		fi
 
 	done
 
-	udfDebug 4 "selfcheck done.." >&2
 	return 0
 }
 #
@@ -134,7 +125,7 @@ udfHandleRequest() {
 
 	udfThrowOnEmptyVariable fnServerKey ipServer dev pathCrt keepalive
 
-	local fn s keyPeer fnClientCrt cnClient ipClient IFS
+	local fn fnLeased s keyPeer fnClientCrt cnClient ipClient IFS
 
 	udfMakeTemp fn
 
@@ -190,10 +181,13 @@ udfHandleRequest() {
 
 	fi
 
+	fnLeased=${path}/${cnServer}.${dev}.leased
+
 	{
 
 		udfDebug 4 && \
-			printf "\nremote peer info:\n\tClient CN\t- %s(%s)\n\twg public key\t- %s\n" "$cnClient" "${fnClientCrt##*/}" "$keyPeer" >&2
+			printf "\nremote peer info:\n\tClient Common Name\t- %s\n\tPublic key for %s\t- %s\n" \
+				"$cnClient" "$dev" "${keyPeer:0:10}.." >&2
 
 		if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
 
@@ -201,10 +195,10 @@ udfHandleRequest() {
 
 		fi
 
-		if [[ -s ${path}/${cnServer}.${dev}.leased ]]; then
+		if [[ -s $fnLeased ]]; then
 
 			## TODO check ip format
-			ipClient=$( grep -P "^${cnClient}:\S+$" ${path}/${cnServer}.${dev}.leased | tail -n 1 | cut -f 2 -d':' | xargs )
+			ipClient=$( grep -P "^${cnClient}:\S+$" $fnLeased | tail -n 1 | cut -f 2 -d':' | xargs )
 
 		fi
 
@@ -227,6 +221,9 @@ udfHandleRequest() {
 
 			echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${ipServer}"
 
+			echo "${cnClient}:${ipClient}" >> $fnLeased
+			cat $fnLeased | grep -P '^\S+:\S+$' | sort | uniq > $fn && mv $fn $fnLeased
+
 		else
 
 			echo "Error $(< $fn) $?"
@@ -237,26 +234,23 @@ udfHandleRequest() {
 
 	for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
 
-		udfDebug 4 "remove unused peer ${s}"
+		udfDebug 4 "${dev}: remove unused peer ${s:0:10}.."
 		wg set $dev peer $s remove
 
 	done >&2
 
-	udfDebug 1 "server configuration updated" >&2
+	udfDebug 1 "server configuration updated." >&2
 
 	udfDebug 3 && {
 
 		printf "\n\nWireguard interface %s info:\n-----------------------------\n\n" "$dev"
-		wg
 
-		printf "\n\nWireguard interface %s configuration:\n--------------------------------------\n\n" "$dev"
-		wg showconf $dev
+		wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
 
 		printf "\n----\n"
 
 	} >&2
 
-	echo "${cnClient}:${ipClient}" >> ${path}/${cnServer}.${dev}.leased
 	wg showconf $dev > ${path}/${cnServer}.${dev}.conf
 	chmod 0600 ${path}/${cnServer}.${dev}.conf
 
@@ -264,7 +258,7 @@ udfHandleRequest() {
 #
 udfMain() {
 
-	DEBUGLEVEL=4
+	DEBUGLEVEL=5
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
@@ -306,13 +300,14 @@ udfMain() {
 
 	udfCheckNetcat $portAuth kill
 
+	udfSelfCheck $portAuth &
+	udfAddPid2Clean $!
+
 	while true; do
 
-		udfDebug 5 "Daemon for Wireguard clients (re)started.."
-		udfSelfCheck $portAuth &
-		udfAddPid2Clean $!
+		udfDebug 4 "Daemon for Wireguard clients (re)started.."
 		udfMakeFifo fnTmp
-		cat $fnTmp | udfWaitRequest | nc -l -k -v $portAuth > $fnTmp
+		cat $fnTmp | udfWaitRequest | nc -l -v $portAuth > $fnTmp
 		## TODO exit command required for done
 		rm -f $fnTmp
 

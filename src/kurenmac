@@ -1,24 +1,45 @@
 #!/bin/bash
 #
-# $Id: kurenmac 15 2016-07-27 16:18:21+04:00 toor $
+# $Id: kurenmac 17 2016-07-28 16:05:42+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
+udfGetValidIPsOnly() {
 
+	[[ -n "$*" ]] || eval $( udfOnError return iErrorEmptyOrMissingArgument )
+
+	local s sDig sOut
+
+	for s in $*; do
+
+		[[ $s =~ ^[0-9.]+$ ]] && ipcalc "$s" | grep '^INVALID ADDRESS:' && continue
+		sipcalc -d4 "$s" | grep '^-\[ERR :' && continue
+		sDig=$( dig +short $s | xargs )
+		[[ -n "$sDig" ]] && s="$sDig"
+		sOut+="$s "
+
+	done >/dev/null 2>&1
+
+	echo ${sOut% *} | tr ' ' '\n' | sort | uniq | xargs
+
+	return 0
+
+}
+#
 udfMain() {
 
-	DEBUGLEVEL=4
+	DEBUGLEVEL=5
 
-	local a cnClient cnServer dev fn fnAns fnKey fnPub fnServerCrt fnClientCrt fnClientKey host i ini path pathKey pathCrt port s
+	local a cnClient cnServer dev fn fnAns fnKey fnPub fnServerCrt fnClientCrt fnClientKey host i ini ipClient ipServer path pathKey pathCrt peer port s
 
 	path=/etc/kurenma
 	ini=${path}/client.kurenma.ini
 	pathCrt=${path}/ssl/public
 	pathKey=${path}/ssl/private
 
-	udfThrowOnCommandNotFound echo ip grep knock openssl ping printf sed tee wg
+	udfThrowOnCommandNotFound echo ip ipcalc dig grep knock openssl ping printf sed sipcalc tee wg
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw  iErrorNotPermitted "You must be root to run this." )
 
@@ -78,54 +99,73 @@ udfMain() {
 	udfMakeTemp fnAns
 
 	## TODO use loop for many times trying
-	s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 48 -i 12 $host $port | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
+	s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 32 -i 8 $host $port | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
 
-	udfDebug 4 && printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" "$(< $fnKey)" "$(< $fnPub)"
+	udfDebug 4 && \
+		printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" \
+			"$(head -c 10 $fnKey).." "$(head -c 10 $fnPub).."
+
 	rm -f $fnPub
 
-	[[ -n "$s" ]] || s="$(< $fnAns)"
-	rm -f $fnAns
+	if [[ -z "$s" ]]; then
 
-	udfDebug 3 "server answer: $s"
+		s="$(< $fnAns)"
+		rm -f $fnAns
+		eval $( udfOnError throw iErrorNotValidArgument "unexpected answer from ${host}:${port} $s" )
 
-	[[ $s =~ ^OK ]] || eval $( udfOnError throw iErrorNotValidArgument "bad answer from ${host}:${port} $s" )
+	fi
+
+	[[ $s =~ ^OK: ]] || eval $( udfOnError throw iErrorNotValidArgument "malformed answer from ${host}:${port} $s" )
 
 	a=( ${s//:/ } )
 
+    peer=$( echo ${a[1]} | grep -P "^[a-zA-Z0-9+/]+={0,2}$" )
+	udfIsNumber ${a[2]} && port=${a[2]} || port=''
+	ipClient=$( udfGetValidIPsOnly ${a[3]} )
+	ipServer=$( udfGetValidIPsOnly ${a[4]} )
+
+	udfDebug 3 && \
+		printf "server connection properties:\n\tleased ip: %s\n\t   server: %s:%s\n\t     peer: %s\n\n" \
+			"$ipClient" "${ipServer}" "${port}" "${peer:0:10}.."
+
+	udfThrowOnEmptyVariable peer port ipClient ipServer
+
+	udfDebug 4 "Setup network environment for peer ${peer:0:10}.."
+	udfDebug 5 " ${dev}: init device"
 	ip link del dev $dev 2>/dev/null || true
 	ip link add dev $dev type wireguard
-	wg set $dev private-key $fnKey peer "${a[1]}" allowed-ips 0.0.0.0/0 endpoint "${host}:${a[2]}"
-	rm -f $fnKey $fnPub
-	ip address add "${a[3]}"/24 dev $dev
+
+	udfDebug 5 " ${dev}: init peer ${peer:0:10}.. to ${host}:${port} with ip $ipClient"
+	wg set $dev private-key $fnKey peer $peer allowed-ips 0.0.0.0/0 endpoint "${host}:${port}"
+	rm -f $fnKey
+	ip address add "${ipClient}"/24 dev $dev
 	ip link set up dev $dev
 
-	ping -t 1 -c 3 -q ${a[4]} >/dev/null 2>&1
+	ping -t 1 -c 3 -q $ipServer >/dev/null 2>&1
 
 	eval set -- $(_ sArg)
 
 	if [[ "$1" == "default-route" ]]; then
 
 		host="$(wg show $dev endpoints | sed -n 's/.*\t\(.*\):.*/\1/p')"
-		echo "host for route to wg = $host"
-		echo "route info for ${host}:"
+		udfDebug 3 "host for route to wg = $host"
+		udfDebug 3 "route info for ${host}:"
 		ip route get $host
 		host="$( ip route get $host | sed '/ via [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/{s/^\(.* via [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\).*/\1/}' | head -n 1 )"
-		echo "new route $host"
+		udfDebug 3 "new route $host"
 		ip route add $host 2>/dev/null || true
 		ip route add 0/1 dev $dev
 		ip route add 128/1 dev $dev
 
 	fi
 
-	udfDebug 1 "client configuration done."
+	udfDebug 1 && printf "\nclient configuration done.\n"
 
 	udfDebug 3 && {
 
 		printf "\n\nWireguard interface %s info:\n-----------------------------\n\n" "$dev"
-		wg
 
-		printf "\n\nWireguard interface %s configuration:\n--------------------------------------\n\n" "$dev"
-		wg showconf $dev
+		wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
 
 		printf "\n----\n"
 

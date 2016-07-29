@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 17 2016-07-28 16:05:42+04:00 toor $
+# $Id: kurenmac 18 2016-07-29 16:04:59+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -166,6 +166,8 @@ udfMain() {
 		printf "\n\nWireguard interface %s info:\n-----------------------------\n\n" "$dev"
 
 		wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
+
+		ip addr show $dev | grep inet
 
 		printf "\n----\n"
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 17 2016-07-28 16:06:06+04:00 toor $
+# $Id: kurenmas 18 2016-07-29 16:05:00+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -15,39 +15,26 @@ udfMakeFifo() {
 
 }
 #
-udfWaitRequest() {
+udfGetValidIPsOnly() {
 
-	local -r iMax=64
-	local i=0 s csv
-	#
-	while read s; do
+	[[ -n "$*" ]] || eval $( udfOnError return iErrorEmptyOrMissingArgument )
 
-		udfDebug 5 "input: ${s:0:10}.. ${i}" >&2
-		csv+="${s}:"
-		i=$((i+1))
+	local s sDig sOut
 
-		if (( $i > $iMax )); then
+	for s in $*; do
 
-			echo "Warn: too many lines received, abort .." >&2
-			break
+		[[ $s =~ ^[0-9.]+$ ]] && ipcalc "$s" | grep '^INVALID ADDRESS:' && continue
+		sipcalc -d4 "$s" | grep '^-\[ERR :' && continue
+		sDig=$( dig +short $s | xargs )
+		[[ -n "$sDig" ]] && s="$sDig"
+		sOut+="$s "
 
-		fi
+	done >/dev/null 2>&1
 
-		[[ $s =~ ^-----END.PKCS7-----$ ]] && break
+	echo ${sOut% *} | tr ' ' '\n' | sort | uniq | xargs
 
-	done
+	return 0
 
-	if [[ $csv =~ ^-----BEGIN.PKCS7-----.*-----END.PKCS7-----:$ ]]; then
-
-		udfDebug 5 "start request handling." >&2
-		udfHandleRequest "$csv"
-
-	else
-
-		udfDebug 5 "connection does not imply data exchange.. $csv" >&2
-		[[ -n "$csv" ]] && echo "unexpected.."
-
-	fi
 }
 #
 udfCheckNetcat() {
@@ -118,14 +105,49 @@ udfSelfCheck() {
 	return 0
 }
 #
+udfWaitRequest() {
+
+	local -r iMax=64
+	local i=0 s csv
+	#
+	while read s; do
+
+		udfDebug 5 "input: ${s:0:10}.. ${i}" >&2
+		csv+="${s}:"
+		i=$((i+1))
+
+		if (( $i > $iMax )); then
+
+			echo "Warn: too many lines received, abort .." >&2
+			break
+
+		fi
+
+		[[ $s =~ ^-----END.PKCS7-----$ ]] && break
+
+	done
+
+	if [[ $csv =~ ^-----BEGIN.PKCS7-----.*-----END.PKCS7-----:$ ]]; then
+
+		udfDebug 5 "start request handling." >&2
+		udfHandleRequest "$csv"
+
+	else
+
+		udfDebug 5 "connection does not imply data exchange.. $csv" >&2
+		[[ -n "$csv" ]] && echo "unexpected.."
+
+	fi
+}
+#
 udfHandleRequest() {
 
 	## TODO udfThrowOnEmptyArgument
 	[[ -n "$1" ]] || eval $( udfOnError retecho iErrorEmptyOrMissingArgument )
 
-	udfThrowOnEmptyVariable fnServerKey ipServer dev pathCrt keepalive
+	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt keepalive
 
-	local fn fnLeased s keyPeer fnClientCrt cnClient ipClient IFS
+	local csvCIDR cnClient fn fnClientCrt fnLeased IFS keyPeer s
 
 	udfMakeTemp fn
 
@@ -195,16 +217,26 @@ udfHandleRequest() {
 
 		fi
 
-		if [[ -s $fnLeased ]]; then
+		if [[ "$ipClient" == "commonname" ]]; then
 
-			## TODO check ip format
+			ipClient=$( udfGetValidIPsOnly $cnClient )
+			udfDebug 5 "Leased IP by CN to $cnClient - $ipClient" >&2
+
+		fi
+
+		if [[ -z "$ipClient" || $ipClient == "dynamic" ]]; then
+
+			[[ -f $fnLeased ]] || touch $fnLeased
+
 			ipClient=$( grep -P "^${cnClient}:\S+$" $fnLeased | tail -n 1 | cut -f 2 -d':' | xargs )
+			ipClient=$( udfGetValidIPsOnly $ipClient )
 
 		fi
 
 		if [[ -z "$ipClient" ]]; then
 
 			ipClient=$( s="$( wg show $dev allowed-ips )"; for ((i=2; i<=254; i++)); do ip="${ipServer%.*}.$i"; [[ $s != *${ip}/32* ]] && echo $ip && break; done )
+			ipClient=$( udfGetValidIPsOnly $ipClient )
 
 		fi
 
@@ -215,9 +247,31 @@ udfHandleRequest() {
 
 		fi
 
-		udfMakeTemp fn
+		csvCIDR="${ipClient}/32"
 
-		if wg set $dev peer "$keyPeer" allowed-ips "${ipClient}/32" persistent-keepalive $keepalive 2>$fn; then
+		for s in ${ipsAllowed//[;,]/ }; do
+
+			[[ -n "$( udfGetValidIPsOnly ${s%/*} )" ]] || continue
+
+			if [[ $s == ${s##*/} ]]; then
+
+				s="$( udfGetValidIPsOnly ${s%/*} )"
+
+			else
+
+				udfIsNumber "${s##*/}" && (( "${s##*/}" > 33 )) && continue
+				udfIsNumber "${s##*/}" || continue
+
+			fi
+
+			csvCIDR+=",$s"
+
+		done
+
+		udfDebug 5 "allowed-ips: $csvCIDR" >&2
+
+		udfMakeTemp fn
+		if wg set $dev peer "$keyPeer" allowed-ips "$csvCIDR" persistent-keepalive $keepalive 2>$fn; then
 
 			echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${ipServer}"
 
@@ -262,9 +316,9 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-	local dev fn fnServerKey fnTmp ini ip ipServer ipClient keyPeer path pathKey pathCrt keepalive s
+	local dev fn fnServerKey fnTmp ini ip ipClient ipServer ipsAllowed keyPeer path pathKey pathCrt keepalive s
 
-	udfThrowOnCommandNotFound cut echo grep ip kill nc openssl ps sort wg
+	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill nc openssl ps sipcalc sort wg
 
 	udfExitIfAlreadyStarted
 
@@ -273,15 +327,16 @@ udfMain() {
 	pathKey=${path}/ssl/private
 	ini=${path}/server.kurenma.ini
 
-	udfIni $ini ':dev;port;portAuth;ipServer;keepalive ssl:cnServer'
+	udfIni $ini ':dev;port;portAuth;ipClient;ipServer;keepalive ssl:cnServer ipsAllowed:='
 
 	: ${dev:=wg0}
+	: ${ipClient:=dynamic}
 	: ${ipServer:=192.168.29.1}
 	: ${port:=12912}
 	: ${portAuth:=42912}
 	udfIsNumber $keepalive && [[ $keepalive -gt 10 && $keepalive -lt 3600 ]] || keepalive=333
 
-	udfDebug 2 && udfShowVariable dev ipServer port portAuth cnServer
+	udfDebug 2 && udfShowVariable dev ipServer port portAuth cnServer ipsAllowed
 	udfThrowOnEmptyVariable cnServer dev ipServer port portAuth
 
 	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: wgmakecrt.sh 10 2016-07-25 01:34:53+04:00 toor $
+# $Id: curenmakecrt.sh 19 2016-08-01 17:13:52+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -22,6 +22,8 @@ udfMain() {
 	conf=${path}/kurenma.ssl
 #
 	## TODO throw on not exist $conf $path{Crt,Key}
+	## TODO require a filename as CN
+	## TODO use preedit ssl file for use CN as default
 #
 	openssl req -new -nodes -keyout ${pathKey}/${1}.key -out ${path}/${1}.csr -config $conf -verbose
 	openssl ca  -in ${path}/${1}.csr -out ${pathCrt}/${1}.crt -config $conf -verbose

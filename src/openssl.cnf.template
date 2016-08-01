@@ -1,5 +1,5 @@
 #
-# $Id: openssl.cnf.template 18 2016-07-29 16:05:00+04:00 toor $
+# $Id: openssl.cnf.template 19 2016-08-01 17:14:45+04:00 toor $
 #
 # OpenSSL example configuration file.
 # This is mostly being used for generation of certificate requests.
@@ -124,33 +124,33 @@ req_extensions = v3_req # The extensions to add to a certificate request
 
 [ req_distinguished_name ]
 countryName			= Country Name (2 letter code)
-countryName_default		= GT
+countryName_default		= %C%
 countryName_min			= 2
 countryName_max			= 2
 
 stateOrProvinceName		= State or Province Name (full name)
-stateOrProvinceName_default	= Altyn Urda
+stateOrProvinceName_default	= %ST%
 
 localityName			= Locality Name (eg, city)
-localityName_default		= Kurenma
+localityName_default		= %L%
 
 0.organizationName		= Organization Name (eg, company)
-0.organizationName_default	= Kurenma
+0.organizationName_default	= %O%
 
 # we can do this but it is not needed normally :-)
 #1.organizationName		= Second Organization Name (eg, company)
 #1.organizationName_default	= World Wide Web Pty Ltd
 
 organizationalUnitName		= Organizational Unit Name (eg, section)
-organizationalUnitName_default	= Kurenma
+organizationalUnitName_default	= %OU%
 
 commonName			= Common Name (eg, YOUR name)
 commonName_max			= 64
-commonName_default		= kurenma.wg
+commonName_default		= %CN%
 
 emailAddress			= Email Address
 emailAddress_max		= 64
-emailAddress_default		= postmaster@kurenma.wg
+emailAddress_default		= %EA%
 
 # SET-ex3			= SET extension number 3
 

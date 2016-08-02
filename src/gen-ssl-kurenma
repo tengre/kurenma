@@ -1,0 +1,148 @@
+#!/bin/bash
+#
+# $Id: gen-ssl-kurenma 21 2016-08-02 17:06:42+04:00 toor $
+#
+_bashlyk=kurenma . bashlyk
+#
+#
+#
+_defLocal() {
+
+	local s S
+
+	for s in ${*//[;,]/ }; do
+
+		udfIsValidVariable $s || eval $( udfOnError throw iErrorNonValidVariable "$s" )
+		S+="$s "
+
+	done
+
+	echo "local ${S% *}"
+
+}
+#
+udfMain() {
+
+	udfThrowOnCommandNotFound chmod cp echo mkdir openssl rm sed touch wg
+
+	local conf confDN csv fnTemplate path pathCnf pathCrt pathCsr pathKey s
+	eval $(_defLocal $csv)
+#
+	csv='C;ST;L;O;OU;CN;EA'
+	path=/etc/kurenma/ssl
+	pathCsr=${path}/csr
+	pathCrt=${path}/public
+	pathKey=${path}/private
+	pathCnf=${path}/configs
+	confDN=${path}/dn.kurenma.ini
+	fnTemplate=${path}/openssl.cnf.template
+#
+	udfIni $confDN ":${csv}"
+#
+	: ${C:=XX}
+	: ${ST:=State}
+	: ${L:=Locality}
+	: ${O:=Organizational}
+	: ${OU:=OrganizationalUnit}
+	: ${CN:=CommonName}
+
+	for s in "$confDN" "$fnTemplate"; do
+
+		[[ -f $s ]] || eval $( udfOnError throw iErrorNoSuchFileOrDir "$s" )
+
+	done
+
+	eval set -- $( _ sArg )
+
+	case "$1" in
+
+	 ca)
+
+		if [[ -s ${pathKey}/cakey.pem && -s ${pathCrt}/cacert.pem ]]; then
+
+			eval $( udfOnError exitecho iErrorUnexpected "Already exist ${pathKey}/cakey.pem and/or ${pathCrt}/cacert.pem" )
+
+		fi
+
+	 	mkdir -p ${path}/{public,private,configs,certs,newcerts,crl,csr}
+		chmod 0710 $pathKey
+
+		echo $(date "+%s") > ${path}/serial
+
+		rm -f ${path}/index.txt
+		touch ${path}/index.txt
+
+		conf=${pathCnf}/kurenma.ssl
+
+		: ${EA:=email@domain.name}
+
+		;;
+
+	 crt)
+
+		[[ -n "$2" ]] || eval $( udfOnError exitecho iErrorEmptyOrMissingArgument "argument required.. see usage" )
+
+		if [[ -s ${pathKey}/${2}.key && -s ${pathCrt}/${2}.crt ]]; then
+
+			eval $( udfOnError exitecho iErrorUnexpected "Already exist ${pathKey}/${2}.key and/or ${pathCrt}/${2}.crt" )
+
+		fi
+
+		for s in "$path" "$pathKey" "$pathCrt" "$pathCsr" "$pathCnf"; do
+
+			[[ -d "$s" ]] || eval $( udfOnError throw iErrorNoSuchFileOrDir "$s" )
+
+		done
+
+		conf=${pathCnf}/${2}.kurenma.ssl
+
+		: ${EA:=postmaster@$2}
+
+		OU=${2%%.*}
+		CN=$2
+
+		;;
+
+	 *)
+
+		echo "Error: unknown option.. ${*}"
+		echo "usage: ${0##*/} ca | { crt <CommonName> }"
+		exit 1
+
+	esac
+
+	cp $fnTemplate $conf || eval $( udfOnError throw iErrorNoSuchFileOrDir $conf )
+
+	for s in ${csv//[;,]/ }; do
+
+		sed -i -r -e "s/%${s}%/${!s}/ig" $conf
+
+	done
+
+	case "$1" in
+
+	 ca)
+		openssl req -nodes -new -x509 -keyout ${pathKey}/cakey.pem -out ${pathCrt}/cacert.pem -days 3650 -config $conf -verbose
+		#openssl dhparam -out ${pathCrt}/dh2048.pem 2048
+
+		wg genkey | tee ${pathKey}/private.wg.key | wg pubkey > ${pathCrt}/public.wg.key
+
+		;;
+
+	 crt)
+
+		openssl req -new -nodes -keyout ${pathKey}/${2}.key -out ${pathCsr}/${2}.csr -config $conf -verbose
+		openssl ca  -in ${pathCsr}/${2}.csr -out ${pathCrt}/${2}.crt -config $conf -verbose
+
+		;;
+
+	esac
+
+	chmod 0600 ${pathKey}/*
+
+}
+#
+#
+#
+udfMain
+#

@@ -1,5 +1,38 @@
-Sun, 10 Jul 2016 17:47:51 +0400
+Wed, 03 Aug 2016 10:50:04 +0400
+	New upstream release
+	Version 0.2
+ - binded peer properties to 'Common Name' of the peer certificate
+ - prevented running multiple instances of the peers
+ - enabled run instances of the peers only from root
+ - server side runned as service by endless loop around of netcat:
+   * stdin and stdout of netcat looped through a named pipe
+   * added function udfWaitRequest to control the netcat
+   * used PKCS7 format for initial key exchange
+   * input stream more than 64 lines discarded
+   * added function udfHandleRequest for Wireguard tunnel creation
+   * used stderr for logging, applies 1-5 levels of messages
+   * added new function udfSelfCheck for cleaning unexpected long connection
+     with the client
+   * server gives first free IP for client (option 'dynamic' - default), or
+     finds IP by using the 'Common Name' of the client as FQDN ('commonname')
+   * client gets previously leased IP (if it is available) after reconnection in
+     the 'dynamic' mode. This address temporary binded to the client certificate
+   * added handling of section 'ipsAllowed' for getting list of allowed hosts
+     and networks
+   * added cleaning Wireguard peers with empty allowed-ips
+ - added new configuration dn.kurenma.ini to determine the Distinguished Name of
+   the Center of Authority (CA) and defaults values for client and server certs
+   generation.
+ - used single script gen-ssl-kurenma for keys and certs generation:
+   * ca                - make CA files and infrastructure
+   * crt <Common Name> - make key and certificate files for client or server
+ - openssl configurations saved to ../ssl/configs, CSR files saved to ../ssl/csr
+ - used knock to start peers handshaking from client
+ - added function udfGetValidIPsOnly for IP validating
+ - added support for wireguard option 'persistent-keepalive' by using ini config
+   option 'keepalive'
 
-    Initial release
-    Version 0.1
+Sun, 10 Jul 2016 17:47:51 +0400
+	Initial release
+	Version 0.1
 

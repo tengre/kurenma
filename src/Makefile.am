@@ -1,13 +1,15 @@
 ##
-## $Id: Makefile.am 5 2016-07-19 02:41:03+04:00 toor $
+## $Id: Makefile.am 23 2016-08-03 14:53:25+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
 #
+PACKAGE			= kurenma
 ETC			= /etc
-bin_SCRIPTS		= upfirewars wgclient.sh wgserver.sh
-sysconfdir		= ${ETC}/saklaw-shelter
-sysconf_DATA		= ipslist.ini client.wg.ini server.wg.ini knockd.conf
-syslibdir		= /usr/share/saklaw-shelter
-syslib_DATA		= wgmakecrt.sh wgmakepem.sh
+bin_SCRIPTS		= update-firehol gen-ssl-kurenma kurenmac
+sbin_SCRIPTS		= kurenmas
+sysconfdir		= ${ETC}/${PACKAGE}
+sysconf_DATA		= ipslist.ini client.${PACKAGE}.ini server.${PACKAGE}.ini dn.${PACKAGE}.ini
+syslibdir		= /usr/share/${PACKAGE}
+syslib_DATA		= knockd.conf.example openssl.cnf.template
 DESTDIR			=

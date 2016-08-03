@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 18 2016-07-29 16:04:59+04:00 toor $
+# $Id: kurenmac 23 2016-08-03 15:38:37+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -30,18 +30,18 @@ udfGetValidIPsOnly() {
 #
 udfMain() {
 
+	[[ $UID == 0 ]] || eval $( udfOnError throw  iErrorNotPermitted "You must be root to run this." )
+
+	local a cnClient cnServer dev fn fnAns fnKey fnPub fnServerCrt fnClientCrt fnClientKey host i ini ipClient ipServer pathCrt pathIni pathKey  peer port s
+
 	DEBUGLEVEL=5
-
-	local a cnClient cnServer dev fn fnAns fnKey fnPub fnServerCrt fnClientCrt fnClientKey host i ini ipClient ipServer path pathKey pathCrt peer port s
-
-	path=/etc/kurenma
-	ini=${path}/client.kurenma.ini
-	pathCrt=${path}/ssl/public
-	pathKey=${path}/ssl/private
 
 	udfThrowOnCommandNotFound echo ip ipcalc dig grep knock openssl ping printf sed sipcalc tee wg
 
-	[[ $UID == 0 ]] || eval $( udfOnError throw  iErrorNotPermitted "You must be root to run this." )
+	pathIni=$( _ pathIni )
+	ini=${pathIni}/client.kurenma.ini
+	pathCrt=${pathIni}/ssl/public
+	pathKey=${pathIni}/ssl/private
 
 	udfIni $ini ':dev;host;port ssl:cnServer;cnClient'
 
@@ -49,7 +49,7 @@ udfMain() {
 	: ${i:=256}
 
 	udfDebug 2 "configuration:" && udfShowVariable dev host port cnServer cnClient
-	udfThrowOnEmptyVariable dev host port cnServer cnClient
+	udfThrowOnEmptyVariable cnClient cnServer dev host pathIni port
 
 	fnServerCrt=${pathCrt}/${cnServer}.crt
 	fnClientCrt=${pathCrt}/${cnClient}.crt
@@ -103,7 +103,7 @@ udfMain() {
 
 	udfDebug 4 && \
 		printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" \
-			"$(head -c 10 $fnKey).." "$(head -c 10 $fnPub).."
+			"$(head -c 10 $fnKey)<skipped>" "$(head -c 10 $fnPub)<skipped>"
 
 	rm -f $fnPub
 
@@ -119,23 +119,23 @@ udfMain() {
 
 	a=( ${s//:/ } )
 
-    peer=$( echo ${a[1]} | grep -P "^[a-zA-Z0-9+/]+={0,2}$" )
+	peer=$( echo ${a[1]} | grep -P "^[a-zA-Z0-9+/]+={0,2}$" )
 	udfIsNumber ${a[2]} && port=${a[2]} || port=''
 	ipClient=$( udfGetValidIPsOnly ${a[3]} )
 	ipServer=$( udfGetValidIPsOnly ${a[4]} )
 
 	udfDebug 3 && \
 		printf "server connection properties:\n\tleased ip: %s\n\t   server: %s:%s\n\t     peer: %s\n\n" \
-			"$ipClient" "${ipServer}" "${port}" "${peer:0:10}.."
+			"$ipClient" "${ipServer}" "${port}" "${peer:0:10}<skipped>"
 
 	udfThrowOnEmptyVariable peer port ipClient ipServer
 
-	udfDebug 4 "Setup network environment for peer ${peer:0:10}.."
+	udfDebug 4 "Setup network environment for peer ${peer:0:10}<skipped>"
 	udfDebug 5 " ${dev}: init device"
 	ip link del dev $dev 2>/dev/null || true
 	ip link add dev $dev type wireguard
 
-	udfDebug 5 " ${dev}: init peer ${peer:0:10}.. to ${host}:${port} with ip $ipClient"
+	udfDebug 5 " ${dev}: init peer ${peer:0:10}<skipped> to ${host}:${port} with ip $ipClient"
 	wg set $dev private-key $fnKey peer $peer allowed-ips 0.0.0.0/0 endpoint "${host}:${port}"
 	rm -f $fnKey
 	ip address add "${ipClient}"/24 dev $dev
@@ -173,8 +173,8 @@ udfMain() {
 
 	} >&2
 
-	wg showconf $dev > ${path}/${cnClient}_${cnServer}.${dev}.conf
-	chmod 0600 ${path}/${cnClient}_${cnServer}.${dev}.conf
+	wg showconf $dev > ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
+	chmod 0600 ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
 
 }
 #

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 22 2016-08-03 00:06:31+04:00 toor $
+# $Id: gen-ssl-kurenma 23 2016-08-03 14:53:25+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -25,16 +25,19 @@ udfMain() {
 
 	udfThrowOnCommandNotFound chmod cp echo mkdir openssl rm sed touch wg
 
-	local conf confDN csv fnTemplate path pathCnf pathCrt pathCsr pathKey s
+	local conf confDN csv fnTemplate path pathCnf pathCrt pathCsr pathIni pathKey s
 
-	csv='C;ST;L;O;OU;CN;EA'
-	path=/etc/kurenma/ssl
+	$pathIni=$( _ pathIni )
+	udfThrowOnEmptyVariable pathIni
+
+	path=${pathIni}/ssl
 	pathCsr=${path}/csr
 	pathCrt=${path}/public
-	pathKey=${path}/private
 	pathCnf=${path}/configs
-	confDN=${path}/dn.kurenma.ini
-	fnTemplate=${path}/openssl.cnf.template
+	pathKey=${path}/private
+	confDN=${pathIni}/dn.kurenma.ini
+	fnTemplate=/usr/share/kurenma/openssl.cnf.template
+	csv='C;ST;L;O;OU;CN;EA'
 
 	eval $(_defLocal $csv)
 

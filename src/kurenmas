@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 18 2016-07-29 16:05:00+04:00 toor $
+# $Id: kurenmas 23 2016-08-03 15:38:31+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -112,7 +112,7 @@ udfWaitRequest() {
 	#
 	while read s; do
 
-		udfDebug 5 "input: ${s:0:10}.. ${i}" >&2
+		udfDebug 5 "input line ${i}: ${s:0:10}<skipped>" >&2
 		csv+="${s}:"
 		i=$((i+1))
 
@@ -145,9 +145,9 @@ udfHandleRequest() {
 	## TODO udfThrowOnEmptyArgument
 	[[ -n "$1" ]] || eval $( udfOnError retecho iErrorEmptyOrMissingArgument )
 
-	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt keepalive
-
 	local csvCIDR cnClient fn fnClientCrt fnLeased IFS keyPeer s
+
+	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt pathDat pathIni keepalive
 
 	udfMakeTemp fn
 
@@ -161,8 +161,10 @@ udfHandleRequest() {
 
 	udfDebug 5 && {
 
-		printf "\nreceived data:\n"
-		cat $fn
+		printf "\nreceived data:\n--------------\n"
+		head -n 2 $fn
+		echo "$( tail -n +3 $fn | head -c 10 )<skipped>"
+		echo "--------------"
 
 	} >&2
 
@@ -203,13 +205,13 @@ udfHandleRequest() {
 
 	fi
 
-	fnLeased=${path}/${cnServer}.${dev}.leased
+	fnLeased=${pathDat}/${cnServer}.${dev}.leased
 
 	{
 
 		udfDebug 4 && \
 			printf "\nremote peer info:\n\tClient Common Name\t- %s\n\tPublic key for %s\t- %s\n" \
-				"$cnClient" "$dev" "${keyPeer:0:10}.." >&2
+				"$cnClient" "$dev" "${keyPeer:0:10}<skipped>" >&2
 
 		if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
 
@@ -288,7 +290,7 @@ udfHandleRequest() {
 
 	for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
 
-		udfDebug 4 "${dev}: remove unused peer ${s:0:10}.."
+		udfDebug 4 "${dev}: remove unused peer ${s:0:10}<skipped>"
 		wg set $dev peer $s remove
 
 	done >&2
@@ -305,27 +307,30 @@ udfHandleRequest() {
 
 	} >&2
 
-	wg showconf $dev > ${path}/${cnServer}.${dev}.conf
-	chmod 0600 ${path}/${cnServer}.${dev}.conf
+	wg show $dev | grep 'endpoint:' | sed -r -e "s/^.*t: (.*):.*$/\1/" | sort | uniq > ${pathDat}/clients.lst
+	wg showconf $dev > ${pathIni}/${cnServer}.${dev}.conf
+	chmod 0600 ${pathIni}/${cnServer}.${dev}.conf ${pathDat}/clients.lst
 
 }
 #
 udfMain() {
 
-	DEBUGLEVEL=5
-
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-	local dev fn fnServerKey fnTmp ini ip ipClient ipServer ipsAllowed keyPeer path pathKey pathCrt keepalive s
+	local dev fn fnServerKey fnTmp ini ip ipClient ipServer ipsAllowed keyPeer pathIni pathCrt pathDat pathKey keepalive s
 
-	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill nc openssl ps sipcalc sort wg
+	DEBUGLEVEL=5
+
+	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill mkdir nc openssl ps sipcalc sort uniq wg
 
 	udfExitIfAlreadyStarted
 
-	path=/etc/kurenma
-	pathCrt=${path}/ssl/public
-	pathKey=${path}/ssl/private
-	ini=${path}/server.kurenma.ini
+	pathIni=$( _ pathIni )
+	pathDat=$( _ pathDat )
+
+	pathCrt=${pathIni}/ssl/public
+	pathKey=${pathIni}/ssl/private
+	ini=${pathIni}/server.kurenma.ini
 
 	udfIni $ini ':dev;port;portAuth;ipClient;ipServer;keepalive ssl:cnServer ipsAllowed:='
 
@@ -334,10 +339,12 @@ udfMain() {
 	: ${ipServer:=192.168.29.1}
 	: ${port:=12912}
 	: ${portAuth:=42912}
-	udfIsNumber $keepalive && [[ $keepalive -gt 10 && $keepalive -lt 3600 ]] || keepalive=333
+	udfIsNumber $keepalive && [[ $keepalive -gt 10 && $keepalive -lt 3600 ]] || keepalive=25
 
 	udfDebug 2 && udfShowVariable dev ipServer port portAuth cnServer ipsAllowed
-	udfThrowOnEmptyVariable cnServer dev ipServer port portAuth
+	udfThrowOnEmptyVariable cnServer dev ipServer pathDat pathIni port portAuth
+
+	mkdir -p $pathDat || eval $( udfOnError retecho iErrorNotExistNotCreated $pathDat )
 
 	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then
 

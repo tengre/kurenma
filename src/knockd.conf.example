@@ -1,0 +1,14 @@
+[options]
+	logfile = /var/log/knockd.log
+
+[addHost]
+	sequence    = 20000,40000,60000
+	seq_timeout = 5
+	command     = /root/bin/update-firehol %IP%
+	tcpflags    = syn
+
+[delHost]
+	sequence    = 50000,30000,10000
+	seq_timeout = 5
+	command     = /root/bin/update-firehol
+	tcpflags    = syn

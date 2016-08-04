@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 24 2016-08-04 11:01:46+04:00 toor $
+# $Id: kurenmac 25 2016-08-04 23:13:09+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -147,7 +147,7 @@ udfMain() {
 	ip link add dev $dev type wireguard
 
 	udfDebug 5 " ${dev}: init peer ${peer:0:10}<skipped> to ${host}:${port} with ip $ipClient"
-	wg set $dev private-key $fnKey peer $peer allowed-ips 0.0.0.0/0 endpoint "${host}:${port} persistent-keepalive $keepalive"
+	wg set $dev private-key $fnKey peer $peer allowed-ips 0.0.0.0/0 persistent-keepalive $keepalive endpoint "${host}:${port}"
 	rm -f $fnKey
 	ip address add "${ipClient}"/24 dev $dev
 	ip link set up dev $dev

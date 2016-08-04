@@ -1,0 +1,11 @@
+[Unit]
+Description=Kurenma Auth Service for Wireguard Network
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/kurenmas start
+ExecStop=/usr/sbin/kurenmas   stop
+
+[Install]
+WantedBy=multi-user.target
+

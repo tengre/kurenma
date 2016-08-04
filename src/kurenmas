@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 24 2016-08-04 11:01:46+04:00 toor $
+# $Id: kurenmas 25 2016-08-04 23:13:15+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -9,7 +9,7 @@ _bashlyk=kurenma . bashlyk
 udfMakeFifo() {
 
 	[[ -n "$1" ]] || eval $( udfOnError iErrorEmptyOrMissingArgument )
-	udfMakeTemp $1 path=/var/run
+	udfMakeTemp $1 path=$( _ pathRun )
 	rm -f ${!1}
 	mkfifo ${!1}
 
@@ -54,7 +54,10 @@ udfCheckNetcat() {
 				;;
 
 		kill)
-				kill $p
+				kill -15 $p
+				sleep 0.5
+				p="$( ps -C nc -o pid= -o args= | grep -w "$1" | xargs | cut -f 1 -d' ' )"
+				[[ -n $p ]] && kill -9 $p
 				;;
 
 	esac
@@ -317,16 +320,15 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-	local dev fn fnServerKey fnTmp ini ip ipClient ipServer ipsAllowed keyPeer pathIni pathCrt pathDat pathKey keepalive s
+	local dev fn fnPid fnServerKey fnTmp ini ip ipClient ipServer ipsAllowed keyPeer pathIni pathCrt pathDat pathKey keepalive s
 
 	DEBUGLEVEL=5
 
 	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill mkdir nc openssl ps sipcalc sort uniq wg
 
-	udfExitIfAlreadyStarted
-
 	pathIni=$( _ pathIni )
 	pathDat=$( _ pathDat )
+	pathRun=$( _ pathRun )
 
 	pathCrt=${pathIni}/ssl/public
 	pathKey=${pathIni}/ssl/private
@@ -340,6 +342,27 @@ udfMain() {
 	: ${port:=12912}
 	: ${portAuth:=42912}
 
+	eval set -- $(_ sArg)
+
+	case "$1" in
+
+		start)
+			udfDebug 1 "starting.."
+		;;
+
+		 stop)
+			udfDebug 1 "stopping.."
+			fnPid=${pathRun}/kurenmas.pid
+			echo stop >> $fnPid
+			[[ -n $portAuth ]] && udfCheckNetcat $portAuth kill || killall -9 nc
+			return 0
+		;;
+
+	esac
+
+	udfExitIfAlreadyStarted
+	fnPid=$( _ fnPid )
+	
 	if udfIsNumber $keepalive; then
 
 		(( $keepalive >= 10   )) || keepalive=10
@@ -372,6 +395,7 @@ udfMain() {
 
 	udfCheckNetcat $portAuth kill
 
+	echo "start" >> $fnPid
 	udfSelfCheck $portAuth &
 	udfAddPid2Clean $!
 
@@ -380,10 +404,13 @@ udfMain() {
 		udfDebug 4 "Daemon for Wireguard clients (re)started.."
 		udfMakeFifo fnTmp
 		cat $fnTmp | udfWaitRequest | nc -l -v $portAuth > $fnTmp
-		## TODO exit command required for done
+		sleep 1
+		[[ ! -s $fnPid || $( tail -n 1 $fnPid ) == "stop" ]] && break
 		rm -f $fnTmp
 
 	done
+
+	udfFinally "."
 
 }
 #

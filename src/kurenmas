@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 23 2016-08-03 15:38:31+04:00 toor $
+# $Id: kurenmas 24 2016-08-04 11:01:46+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -339,9 +339,19 @@ udfMain() {
 	: ${ipServer:=192.168.29.1}
 	: ${port:=12912}
 	: ${portAuth:=42912}
-	udfIsNumber $keepalive && [[ $keepalive -gt 10 && $keepalive -lt 3600 ]] || keepalive=25
 
-	udfDebug 2 && udfShowVariable dev ipServer port portAuth cnServer ipsAllowed
+	if udfIsNumber $keepalive; then
+
+		(( $keepalive >= 10   )) || keepalive=10
+		(( $keepalive <= 3600 )) || keepalive=3600
+
+	else
+
+		keepalive=0
+
+	fi
+
+	udfDebug 2 && udfShowVariable dev ipServer port portAuth cnServer ipsAllowed keepalive
 	udfThrowOnEmptyVariable cnServer dev ipServer pathDat pathIni port portAuth
 
 	mkdir -p $pathDat || eval $( udfOnError retecho iErrorNotExistNotCreated $pathDat )

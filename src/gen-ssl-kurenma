@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 23 2016-08-03 14:53:25+04:00 toor $
+# $Id: gen-ssl-kurenma 24 2016-08-04 11:01:47+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -27,7 +27,7 @@ udfMain() {
 
 	local conf confDN csv fnTemplate path pathCnf pathCrt pathCsr pathIni pathKey s
 
-	$pathIni=$( _ pathIni )
+	pathIni=$( _ pathIni )
 	udfThrowOnEmptyVariable pathIni
 
 	path=${pathIni}/ssl

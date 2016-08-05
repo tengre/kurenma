@@ -1,11 +1,39 @@
 #!/bin/bash
 #
-# $Id: kurenmas 25 2016-08-04 23:13:15+04:00 toor $
+_kurenmas_sVersion=0.2
+eval "_kurenmas_aRev=($Id: kurenmas 26 2016-08-05 15:50:59+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
+udfUsage() {
+
+    	local sVersion="$_kurenmas_sVersion (${_kurenmas_aRev[3]}rev${_kurenmas_aRev[2]})"
+
+	printf "\t$(_ s0) v${sVersion}, Kurenma Service for Wireguard tunnels, (c) 2016\n"
+
+#****h* kurenma/kurenmas
+#  DESCRIPTION
+#    kurenmas - Kurenma Service for Wireguard tunnels
+#  AUTHOR
+#    Damir Sh. Yakupov <yds@bk.ru>
+#  ARGUMENTS
+	cat <<-EOF | tr -d '#'
+
+		Usage: $(_ s0) start|stop
+		where:
+
+#			start	- start service
+#			stop	- stop  service
+#
+#		without arguments show this usage and exit
+
+	EOF
+	eval $(udfOnError exit)
+
+}
+#******
 udfMakeFifo() {
 
 	[[ -n "$1" ]] || eval $( udfOnError iErrorEmptyOrMissingArgument )
@@ -110,37 +138,42 @@ udfSelfCheck() {
 #
 udfWaitRequest() {
 
-	local -r iMax=64
+	local -r iMax=32
 	local i=0 s csv
 	#
-	while read s; do
+	while read -n 66 s; do
 
 		udfDebug 5 "input line ${i}: ${s:0:10}<skipped>" >&2
+
+		if [[ $s =~ ^-----BEGIN.PKCS7-----$ ]]; then
+
+			csv=""
+			i=0
+
+		fi
+
 		csv+="${s}:"
 		i=$((i+1))
 
 		if (( $i > $iMax )); then
 
-			echo "Warn: too many lines received, abort .." >&2
-			break
+			echo "Warn: too many lines received, ignore .." >&2
+			csv=""
+			i=0
 
 		fi
 
-		[[ $s =~ ^-----END.PKCS7-----$ ]] && break
+		if [[ $csv =~ ^-----BEGIN.PKCS7-----.*-----END.PKCS7-----:$ ]]; then
+
+			udfDebug 5 "start request handling." >&2
+			udfHandleRequest "$csv"
+			csv=""
+			i=0
+
+		fi
 
 	done
 
-	if [[ $csv =~ ^-----BEGIN.PKCS7-----.*-----END.PKCS7-----:$ ]]; then
-
-		udfDebug 5 "start request handling." >&2
-		udfHandleRequest "$csv"
-
-	else
-
-		udfDebug 5 "connection does not imply data exchange.. $csv" >&2
-		[[ -n "$csv" ]] && echo "unexpected.."
-
-	fi
 }
 #
 udfHandleRequest() {
@@ -352,17 +385,22 @@ udfMain() {
 
 		 stop)
 			udfDebug 1 "stopping.."
-			fnPid=${pathRun}/kurenmas.pid
+			fnPid=${pathRun}/98ea1ee1f545f23bca33b97d4fb6bb05.pid
 			echo stop >> $fnPid
 			[[ -n $portAuth ]] && udfCheckNetcat $portAuth kill || killall -9 nc
 			return 0
+		;;
+
+		    *)
+			udfDebug 1 && udfUsage
+			return 1
 		;;
 
 	esac
 
 	udfExitIfAlreadyStarted
 	fnPid=$( _ fnPid )
-	
+
 	if udfIsNumber $keepalive; then
 
 		(( $keepalive >= 10   )) || keepalive=10
@@ -403,7 +441,7 @@ udfMain() {
 
 		udfDebug 4 "Daemon for Wireguard clients (re)started.."
 		udfMakeFifo fnTmp
-		cat $fnTmp | udfWaitRequest | nc -l -v $portAuth > $fnTmp
+		cat $fnTmp | udfWaitRequest | nc -k -l -v $portAuth > $fnTmp
 		sleep 1
 		[[ ! -s $fnPid || $( tail -n 1 $fnPid ) == "stop" ]] && break
 		rm -f $fnTmp

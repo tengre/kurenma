@@ -1,7 +1,7 @@
 [options]
 	logfile = /var/log/knockd.log
 
-[addHost]
+[kurenma]
 	sequence    = 20000,40000,60000
 	seq_timeout = 5
 	command     = /root/bin/update-firehol %IP%

@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# $Id: setup-knockd 26 2016-08-05 15:51:00+04:00 toor $
+#
+_bashlyk=kurenma . bashlyk
+#
+#
+#
+_defLocal() {
+
+	local s S
+
+	for s in ${*//[;,]/ }; do
+
+		udfIsValidVariable $s || eval $( udfOnError throw iErrorNonValidVariable "$s" )
+		S+="$s "
+
+	done
+
+	echo "local ${S% *}"
+
+}
+#
+udfMain() {
+
+	local crtServer cnServer csvKnockd iniServer iniKnockd pathIni s
+	#
+	#csvKnockd="kurenma:sequence;seq_timeout;command;tcpflags"
+
+	pathIni=$( _ pathIni )
+	iniServer=${pathIni}/server.kurenma.ini
+	iniKnockd="/etc/knockd.conf"
+	#
+	udfIni $iniServer "ssl:cnServer"
+	udfThrowOnEmptyVariable cnServer
+
+	crtServer=${pathIni}/ssl/public/${cnServer}.crt
+
+	[[ -s $crtServer ]] || eval $( udfOnError throw iErrorNoSuchFileOrDir $crtServer )
+
+	s=$(grep keyid $crtServer | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/")
+	udfDebug 2 "keyid head: $s"
+	s=$( printf "sequence=%d,%d,%d;" $s )
+	udfDebug 2 "  sequence: $s"
+
+	## temporary bug fix
+	sed -i -r -e "s/%/<procent>/g" $iniKnockd
+	##
+	udfIniChange $iniKnockd "$s" "kurenma"
+	## temporary bug fix
+	sed -i -r -e "s/<procent>/%/g" $iniKnockd
+	##
+
+	udfDebug 2 && cat $iniKnockd
+
+	## TODO restart knockd
+	# service knockd restart
+
+}
+#
+#
+#
+udfMain
+#
+
+

@@ -5,4 +5,6 @@ for bashlyk:
 -#00004 - udfThrowOnEmptyArgument
 update-firehol:
 -#00005 - preserve IP of the peers in the white list
+for bashlyk:
+-#00006 - udfChangeIni - loss % contain substring
 

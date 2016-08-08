@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 26 2016-08-05 15:51:00+04:00 toor $
+# $Id: setup-knockd 27 2016-08-08 17:12:46+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -23,9 +23,9 @@ _defLocal() {
 #
 udfMain() {
 
-	local crtServer cnServer csvKnockd iniServer iniKnockd pathIni s
-	#
-	#csvKnockd="kurenma:sequence;seq_timeout;command;tcpflags"
+	local crtServer cnServer fmtKnockd iniServer iniKnockd pathIni s
+	## TODO <procent> is temporary fix bug of bashlyk library 1.84 (libini)
+	fmtKnockd="sequence=%d,%d,%d;seq_timeout=5;command=/usr/bin/update-firehol <procent>IP<procent>;tcpflags=syn"
 
 	pathIni=$( _ pathIni )
 	iniServer=${pathIni}/server.kurenma.ini
@@ -40,7 +40,7 @@ udfMain() {
 
 	s=$(grep keyid $crtServer | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/")
 	udfDebug 2 "keyid head: $s"
-	s=$( printf "sequence=%d,%d,%d;" $s )
+	s=$( printf "$fmtKnockd" $s )
 	udfDebug 2 "  sequence: $s"
 
 	## temporary bug fix

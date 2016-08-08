@@ -1,10 +1,44 @@
 #!/bin/bash
 #
-# $Id: kurenmac 26 2016-08-05 15:50:59+04:00 toor $
+# $Id: kurenmac 27 2016-08-08 17:12:46+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
+#
+shopt -s expand_aliases
+alias try="udfTry <<-catch.e"
+
+udfTry() {
+
+    local s b=true fn i=0
+    #
+    udfMakeTemp fn
+    #
+    while read s; do
+
+	i=$((i+1))
+
+	[[ -n "$s" ]] || continue
+
+	eval "$s" > $fn 2>&1 && echo -n "." || {
+
+		_ iTryBlockLine $i
+		b=false
+		break
+	}
+
+    done
+
+    if ! $b; then
+
+	echo "?"
+	udfStackTrace $s
+	eval $( udfOnError exitwarn $i "line: $i, code: $s, output: $(< $fn)" )
+
+    fi
+
+}
 #
 udfGetValidIPsOnly() {
 
@@ -34,7 +68,7 @@ udfMain() {
 
 	local a cnClient cnServer dev fn fnAns fnClientCrt fnClientKey fnKey fnPub fnServerCrt host i ini ipClient ipServer keepalive pathCrt pathIni pathKey peer port s
 
-	DEBUGLEVEL=5
+	DEBUGLEVEL=4
 
 	udfThrowOnCommandNotFound echo ip ipcalc dig grep knock openssl ping printf sed sipcalc tee wg
 
@@ -86,51 +120,60 @@ udfMain() {
 	fi
 
 	s=$( grep keyid $fnServerCrt | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
+
+	[[ -n "$s" ]] || eval $( udfOnError throw "iErrorEmptyOrMissingArgument" "$fnServerCrt - not valid format" )
 	udfDebug 5 "server crt keyid head: $s"
-	s=$( printf "%d %d %d" $s )
+
+	s=$( printf "%d %d %d" $s ) || eval $( udfOnError throw "iErrorNotValidArgument" "$fnServerCrt - not valid format" )
+
 	udfDebug 5 "knock  ports sequence: $s"
-
-	udfDebug 2 "check server availibity:"
-	while true; do
-
-		if echo "${i}%8" | bc | grep '^0$' >/dev/null; then
-
-			knock $host $s && echo -n "!"
-
-		fi
-		sleep 1
-
-		nc -w 4 -z ${host} ${port} 2>/dev/null && break
-		echo -n "."
-		i=$((i-1))
-		(( $i > 0 )) || eval $( udfOnError throw iErrorNotPermitted "${host}:${port}" )
-
-	done
-	udfDebug 2 "ok."
-	sleep 4
 
 	udfMakeTemp fnKey
 	udfMakeTemp fnPub
 	udfMakeTemp fnAns
 
-	## TODO use loop for many times trying
-	s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $port | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
+	while true; do
 
-	udfDebug 4 && \
+	udfDebug 2 "check server availibity:"
+
+		while true; do
+
+			if echo "${i}%8" | bc | grep '^0$' >/dev/null; then
+
+				knock $host $s && echo -n "!"
+
+			fi
+			sleep 1
+
+			nc -w 3 -z ${host} ${port} 2>/dev/null && break
+			echo -n "."
+			i=$((i-1))
+
+			if (( $i <= 0 )); then
+
+				eval $( udfOnError warn iErrorNotPermitted "${host}:${port} are unreacheable" )
+				i=256
+			fi
+
+		done
+		udfDebug 2 "ok."
+		sleep 4
+
+		s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $port | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
+
+		udfDebug 4 && \
 		printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" \
 			"$(head -c 10 $fnKey)<skipped>" "$(head -c 10 $fnPub)<skipped>"
 
+		[[ $s =~ ^OK: ]] && break
+
+		[[ -z "$s" ]] && s="$(< $fnAns)"
+
+		eval $( udfOnError warn iErrorNotValidArgument "malformed answer from ${host}:${port} $s" )
+
+	done
+
 	rm -f $fnPub
-
-	if [[ -z "$s" ]]; then
-
-		s="$(< $fnAns)"
-		rm -f $fnAns
-		eval $( udfOnError throw iErrorNotValidArgument "unexpected answer from ${host}:${port} $s" )
-
-	fi
-
-	[[ $s =~ ^OK: ]] || eval $( udfOnError throw iErrorNotValidArgument "malformed answer from ${host}:${port} $s" )
 
 	a=( ${s//:/ } )
 
@@ -140,23 +183,32 @@ udfMain() {
 	ipServer=$( udfGetValidIPsOnly ${a[4]} )
 
 	udfDebug 3 && \
-		printf "server connection properties:\n\tleased ip: %s\n\t   server: %s:%s\n\t     peer: %s\n\n" \
-			"$ipClient" "${ipServer}" "${port}" "${peer:0:10}<skipped>"
+		printf "server connection properties:\n\tleased ip: %s\n\t   server: %s\n\t     peer: %s\n\t     port: %s\n\n" \
+			"$ipClient" "$ipServer" "${peer:0:10}<skipped>" "$port"
 
 	udfThrowOnEmptyVariable peer port ipClient ipServer
 
-	udfDebug 4 "Setup network environment for peer ${peer:0:10}<skipped>"
-	udfDebug 5 " ${dev}: init device"
-	ip link del dev $dev 2>/dev/null || true
-	ip link add dev $dev type wireguard
+	udfDebug 0 && \
+		echo -n "Setup tunnel for peer ${peer:0:10}<skipped> with IP $ipClient to ${host}:${port}: "
+	#
+	try
 
-	udfDebug 5 " ${dev}: init peer ${peer:0:10}<skipped> to ${host}:${port} with ip $ipClient"
-	wg set $dev private-key $fnKey peer $peer allowed-ips 0.0.0.0/0 persistent-keepalive $keepalive endpoint "${host}:${port}"
-	rm -f $fnKey
-	ip address add "${ipClient}"/24 dev $dev
-	ip link set up dev $dev
+		ip link del dev $dev || true
+		ip link add dev $dev type wireguard
+		wg set $dev private-key $fnKey \
+			peer $peer \
+			allowed-ips 0.0.0.0/0 \
+			persistent-keepalive $keepalive \
+			endpoint "${host}:${port}"
+
+		rm -f $fnKey
+		ip address add "${ipClient}"/24 dev $dev
+		ip link set up dev $dev
+
+	catch.e
 
 	ping -t 1 -c 3 -q $ipServer >/dev/null 2>&1
+	echo "ok."
 
 	eval set -- $(_ sArg)
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 _kurenmas_sVersion=0.2
-eval "_kurenmas_aRev=($Id: kurenmas 26 2016-08-05 15:50:59+04:00 toor $)"
+eval "_kurenmas_aRev=($Id: kurenmas 28 2016-08-09 16:58:27+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -98,17 +98,17 @@ udfSelfCheck() {
 
 	udfIsNumber $1 || eval $( udfOnError throw iErrorNotValidArgument '$1' )
 
-	local fn iA iB iC=0
+	local fn iA iB iC=0 s
 
 	fn=$( _ fnLog )
 
 	while true; do
 
-		sleep 16
+		for s in 5 4 3 2 1; do sleep $s; done
 
 		iB=$( sed -rn "/.* Connection from .* port .* .* accepted .*/{=}" $fn | tail -n 1 )
 
-		sleep 16
+		for s in 5 4 3 2 1; do sleep $s; done
 
 		iA=$( sed -rn "/.* (Listening on .* .*|Connection closed, listening again.)/{=}" $fn | tail -n 1 )
 
@@ -127,7 +127,7 @@ udfSelfCheck() {
 		else
 
 			(( iA == -1 )) && iC=0 || iC=$iA
-			sleep 16
+			for s in 5 4 3 2 1; do sleep $s; done
 
 		fi
 
@@ -355,7 +355,7 @@ udfMain() {
 
 	local dev fn fnPid fnServerKey fnTmp ini ip ipClient ipServer ipsAllowed keyPeer pathIni pathCrt pathDat pathKey keepalive s
 
-	DEBUGLEVEL=5
+	DEBUGLEVEL=4
 
 	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill mkdir nc openssl ps sipcalc sort uniq wg
 
@@ -380,20 +380,30 @@ udfMain() {
 	case "$1" in
 
 		start)
-			udfDebug 1 "starting.."
+			udfDebug 1 "service kurenmas starting.."
+
+			export _kurenmas_ctl=start
+			( kurenmas & ) &
+
+			return 0
 		;;
 
 		 stop)
-			udfDebug 1 "stopping.."
-			fnPid=${pathRun}/98ea1ee1f545f23bca33b97d4fb6bb05.pid
+			udfDebug 1 "service kurenmas stopping.."
+			fnPid=${pathRun}/kurenmas.pid
 			echo stop >> $fnPid
-			[[ -n $portAuth ]] && udfCheckNetcat $portAuth kill || killall -9 nc
+			[[ -n $portAuth ]] && udfCheckNetcat $portAuth kill
 			return 0
 		;;
 
 		    *)
-			udfDebug 1 && udfUsage
-			return 1
+			if [[ "$_kurenmas_ctl" == "start" ]]; then
+				echo "starting.."
+				unset _kurenmas_ctl
+			else
+				udfDebug 1 && udfUsage
+				return 1
+			fi
 		;;
 
 	esac

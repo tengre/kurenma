@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 27 2016-08-08 17:12:46+04:00 toor $
+# $Id: kurenmac 28 2016-08-09 17:03:45+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -119,22 +119,22 @@ udfMain() {
 
 	fi
 
-	s=$( grep keyid $fnServerCrt | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
-
-	[[ -n "$s" ]] || eval $( udfOnError throw "iErrorEmptyOrMissingArgument" "$fnServerCrt - not valid format" )
-	udfDebug 5 "server crt keyid head: $s"
-
-	s=$( printf "%d %d %d" $s ) || eval $( udfOnError throw "iErrorNotValidArgument" "$fnServerCrt - not valid format" )
-
-	udfDebug 5 "knock  ports sequence: $s"
-
 	udfMakeTemp fnKey
 	udfMakeTemp fnPub
 	udfMakeTemp fnAns
 
 	while true; do
 
-	udfDebug 2 "check server availibity:"
+		s=$( grep keyid $fnServerCrt | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
+
+		[[ -n "$s" ]] || eval $( udfOnError throw "iErrorEmptyOrMissingArgument" "$fnServerCrt - not valid format" )
+		udfDebug 5 "server crt keyid head: $s"
+
+		s=$( printf "%d %d %d" $s ) || eval $( udfOnError throw "iErrorNotValidArgument" "$fnServerCrt - not valid format" )
+
+		udfDebug 5 "knock  ports sequence: $s"
+
+		udfDebug 2 "check server availibity:"
 
 		while true; do
 
@@ -170,6 +170,8 @@ udfMain() {
 		[[ -z "$s" ]] && s="$(< $fnAns)"
 
 		eval $( udfOnError warn iErrorNotValidArgument "malformed answer from ${host}:${port} $s" )
+
+		sleep 8
 
 	done
 

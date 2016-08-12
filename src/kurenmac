@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 28 2016-08-09 17:03:45+04:00 toor $
+# $Id: kurenmac 29 2016-08-12 15:41:16+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -111,7 +111,7 @@ udfMain() {
 	if [[ -f $fnClientCrt && -f $fnClientKey  && -f $fnServerCrt ]]; then
 
 
-		udfDebug 3 && printf "client auth info:\n\tremote public key\t- %s\n\tlocal private key\t- %s\n\tlocal Common Name \t- %s\n" "$fnServerCrt" "$fnClientKey" "$cnClient"
+		udfDebug 3 && printf -- "client auth info:\n\tremote public key\t- %s\n\tlocal private key\t- %s\n\tlocal Common Name \t- %s\n" "$fnServerCrt" "$fnClientKey" "$cnClient"
 
 	else
 
@@ -130,7 +130,7 @@ udfMain() {
 		[[ -n "$s" ]] || eval $( udfOnError throw "iErrorEmptyOrMissingArgument" "$fnServerCrt - not valid format" )
 		udfDebug 5 "server crt keyid head: $s"
 
-		s=$( printf "%d %d %d" $s ) || eval $( udfOnError throw "iErrorNotValidArgument" "$fnServerCrt - not valid format" )
+		s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError throw "iErrorNotValidArgument" "$fnServerCrt - not valid format" )
 
 		udfDebug 5 "knock  ports sequence: $s"
 
@@ -162,7 +162,7 @@ udfMain() {
 		s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $port | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
 
 		udfDebug 4 && \
-		printf "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" \
+		printf -- "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" \
 			"$(head -c 10 $fnKey)<skipped>" "$(head -c 10 $fnPub)<skipped>"
 
 		[[ $s =~ ^OK: ]] && break
@@ -185,7 +185,7 @@ udfMain() {
 	ipServer=$( udfGetValidIPsOnly ${a[4]} )
 
 	udfDebug 3 && \
-		printf "server connection properties:\n\tleased ip: %s\n\t   server: %s\n\t     peer: %s\n\t     port: %s\n\n" \
+		printf -- "server connection properties:\n\tleased ip: %s\n\t   server: %s\n\t     peer: %s\n\t     port: %s\n\n" \
 			"$ipClient" "$ipServer" "${peer:0:10}<skipped>" "$port"
 
 	udfThrowOnEmptyVariable peer port ipClient ipServer
@@ -228,17 +228,17 @@ udfMain() {
 
 	fi
 
-	udfDebug 1 && printf "\nclient configuration done.\n"
+	udfDebug 1 && printf -- "\nclient configuration done.\n"
 
 	udfDebug 3 && {
 
-		printf "\n\nWireguard interface %s info:\n-----------------------------\n\n" "$dev"
+		printf -- "\n\nWireguard interface %s info:\n-----------------------------\n\n" "$dev"
 
 		wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
 
 		ip addr show $dev | grep inet
 
-		printf "\n----\n"
+		printf -- "\n----\n"
 
 	} >&2
 

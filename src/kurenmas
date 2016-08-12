@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 _kurenmas_sVersion=0.2
-eval "_kurenmas_aRev=($Id: kurenmas 29 2016-08-12 15:41:16+04:00 toor $)"
+eval "_kurenmas_aRev=($Id: kurenmas 30 2016-08-12 16:04:20+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -187,7 +187,7 @@ udfHandleRequest() {
 
 	udfMakeTemp fn
 
-	printf -- "${//:/\\n}" | openssl smime -decrypt -inform PEM -inkey $fnServerKey | tr -d '\r' > $fn
+	printf -- "${1//:/\\n}" | openssl smime -decrypt -inform PEM -inkey $fnServerKey | tr -d '\r' > $fn
 
 	udfDebug 5 && {
 

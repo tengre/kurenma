@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 31 2016-08-15 16:18:20+04:00 toor $
+# $Id: kurenmac 32 2016-08-16 00:19:38+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -58,6 +58,8 @@ udfGetValidIPsOnly() {
 
 	echo ${sOut% *} | tr ' ' '\n' | sort | uniq | xargs
 
+	## TODO set mode (daemon, one time client and etc.)
+	## TODO checking tunnel availibity
 	return 0
 
 }

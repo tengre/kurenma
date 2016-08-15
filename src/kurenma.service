@@ -1,3 +1,7 @@
+#
+# $Id: kurenma.service 32 2016-08-16 00:19:38+04:00 toor $
+#
+## TODO timeout for child waiting
 [Unit]
 Description=Kurenma Auth Service for Wireguard Network
 

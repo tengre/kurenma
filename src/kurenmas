@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 _kurenmas_sVersion=0.2
-eval "_kurenmas_aRev=($Id: kurenmas 31 2016-08-15 16:18:20+04:00 toor $)"
+eval "_kurenmas_aRev=($Id: kurenmas 32 2016-08-16 00:19:38+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -34,6 +34,40 @@ udfUsage() {
 
 }
 #******
+shopt -s expand_aliases
+alias try="udfTry <<-catch.e"
+#
+udfTry() {
+
+    local s b=true fn i=0
+    #
+    udfMakeTemp fn
+    #
+    while read s; do
+
+	i=$((i+1))
+
+	[[ -n "$s" ]] || continue
+
+	eval "$s" > $fn 2>&1 && echo -n "." || {
+
+		_ iTryBlockLine $i
+		b=false
+		break
+	}
+
+    done
+
+    if ! $b; then
+
+	echo "?"
+	udfStackTrace $s
+	eval $( udfOnError exitwarn $i "line: $i, code: $s, output: $(< $fn)" )
+
+    fi
+
+}
+#
 udfMakeFifo() {
 
 	[[ -n "$1" ]] || eval $( udfOnError iErrorEmptyOrMissingArgument )
@@ -141,6 +175,9 @@ udfSelfCheck() {
 	fn=$( _ fnLog )
 
 	while true; do
+
+		## TODO check peers expiring
+		## TODO implement auto sleep mode
 
 		for s in 5 4 3 2 1; do sleep $s; done
 
@@ -485,11 +522,16 @@ udfMain() {
 
 	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then
 
-		ip link del dev $dev 2>/dev/null
-		ip link add dev $dev type wireguard
-		ip address add ${ipServer}/24 dev $dev
-		wg set $dev private-key <(wg genkey) listen-port $port
-		ip link set up dev $dev
+		try
+
+			ip link del dev $dev 2>/dev/null || true
+			ip link add dev $dev type wireguard
+			ip address add ${ipServer}/24 dev $dev
+			wg set $dev private-key <(wg genkey) listen-port $port
+			ip link set up dev $dev
+			udfDebug 4 "init new server pub key: $( wg show $dev private-key | wg pubkey | head -c 10 )<skipped>"
+
+		catch.e
 
 	fi
 

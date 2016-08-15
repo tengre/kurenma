@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 29 2016-08-12 15:41:16+04:00 toor $
+# $Id: kurenmac 31 2016-08-15 16:18:20+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -66,7 +66,7 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw  iErrorNotPermitted "You must be root to run this." )
 
-	local a cnClient cnServer dev fn fnAns fnClientCrt fnClientKey fnKey fnPub fnServerCrt host i ini ipClient ipServer keepalive pathCrt pathIni pathKey peer port s
+	local a cnClient cnServer dev fn fnAns fnClientCrt fnClientKey fnKey fnPub fnServerCrt host i ini ipClient ipServer pathCrt pathIni pathKey peer port s tsKeepalive
 
 	DEBUGLEVEL=4
 
@@ -77,23 +77,22 @@ udfMain() {
 	pathCrt=${pathIni}/ssl/public
 	pathKey=${pathIni}/ssl/private
 
-	udfIni $ini ':dev;host;port;keepalive ssl:cnServer;cnClient'
+	udfIni $ini ':dev;host;port;tsKeepalive ssl:cnServer;cnClient'
 
 	: ${dev:=wg0}
 	: ${i:=256}
 
-	if udfIsNumber $keepalive; then
+	if udfIsNumber $tsKeepalive; then
 
-		(( $keepalive >= 10   )) || keepalive=10
-		(( $keepalive <= 3600 )) || keepalive=3600
+		(( $tsKeepalive <= 65355 )) || tsKeepalive=65355
 
 	else
 
-		keepalive=0
+		tsKeepalive=0
 
 	fi
 
-	udfDebug 2 "configuration:" && udfShowVariable dev host port cnServer cnClient keepalive
+	udfDebug 2 "configuration:" && udfShowVariable dev host port cnServer cnClient tsKeepalive
 	udfThrowOnEmptyVariable cnClient cnServer dev host pathIni port
 
 	fnServerCrt=${pathCrt}/${cnServer}.crt
@@ -138,7 +137,8 @@ udfMain() {
 
 		while true; do
 
-			if echo "${i}%8" | bc | grep '^0$' >/dev/null; then
+			if ! (( i % 8 )); then
+
 
 				knock $host $s && echo -n "!"
 
@@ -200,7 +200,7 @@ udfMain() {
 		wg set $dev private-key $fnKey \
 			peer $peer \
 			allowed-ips 0.0.0.0/0 \
-			persistent-keepalive $keepalive \
+			persistent-keepalive $tsKeepalive \
 			endpoint "${host}:${port}"
 
 		rm -f $fnKey
@@ -232,7 +232,7 @@ udfMain() {
 
 	udfDebug 3 && {
 
-		printf -- "\n\nWireguard interface %s info:\n-----------------------------\n\n" "$dev"
+		printf -- "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
 
 		wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
 

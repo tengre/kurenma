@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 29 2016-08-12 15:41:17+04:00 toor $
+# $Id: update-firehol 31 2016-08-15 15:51:45+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -36,7 +36,7 @@ udfMain() {
 
 	udfThrowOnCommandNotFound cp dig diff firehol host grep ipcalc kurenmas mv sipcalc sed sort systemctl uniq wg xargs
 
-	local cnf csv ini ipv4Black ipv4Client ipv4White lst pathDat pathIni s sDig
+	local cnf csv ini ipv4Black ipv4Client ipv4White pathDat pathIni s sDig
 
 	pathIni=$( _ pathIni )
 	pathDat=$( _ pathDat )
@@ -49,9 +49,9 @@ udfMain() {
 
 	cnf="/etc/firehol/firehol.conf"
 	ini="${pathIni}/ipslist.ini"
-	lst="${pathDat}/clients.lst"
 
 	ipv4Client=$( wg show | grep 'endpoint:' | sed -r -e "s/^.*t: (.*):.*$/\1/" | sort | uniq | xargs )
+	## TODO check expired peers
 
 	udfIni $ini "ipv4White:= ipv4Black:="
 

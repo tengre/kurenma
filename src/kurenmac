@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 33 2016-08-16 13:33:52+04:00 toor $
+# $Id: kurenmac 38 2016-08-16 16:47:49+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -306,6 +306,8 @@ udfMain() {
 	chmod 0600 ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
 
 	while true; do
+
+		ping -q -W 1 -с 3 $ipServer >/dev/null 2>&1
 
 		$bDaemonize || break
 

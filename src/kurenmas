@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 _kurenmas_sVersion=0.2
-eval "_kurenmas_aRev=($Id: kurenmas 32 2016-08-16 00:19:38+04:00 toor $)"
+eval "_kurenmas_aRev=($Id: kurenmas 33 2016-08-16 14:19:38+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -35,7 +35,7 @@ udfUsage() {
 }
 #******
 shopt -s expand_aliases
-alias try="udfTry <<-catch.e"
+alias try-by-line="udfTry <<-catch.e"
 #
 udfTry() {
 
@@ -99,14 +99,14 @@ udfGetTimeInSec() {
 
 	case ${1##*[[:digit:]]} in
 
-	second|secon|seco|sec|se|s|'') echo $i;;
-	   minute|minut|minu|min|mi|m) echo $(( i*60 ));;
-		     hour|hou|ho|hr|h) echo $(( i*3600 ));;
-		             day|da|d) echo $(( i*3600*24 ));;
-		        week|wee|we|w) echo $(( i*3600*24*7 ));;
-		      month|mon|mo|mn) echo $(( i*3600*24*30 ));;
-		               year|y) echo $(( i*3600*24*365 ));;
-                                    *) echo ""
+		seconds|second|sec|s|'') echo $i;;
+		   minutes|minute|min|m) echo $(( i*60 ));;
+		        hours|hour|hr|h) echo $(( i*3600 ));;
+		             days|day|d) echo $(( i*3600*24 ));;
+		           weeks|week|w) echo $(( i*3600*24*7 ));;
+		       months|month|mon) echo $(( i*3600*24*30 ));;
+		           years|year|y) echo $(( i*3600*24*365 ));;
+	                              *) echo ""
                                        eval $( udfOnError iErrorNotValidArgument "$1 - number with time suffix expected" ) >&2
 
 	esac
@@ -258,7 +258,7 @@ udfHandleRequest() {
 
 	local csvCIDR cnClient fn fnClientCrt fnLeased keyPeer s
 
-	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt pathDat pathIni tsExpired tsKeepalive
+	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt pathDat pathIni tsKeepalive tsPeerTimeout
 
 	udfMakeTemp fn
 
@@ -329,7 +329,7 @@ udfHandleRequest() {
 			if udfIsNumber ${s##*:}; then
 
 
-				if (( $(date +%s) - ${s##*:} >= tsExpired )); then
+				if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
 
 					wg set $dev peer ${s%%:*} remove
 					udfDebug 4 "peer ${s:0:10}<skipped> removed .. $?" >&2
@@ -441,7 +441,7 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-	local dev fn fnPid fnServerKey fnTmp ini ip ipClient ipServer ipsAllowed pathIni pathCrt pathDat pathKey s tsExpired tsKeepalive
+	local dev fn fnPid fnServerKey fnTmp ini ip ipClient ipServer ipsAllowed pathIni pathCrt pathDat pathKey s tsKeepalive tsPeerTimeout
 
 	DEBUGLEVEL=4
 
@@ -455,14 +455,14 @@ udfMain() {
 	pathKey=${pathIni}/ssl/private
 	ini=${pathIni}/server.kurenma.ini
 
-	udfIni $ini ':dev;port;portAuth;ipClient;ipServer;tsExpired;tsKeepalive ssl:cnServer ipsAllowed:='
+	udfIni $ini ':dev;port;portAuth;ipClient;ipServer;tsKeepalive;tsPeerTimeout ssl:cnServer ipsAllowed:='
 
 	: ${dev:=wg0}
 	: ${ipClient:=dynamic}
 	: ${ipServer:=192.168.29.1}
 	: ${port:=12912}
 	: ${portAuth:=42912}
-	: ${tsExpired:=2day}
+	: ${tsPeerTimeout:=2day}
 
 	eval set -- $(_ sArg)
 
@@ -513,25 +513,26 @@ udfMain() {
 
 	fi
 
-	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsExpired $tsExpired "2day"
+	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "2day"
 
-	udfDebug 2 && udfShowVariable dev ipServer port portAuth cnServer ipsAllowed tsExpired tsKeepalive
-	udfThrowOnEmptyVariable cnServer dev ipServer pathDat pathIni port portAuth tsExpired
+	udfDebug 2 && udfShowVariable dev ipServer port portAuth cnServer ipsAllowed tsKeepalive tsPeerTimeout
+	udfThrowOnEmptyVariable cnServer dev ipServer pathDat pathIni port portAuth tsPeerTimeout
 
 	mkdir -p $pathDat || eval $( udfOnError retecho iErrorNotExistNotCreated $pathDat )
 
 	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then
 
-		try
+		try-by-line
 
 			ip link del dev $dev 2>/dev/null || true
 			ip link add dev $dev type wireguard
 			ip address add ${ipServer}/24 dev $dev
 			wg set $dev private-key <(wg genkey) listen-port $port
 			ip link set up dev $dev
-			udfDebug 4 "init new server pub key: $( wg show $dev private-key | wg pubkey | head -c 10 )<skipped>"
 
 		catch.e
+
+		udfDebug 4 "init new server pub key: $( wg show $dev private-key | wg pubkey | head -c 10 )<skipped>"
 
 	fi
 

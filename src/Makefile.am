@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 37 2016-08-16 15:51:04+04:00 toor $
+## $Id: Makefile.am 39 2016-08-25 02:36:10+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -17,4 +17,4 @@ syslib_DATA		= knockd.conf.example openssl.cnf.template
 DESTDIR			=
 
 install-data-hook:
-	$(shell) ln -sf /lib/systemd/system/${PACKAGE}.service /etc/systemd/system/${PACKAGE}.service && systemctl daemon-reload
+	$(shell) ln -sf /lib/systemd/system/${PACKAGE}.service /etc/systemd/system/${PACKAGE}.service && systemctl daemon-reload || true

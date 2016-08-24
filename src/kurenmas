@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 _kurenmas_sVersion=0.2
-eval "_kurenmas_aRev=($Id: kurenmas 33 2016-08-16 14:19:38+04:00 toor $)"
+eval "_kurenmas_aRev=($Id: kurenmas 39 2016-08-25 02:38:12+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -256,7 +256,7 @@ udfHandleRequest() {
 	## TODO udfThrowOnEmptyArgument
 	[[ -n "$1" ]] || eval $( udfOnError retecho iErrorEmptyOrMissingArgument )
 
-	local csvCIDR cnClient fn fnClientCrt fnLeased keyPeer s
+	local a csvCIDR cnClient fn fnClientCrt fnLeased peer s
 
 	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt pathDat pathIni tsKeepalive tsPeerTimeout
 
@@ -280,7 +280,7 @@ udfHandleRequest() {
 
 	fi
 
-	keyPeer="$( tail -n +3 $fn )"
+	peer="$( tail -n +3 $fn )"
 	s=$( head -n 1 $fn )
 	rm -f $fn
 
@@ -316,7 +316,7 @@ udfHandleRequest() {
 
 		udfDebug 4 && \
 			printf -- "\nremote peer info:\n\tClient Common Name\t- %s\n\tPublic key for %s\t- %s\n" \
-				"$cnClient" "$dev" "${keyPeer:0:10}<skipped>" >&2
+				"$cnClient" "$dev" "${peer:0:10}<skipped>" >&2
 
 		if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
 
@@ -328,7 +328,9 @@ udfHandleRequest() {
 
 			if udfIsNumber ${s##*:}; then
 
+				udfDebug 4 "$(date +%s) - ${s##*:} > $tsPeerTimeout" >&2
 
+				## TODO update latest handshake for peer in $fnLeased
 				if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
 
 					wg set $dev peer ${s%%:*} remove
@@ -398,12 +400,21 @@ udfHandleRequest() {
 		udfDebug 5 "allowed-ips: $csvCIDR" >&2
 
 		udfMakeTemp fn
-		if wg set $dev peer "$keyPeer" allowed-ips "$csvCIDR" persistent-keepalive $tsKeepalive 2>$fn; then
+		if wg set $dev peer "$peer" allowed-ips "$csvCIDR" persistent-keepalive $tsKeepalive 2>$fn; then
 
 			echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${ipServer}"
 
-			echo "${cnClient}:${ipClient}" >> $fnLeased
-			cat $fnLeased | grep -P '^\S+:\S+$' | sort | uniq > $fn && mv $fn $fnLeased
+			echo "${cnClient}:${ipClient}:$(date +%s):${peer:0:10}" >> $fnLeased
+
+			while read s; do
+
+				a=( ${s//:/ } )
+				udfIsNumber ${a[2]} || continue
+				(( $(date +%s) - ${a[2]} > $tsPeerTimeout )) && continue
+				echo $s
+
+			done < $fnLeased > $fn
+			mv -f $fn $fnLeased
 
 		else
 

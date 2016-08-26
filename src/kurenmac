@@ -1,49 +1,14 @@
 #!/bin/bash
 #
-# $Id: kurenmac 38 2016-08-16 16:47:49+04:00 toor $
+# $Id: kurenmac 40 2016-08-27 00:52:02+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
-shopt -s expand_aliases
-alias try-by-line="udfTry <<-catch.e"
 _peIPv4='\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-
-udfTry() {
-
-	local s b=true fn i=0
-	#
-	udfMakeTemp fn
-	#
-	while read s; do
-
-		i=$((i+1))
-
-		[[ -n "$s" ]] || continue
-
-		eval "$s" > $fn 2>&1 && echo -n "." || {
-
-			_ iTryBlockLine $i
-			b=false
-			break
-		}
-
-	done
-
-	if ! $b; then
-
-		echo "?"
-		udfStackTrace $s
-		eval $( udfOnError exitwarn $i "line: $i, code: $s, output: $(< $fn)" )
-
-	else
-
-		echo "ok."
-
-	fi
-
-}
+#
+#
 #
 udfGetValidIPsOnly() {
 
@@ -71,13 +36,13 @@ udfGetTimeInSec() {
 
 	if [[ "$1" == "-v" ]]; then
 
-		udfIsValidVariable "$2" || eval $( udfOnError iErrorNotValidArgument "$2 - variable name required" ) >&2
+		udfIsValidVariable "$2" || eval $( udfOnError2 iErrorNotValidArgument "$2 - variable name required" )
 
-		[[ "$3" == "-v" ]] && eval $( udfOnError iErrorNotValidArgument "$3 - number with time suffix expected" ) >&2
+		[[ "$3" == "-v" ]] && eval $( udfOnError2 iErrorNotValidArgument "$3 - number with time suffix expected" )
 
 		eval 'export $2="$( udfGetTimeInSec $3 )"'
 		[[ -n ${!2} ]] || eval 'export $2="$( udfGetTimeInSec $4 )"'
-		[[ -n ${!2} ]] || eval $( udfOnError iErrorEmptyResult "$2 - empty variable" ) >&2
+		[[ -n ${!2} ]] || eval $( udfOnError2 iErrorEmptyResult "$2 - empty variable" )
 
 		return $?
 
@@ -85,7 +50,7 @@ udfGetTimeInSec() {
 
 	local i=${1%%[[:alpha:]]*}
 
-	udfIsNumber $i || eval $( udfOnError iErrorNotValidArgument "$i - number expected" ) >&2
+	udfIsNumber $i || eval $( udfOnError2 iErrorNotValidArgument "$i - number expected" )
 
 	case ${1##*[[:digit:]]} in
 
@@ -97,7 +62,7 @@ udfGetTimeInSec() {
 		       months|month|mon) echo $(( i*3600*24*30 ));;
 		           years|year|y) echo $(( i*3600*24*365 ));;
 	                              *) echo ""
-                                       eval $( udfOnError iErrorNotValidArgument "$1 - number with time suffix expected" ) >&2
+                                       eval $( udfOnError2 iErrorNotValidArgument "$1 - number with time suffix expected" )
 
 	esac
 
@@ -244,7 +209,7 @@ udfMain() {
 	udfDebug 0 && \
 		echo -n "Setup tunnel for peer ${peer:0:10}<skipped> with IP $ipClient to ${host}:${port}: "
 	#
-	try-by-line
+	try-every-line
 
 		ip link del dev $dev || true
 		ip link add dev $dev type wireguard
@@ -258,7 +223,7 @@ udfMain() {
 		ip address add "${ipClient}"/24 dev $dev
 		ip link set up dev $dev
 
-	catch.e
+	catch-every-line
 
 	if $bDefaultRoute; then
 
@@ -270,13 +235,13 @@ udfMain() {
 
 		if [[ -n "$s" ]]; then
 
-			try-by-line
+			try-every-line
 
 				ip route add $s || true
 				ip route add 0/1 dev $dev
 				ip route add 128/1 dev $dev
 
-			catch.e
+			catch-every-line
 
 			udfDebug 2 "tunnel $dev used as default route ($s):" && route -n
 
@@ -321,14 +286,14 @@ udfMain() {
 				if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
 
 					wg set $dev peer ${s%%:*} remove
-					udfDebug 4 "peer ${s:0:10}<skipped> removed .. $?" >&2
+					udfDebug 4 "peer ${s:0:10}<skipped> removed .. $?"
 					exec $0
 
 				fi
 
 			else
 
-				eval $( udfOnError warn iErrorNotValidArgument "${s##*:}" ) >&2
+				eval $( udfOnError2 warn iErrorNotValidArgument "${s##*:}" )
 
 			fi
 

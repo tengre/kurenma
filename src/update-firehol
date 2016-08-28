@@ -1,10 +1,15 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 31 2016-08-15 15:51:45+04:00 toor $
+# $Id: update-firehol 41 2016-08-29 01:06:55+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
+#
+#
+#
+_bashlyk_iErrorTimeExpired=167
+_bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 #
 #
 #
@@ -26,20 +31,44 @@ udfGetValidIPsOnly() {
 
 	echo ${sOut% *} | tr ' ' '\n' | sort | uniq | xargs
 
-	return 0
+	[[ -n "${sOut% *}" ]] || eval $( udfOnError return iErrorEmptyResult )
 
+	return 0
 }
 #
 udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-	udfThrowOnCommandNotFound cp dig diff firehol host grep ipcalc kurenmas mv sipcalc sed sort systemctl uniq wg xargs
+	udfThrowOnCommandNotFound cp dig diff firehol flock host grep ipcalc kurenmas mv sipcalc sed sort systemctl uniq wg xargs
 
-	local cnf csv ini ipv4Black ipv4Client ipv4White pathDat pathIni s sDig
+	local cnf csv fn fnStat ini ipv4Black ipv4Client ipv4White pathDat pathIni s sDig
+
+	pathDat=$( _ pathDat )
+	fnStat="${pathDat}/client.stat"
+	mkdir -p $pathDat || eval $( udfOnError throw NotExistAndNotCreated $pathDat )
+
+	eval set -- $( _ sArg )
+
+	s=$( udfGetValidIPsOnly $1 ) || eval $( udfOnError exitecho NonValidArgument "IP or hostname required" )
+
+	if [[ -z "$_kurenma_flock" ]]; then
+
+		exec env _kurenma_flock="$$" flock -x -w 99 $fnStat $0 $s $$
+
+	fi
+
+	[[ "$_kurenma_flock" == "$2" ]] || {
+
+		udfDebug 0 ", exit.."
+		eval $( udfOnError retecho iErrorNotPermitted "invalid process $2" )
+
+	}
+
+	udfDebug 0 "starting"
+	echo "${s}:$(date +%s)" >> $fnStat
 
 	pathIni=$( _ pathIni )
-	pathDat=$( _ pathDat )
 
 	for s in $pathDat $patIni; do
 
@@ -50,16 +79,32 @@ udfMain() {
 	cnf="/etc/firehol/firehol.conf"
 	ini="${pathIni}/ipslist.ini"
 
-	ipv4Client=$( wg show | grep 'endpoint:' | sed -r -e "s/^.*t: (.*):.*$/\1/" | sort | uniq | xargs )
-	## TODO check expired peers
-
 	udfIni $ini "ipv4White:= ipv4Black:="
 
 	udfDebug 2 && udfShowVariable ipv4White ipv4Black ipv4Client
 
-	eval set -- $( _ sArg )
-
 	cp $cnf ${cnf:0:-3}bak
+
+	ipv4Client=$( wg show | grep 'endpoint:' | sed -r -e "s/^.*t: (.*):.*$/\1/" | sort | uniq | xargs )
+
+	touch $fnStat
+	udfMakeTemp fn
+
+	while read s; do
+
+		udfIsNumber ${s##*:} || continue
+		#
+		# 240 - time interval for safety from collisions
+		#
+		if (( $(date +%s) - ${s##*:} < 240 )); then
+
+			echo "$s"
+			ipv4Client+=" ${s%%:*}"
+
+		fi
+
+	done < $fnStat > $fn
+	mv -f $fn $fnStat
 
 	if udfIsValidVariable ipv4White; then
 
@@ -114,6 +159,7 @@ udfMain() {
 
 	fi
 
+	udfUptime "."
 }
 #
 #

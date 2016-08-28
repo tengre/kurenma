@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 41 2016-08-29 01:06:55+04:00 toor $
+# $Id: update-firehol 42 2016-08-29 01:45:16+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -42,10 +42,10 @@ udfMain() {
 
 	udfThrowOnCommandNotFound cp dig diff firehol flock host grep ipcalc kurenmas mv sipcalc sed sort systemctl uniq wg xargs
 
-	local cnf csv fn fnStat ini ipv4Black ipv4Client ipv4White pathDat pathIni s sDig
+	local cnf csv fn fnKnock ini ipv4Black ipv4Client ipv4White pathDat pathIni s sDig
 
 	pathDat=$( _ pathDat )
-	fnStat="${pathDat}/client.stat"
+	fnKnock="${pathDat}/lastknocks.dat"
 	mkdir -p $pathDat || eval $( udfOnError throw NotExistAndNotCreated $pathDat )
 
 	eval set -- $( _ sArg )
@@ -54,19 +54,18 @@ udfMain() {
 
 	if [[ -z "$_kurenma_flock" ]]; then
 
-		exec env _kurenma_flock="$$" flock -x -w 99 $fnStat $0 $s $$
+		exec env _kurenma_flock="$$" flock -x -w 99 $fnKnock $0 $s $$
 
 	fi
 
-	[[ "$_kurenma_flock" == "$2" ]] || {
+	if [[ "$_kurenma_flock" != "$2" ]]; then
 
-		udfDebug 0 ", exit.."
 		eval $( udfOnError retecho iErrorNotPermitted "invalid process $2" )
 
-	}
+	fi
 
 	udfDebug 0 "starting"
-	echo "${s}:$(date +%s)" >> $fnStat
+	echo "${s}:$(date +%s)" >> $fnKnock
 
 	pathIni=$( _ pathIni )
 
@@ -87,7 +86,7 @@ udfMain() {
 
 	ipv4Client=$( wg show | grep 'endpoint:' | sed -r -e "s/^.*t: (.*):.*$/\1/" | sort | uniq | xargs )
 
-	touch $fnStat
+	touch $fnKnock
 	udfMakeTemp fn
 
 	while read s; do
@@ -103,8 +102,8 @@ udfMain() {
 
 		fi
 
-	done < $fnStat > $fn
-	mv -f $fn $fnStat
+	done < $fnKnock > $fn
+	mv -f $fn $fnKnock
 
 	if udfIsValidVariable ipv4White; then
 

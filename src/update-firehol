@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 42 2016-08-29 01:45:16+04:00 toor $
+# $Id: update-firehol 43 2016-08-30 02:55:36+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -42,11 +42,13 @@ udfMain() {
 
 	udfThrowOnCommandNotFound cp dig diff firehol flock host grep ipcalc kurenmas mv sipcalc sed sort systemctl uniq wg xargs
 
-	local cnf csv fn fnKnock ini ipv4Black ipv4Client ipv4White pathDat pathIni s sDig
+	local cnf csv fn fnKnock fnLock ini ipv4Black ipv4Client ipv4White pathDat pathIni s sDig
 
 	pathDat=$( _ pathDat )
 	fnKnock="${pathDat}/lastknocks.dat"
+	fnLock="$( _ pathRun )/$( _ s0 ).lock"
 	mkdir -p $pathDat || eval $( udfOnError throw NotExistAndNotCreated $pathDat )
+	touch $fnLock || eval $( udfOnError throw NotExistAndNotCreated $fnLock )
 
 	eval set -- $( _ sArg )
 
@@ -54,7 +56,8 @@ udfMain() {
 
 	if [[ -z "$_kurenma_flock" ]]; then
 
-		exec env _kurenma_flock="$$" flock -x -w 99 $fnKnock $0 $s $$
+		udfDebug 0 "try lock from $s"
+		exec env _kurenma_flock="$$" flock -x -w 99 $fnLock $0 $s $$
 
 	fi
 
@@ -64,7 +67,7 @@ udfMain() {
 
 	fi
 
-	udfDebug 0 "starting"
+	udfDebug 0 "starting from $s $2"
 	echo "${s}:$(date +%s)" >> $fnKnock
 
 	pathIni=$( _ pathIni )

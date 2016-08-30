@@ -7,4 +7,6 @@ update-firehol:
 -#00005 - preserve IP of the peers in the white list
 for bashlyk:
 -#00006 - udfChangeIni - loss % contain substring
+-#00007 - udfCheckStarted - check pid as number
+
 

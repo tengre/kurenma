@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 43 2016-08-30 02:55:36+04:00 toor $
+# $Id: update-firehol 44 2016-08-31 01:27:21+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -38,6 +38,8 @@ udfGetValidIPsOnly() {
 #
 udfMain() {
 
+	udfExitIfAlreadyStarted
+
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
 	udfThrowOnCommandNotFound cp dig diff firehol flock host grep ipcalc kurenmas mv sipcalc sed sort systemctl uniq wg xargs
@@ -57,6 +59,8 @@ udfMain() {
 	if [[ -z "$_kurenma_flock" ]]; then
 
 		udfDebug 0 "try lock from $s"
+
+		(( ${#_bashlyk_afnClean[$BASHPID]} > 0 )) && rm -f ${_bashlyk_afnClean[$BASHPID]}
 		exec env _kurenma_flock="$$" flock -x -w 99 $fnLock $0 $s $$
 
 	fi

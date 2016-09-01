@@ -1,3 +1,77 @@
+Fri, 02 Sep 2016 00:37:23 +0400
+	New upstream release
+	Version 0.3
+
+ - support systemd for service starting, added file kurenma.service - systemd
+   unit for service, used 'simple' mode for daemonize
+ - update-firehol script used locking for client requests
+ - added script setup-knockd for knock sequence generating from file of server
+   certificate. This sequence placed in section 'kurenma' of knockd.conf
+ - added function udfGetTimeInSec that supports plural - "2hours" and etc. for
+   resolve human readable format of options and return number of seconds
+ - adopted server and client for use bashlyk 1.85 - 'udfOnError2' instead
+   udfOnError, 'udfDebug' with stderr support
+ - used pseudo 'try - catch' block 'try-every-line' - 'catch-every-line' from
+   bashlyk 1.85 for simplify control the flow of external commands:
+   * showed a dot for each successful execution of the command-line from a flow
+   * display the line number, code, output and the call stack for a non-zero
+     status of the command from catching flow
+ - updated WireGuard 'persistent-keepalive' handling - default value of
+   'persistent-keepalive' now is 0, i.e off, persistent-keepalive disabled on
+   default server and client configurations. Option 'keepalive' renamed to
+   'tsKeepalive' and limited to 65355 seconds
+ - udfGetValidIPsOnly return false for empty result
+ - added option tsPeerTimeout for close inactive peers
+ - send warnings to stderr if it's needed
+ - gen-ssl-kurenma - fixed variable init typos
+ - fixed printf using for safety
+
+ kurenmas:
+ - improved mime data sending to openssl
+ - fixed handling input for netcat, udfWaitRequest updated:
+   * loop of input reading not stopped on any events
+   * input buffer cleared on starting of SSL message, after handling of SSL
+     message or overflow of input data
+ - netcat used option -k ( not exit on connection close)
+ - udfCheckNetcat - try kill -15 and -9, if necessary
+ - after stopping the netcat checks for the "stop" command in PID file
+ - check first argument as control command for service :
+   * start - normal start to endless loop around netcat
+   * stop - send "stop" command via PID file, kill netcat and exit
+ - use global variable _kurenmas_ctl for daemonize with systemd
+ - if latest-handshake of peer equal 0 then peer do not removed
+ - used {try,catch}-every-line block for tunnel init
+ - udfMakeFifo - make pipe in /var/run/kurenma
+ - added function udfUsage - show usage
+
+ kurenmac:
+ - improved the process of connecting, сhecking the availability of the remote
+   port and key exchange process is repeated until a successful attempt
+ - added support for options bDaemonize, bDefaultRoute, tsPeerTimeout and
+   tsKeepalive from client.kurenma.ini:
+   * tsPeerTimeout - max time without handshake, used human readable format
+   * bDaemonize for set/unset idle mode for kurenmac
+   * bDefaultRoute for set default route via WireGuard tunnel
+   * tsKeepalive for persistent-keepalive options of WireGuard
+ - restarts connection if there are no a handshake with the server during the
+   time "tsPeerTimeout" in idle mode
+
+ update-firehol:
+ - added locking (flock) with special lock file, used timeout based locking for
+   for inclusion client IP to firehol "white" list. Locking activated by reexec
+   with exported global variable
+ - get current wireguard endpoints list for preserve active peers connections
+ - added stat file with records of last client knocking. The contents of this
+   file are used for additional protection against collisions of client requests
+ - used systemctl to start kurenmas service
+ - safety clean temp files before reexec
+
+ Makefile.am:
+ - used install-data-hook for service
+ - supress error from install-data-hook
+ - client/server ini renamed as example
+ - added kurenma.service for installation
+
 Wed, 03 Aug 2016 10:50:04 +0400
 	New upstream release
 	Version 0.2

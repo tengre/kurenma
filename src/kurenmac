@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 40 2016-08-27 00:52:02+04:00 toor $
+# $Id: kurenmac 45 2016-09-02 00:38:24+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -27,6 +27,8 @@ udfGetValidIPsOnly() {
 	done >/dev/null 2>&1
 
 	echo ${sOut% *} | tr ' ' '\n' | sort | uniq | xargs
+
+	[[ -n "${sOut% *}" ]] || eval $( udfOnError return iErrorEmptyResult )
 
 	return 0
 

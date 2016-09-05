@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 45 2016-09-02 00:38:24+04:00 toor $
+# $Id: kurenmac 46 2016-09-05 17:19:00+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -86,7 +86,7 @@ udfMain() {
 	udfThrowOnCommandNotFound  dig echo false grep ip ipcalc knock openssl ping printf route sed sipcalc tee true wg
 
 	pathIni=$( _ pathIni )
-	ini=${pathIni}/client.kurenma.ini
+	ini=${pathIni}/kurenma.ini
 	pathCrt=${pathIni}/ssl/public
 	pathKey=${pathIni}/ssl/private
 

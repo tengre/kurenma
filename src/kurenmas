@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-_kurenmas_sVersion=0.2
-eval "_kurenmas_aRev=($Id: kurenmas 45 2016-09-02 00:38:24+04:00 toor $)"
+_kurenmas_sVersion=0.3
+eval "_kurenmas_aRev=($Id: kurenmas 46 2016-09-05 17:19:00+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -416,7 +416,13 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-	local dev fn fnPid fnServerKey fnTmp ini ip ipClient ipServer ipsAllowed pathIni pathCrt pathDat pathKey s tsKeepalive tsPeerTimeout
+
+	local csvSectionMain csvSectionSSL ipsAllowed
+	csvSectionMain='role;host;port;tsKeepalive;tsPeer￼Timeout;bDaemonize;bDefaultRoute;ipServer;ipClient'
+	csvSectionSSL='cnClient;cnServer'
+	eval $( _defLocal $csvSectionMain $csvSectionSSL )
+
+	local dev fn fnCtl fnServerKey fnTmp ini ip pathIni pathCrt pathDat pathKey pathRun s
 
 	DEBUGLEVEL=4
 
@@ -428,55 +434,21 @@ udfMain() {
 
 	pathCrt=${pathIni}/ssl/public
 	pathKey=${pathIni}/ssl/private
-	ini=${pathIni}/server.kurenma.ini
+	ini=${pathIni}/kurenma.ini
+	fnCtl=${pathRun}/kurenma.pid
 
-	udfIni $ini ':dev;port;portAuth;ipClient;ipServer;tsKeepalive;tsPeerTimeout ssl:cnServer ipsAllowed:='
+	udfIni $ini ":${csvSectionMain} ssl:{csvSectionSSL} ipsAllowed:="
 
 	: ${dev:=wg0}
 	: ${ipClient:=dynamic}
 	: ${ipServer:=192.168.29.1}
 	: ${port:=12912}
 	: ${portAuth:=42912}
-	: ${tsPeerTimeout:=2day}
-
-	eval set -- $(_ sArg)
-
-	case "$1" in
-
-		start)
-			udfDebug 1 "service kurenmas starting.."
-
-			export _kurenmas_ctl=start
-			( kurenmas & ) &
-
-			return 0
-		;;
-
-		 stop)
-			udfDebug 1 "service kurenmas stopping.."
-			fnPid=${pathRun}/kurenmas.pid
-			echo stop >> $fnPid
-			[[ -n $portAuth ]] && udfCheckNetcat $portAuth kill
-			return 0
-		;;
-
-		    *)
-			if [[ "$_kurenmas_ctl" == "start" ]]; then
-				echo "starting.."
-				unset _kurenmas_ctl
-			else
-				udfDebug 1 && udfUsage
-				return 1
-			fi
-		;;
-
-	esac
-
+	: ${tsPeerTimeout:=12hours}
 
 	udfDebug 4 "$( _ sId ) (с) ${_kurenmas_aRev[3]}, rev${_kurenmas_aRev[2]}"
 
 	udfExitIfAlreadyStarted
-	fnPid=$( _ fnPid )
 
 	if udfIsNumber $tsKeepalive; then
 
@@ -518,7 +490,7 @@ udfMain() {
 
 	udfCheckNetcat $portAuth kill
 
-	echo "start" >> $fnPid
+	echo "start" >> $fnCtl
 	udfSelfCheck $portAuth &
 	udfAddPid2Clean $!
 
@@ -528,7 +500,7 @@ udfMain() {
 		udfMakeFifo fnTmp
 		cat $fnTmp | udfWaitRequest | nc -k -l -v $portAuth > $fnTmp
 		sleep 1
-		[[ ! -s $fnPid || $( tail -n 1 $fnPid ) == "stop" ]] && break
+		[[ ! -s $fnCtl || $( tail -n 1 $fnCtl ) == "stop" ]] && break
 		rm -f $fnTmp
 
 	done

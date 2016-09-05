@@ -1,0 +1,126 @@
+#!/bin/bash
+#
+_kurenma_sVersion=0.3
+eval "_kurenma_aRev=($Id: kurenma 46 2016-09-05 17:18:59+04:00 toor $)"
+#
+_bashlyk=kurenma . bashlyk
+#
+#
+#
+udfUsage() {
+
+    	local sVersion="$_kurenma_sVersion (${_kurenma_aRev[3]}rev${_kurenma_aRev[2]})"
+
+	printf -- "\t%s v%s, Kurenma Service for WireGuard tunnels, (c) 2016\n" "$(_ s0)" "${sVersion}"
+
+#****h* kurenma/kurenma
+#  DESCRIPTION
+#    kurenma - Kurenma Service for WireGuard tunnels
+#  AUTHOR
+#    Damir Sh. Yakupov <yds@bk.ru>
+#  ARGUMENTS
+	cat <<-EOF | tr -d '#'
+
+		Usage: $(_ s0) start|stop
+		where:
+
+#			start	- start service
+#			stop	- stop  service
+#
+#		without arguments show this usage and exit
+
+	EOF
+	eval $(udfOnError exit)
+
+}
+#
+udfCheckNetcat() {
+
+	udfIsNumber $1 || eval $( udfOnError throw iErrorNotValidArgument '$1' )
+	local i p
+
+	p="$( ps -C nc -o pid= -o args= | grep -w "$1" | xargs | cut -f 1 -d' ' )"
+
+	udfIsNumber "$p" || return 1
+
+	case "$2" in
+
+		wait)
+				udfIsNumber "$3" && i=$3 || i=8
+				sleep $i
+				;;
+
+		kill)
+				kill -15 $p
+				sleep 0.5
+				p="$( ps -C nc -o pid= -o args= | grep -w "$1" | xargs | cut -f 1 -d' ' )"
+				[[ -n $p ]] && kill -9 $p
+				;;
+
+	esac
+
+	return 0
+
+}
+#
+udfMain() {
+
+	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+
+	local cmd fnCtl ini pathIni pathRun s
+
+	DEBUGLEVEL=4
+
+	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill kurenmac kurenmas mkdir nc openssl ps sipcalc sort uniq wg
+
+	pathIni=$( _ pathIni )
+	pathRun=$( _ pathRun )
+
+	ini=${pathIni}/kurenma.ini
+	fnCtl=${pathRun}/kurenma.pid
+
+	udfIni $ini ':role'
+
+	case $role in
+
+	 client) cmd=kurenmac;;
+	 server) cmd=kurenmas;;
+	      *) eval $( udfOnError throw NotValidArgument "role ${role}, (see ${ini})" );;
+
+	esac
+
+	eval set -- $(_ sArg)
+
+	case "$1" in
+
+		start)
+			udfDebug 1 "service $cmd starting.."
+
+			( $cmd & ) &
+
+			return 0
+		;;
+
+		 stop)
+			udfDebug 1 "service $cmd stopping.."
+
+			echo stop >> $fnCtl
+			[[ -n $portAuth ]] && udfCheckNetcat $portAuth kill
+
+			return 0
+		;;
+
+		    *)
+			udfDebug 1 && udfUsage
+			return 1
+		;;
+
+	esac
+
+	return 0
+}
+#
+#
+#
+udfMain
+#

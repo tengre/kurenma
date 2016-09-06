@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 _kurenmas_sVersion=0.3
-eval "_kurenmas_aRev=($Id: kurenmas 49 2016-09-06 23:37:31+04:00 toor $)"
+eval "_kurenmas_aRev=($Id: kurenmas 50 2016-09-06 23:51:44+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -170,7 +170,7 @@ udfCheckNetcat() {
 udfSelfCheck() {
 
 	udfThrowOnEmptyVariable fnCtl portAuth
-	udfIsNumber $1 || eval $( udfOnError throw iErrorNotValidArgument '$1' )
+	udfIsNumber $portAuth || eval $( udfOnError throw NotValidArgument "$portAuth" )
 
 	local fn iA iB iC=0 s
 

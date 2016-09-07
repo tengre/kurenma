@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 53 2016-09-07 16:19:00+04:00 toor $
+# $Id: kurenmac 54 2016-09-07 17:00:04+04:00 toor $
 #
 _kurenmac_sVersion=0.3
 #
@@ -274,8 +274,7 @@ udfMain() {
 
 	udfThrowOnEmptyVariable peer port ipClient ipServer
 
-	udfDebug 0 && \
-		echo -n "Setup tunnel for peer ${peer:0:10}<skipped> with IP $ipClient to ${host}:${port}: "
+	udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>\nwith IP %s to %s:%d: " "${peer:0:10}" "$ipClient" "${host}" "${port}"
 	#
 	try-every-line
 

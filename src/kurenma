@@ -1,7 +1,8 @@
 #!/bin/bash
 #
+# $Id: kurenma 52 2016-09-07 15:51:09+04:00 toor $
+#
 _kurenma_sVersion=0.3
-eval "_kurenma_aRev=($Id: kurenma 51 2016-09-07 12:20:10+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -9,9 +10,9 @@ _bashlyk=kurenma . bashlyk
 #
 udfUsage() {
 
-    	local sVersion="$_kurenma_sVersion (${_kurenma_aRev[3]}rev${_kurenma_aRev[2]})"
+    	local -a aId=( $(grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 )
 
-	printf -- "\t%s v%s, Kurenma Service for WireGuard tunnels, (c) 2016\n" "$(_ s0)" "${sVersion}"
+	printf -- "\t%s v%s rev%s, Kurenma Service Management Tool, (c) %s\n" "$(_ s0)" "${sVersion}" "${aId[2]}" "${aId[3]}"
 
 #****h* kurenma/kurenma
 #  DESCRIPTION
@@ -33,7 +34,7 @@ udfUsage() {
 	eval $(udfOnError exit)
 
 }
-#
+#******
 udfStopProcess() {
 
 	local pid s

@@ -1,39 +1,20 @@
 #!/bin/bash
 #
+# $Id: kurenmas 52 2016-09-07 15:50:29+04:00 toor $)"
+#
 _kurenmas_sVersion=0.3
-eval "_kurenmas_aRev=($Id: kurenmas 51 2016-09-07 12:27:36+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
-udfUsage() {
-
-    	local sVersion="$_kurenmas_sVersion (${_kurenmas_aRev[3]}rev${_kurenmas_aRev[2]})"
-
-	printf -- "\t%s v%s, Kurenma Service for WireGuard tunnels, (c) 2016\n" "$(_ s0)" "${sVersion}"
-
-#****h* kurenma/kurenmas
+#****m* kurenma/kurenmas
 #  DESCRIPTION
 #    kurenmas - Kurenma Service for WireGuard tunnels
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
-#  ARGUMENTS
-	cat <<-EOF | tr -d '#'
-
-		Usage: $(_ s0) start|stop
-		where:
-
-#			start	- start service
-#			stop	- stop  service
-#
-#		without arguments show this usage and exit
-
-	EOF
-	eval $(udfOnError exit)
-
-}
 #******
+#
 udfWatchdog() {
 
 	udfOn EmptyOrMissingArgument throw "$1"
@@ -468,17 +449,17 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-
+	local -a aId
+	local cmdNetcat fn fnCtl fnServerKey fnTmp ini ip pathIni pathCrt pathDat pathKey pathRun s
 	local csvSectionMain csvSectionSSL ipsAllowed
-	csvSectionMain='role;host;port;tsKeepalive;tsPeerTimeout;bDaemonize;bDefaultRoute;ipServer;ipClient'
+
+	csvSectionMain='bDaemonize;bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
 	csvSectionSSL='cnClient;cnServer'
 	eval $( _defLocal $csvSectionMain $csvSectionSSL )
 
-	local cmdNetcat dev fn fnCtl fnServerKey fnTmp ini ip pathIni pathCrt pathDat pathKey pathRun s
-
 	DEBUGLEVEL=4
 
-	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill mkdir nc openssl ps sipcalc sort uniq wg
+	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill mkdir nc openssl ps sipcalc sort uniq wg xargs
 
 	pathIni=$( _ pathIni )
 	pathDat=$( _ pathDat )
@@ -489,7 +470,7 @@ udfMain() {
 	ini=${pathIni}/kurenma.ini
 	fnCtl=${pathRun}/kurenma.pid
 
-	udfIni $ini ":${csvSectionMain} ssl:${csvSectionSSL} ipsAllowed:="
+	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}" "ipsAllowed:="
 
 	: ${dev:=wg0}
 	: ${ipClient:=dynamic}
@@ -498,9 +479,9 @@ udfMain() {
 	: ${portAuth:=42912}
 	: ${tsPeerTimeout:=12hours}
 
-	udfDebug 4 "$( _ sId ) (с) ${_kurenmas_aRev[3]}, rev${_kurenmas_aRev[2]}"
-
 	cmdNetcat="nc -k -l -v $portAuth"
+
+	aId=( $(grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) && udfDebug 4 "$( _ sId ) (с) ${aId[3]}, rev${aId[2]}"
 
 	udfExitIfAlreadyStarted
 
@@ -516,8 +497,8 @@ udfMain() {
 
 	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "2day"
 
-	udfDebug 2 && udfShowVariable dev ipServer port portAuth cnServer ipsAllowed tsKeepalive tsPeerTimeout
-	udfThrowOnEmptyVariable cnServer dev ipServer pathDat pathIni port portAuth tsPeerTimeout
+	udfDebug 2 && udfShowVariable dev port portAuth cnServer ipServer ipsAllowed tsKeepalive tsPeerTimeout
+	udfThrowOnEmptyVariable cnServer dev ipServer pathCrt pathDat pathIni pathKey pathRun port portAuth tsPeerTimeout
 
 	mkdir -p $pathDat || eval $( udfOnError retecho iErrorNotExistNotCreated $pathDat )
 

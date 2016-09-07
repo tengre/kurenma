@@ -1,6 +1,8 @@
 #!/bin/bash
 #
-# $Id: kurenmac 49 2016-09-06 23:37:31+04:00 toor $
+# $Id: kurenmac 52 2016-09-07 15:50:29+04:00 toor $
+#
+_kurenmac_sVersion=0.3
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -105,6 +107,21 @@ udfGetTimeInSec() {
 
 }
 #
+_defLocal() {
+
+	local s S
+
+	for s in ${*//[;,]/ }; do
+
+		udfIsValidVariable $s || eval $( udfOnError throw iErrorNonValidVariable "$s" )
+		S+="$s "
+
+	done
+
+	echo "local ${S% *}"
+
+}
+#
 udfMain() {
 
 	## TODO set mode (daemon, one time client and etc.)
@@ -112,11 +129,17 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
-	local a bDaemonize bDefaultRoute cnClient cnServer dev fn fnAns fnClientCrt fnClientKey fnCtl fnKey fnPub fnServerCrt host i ini ipClient ipServer pathCrt pathIni pathKey pathRun peer port s tsKeepalive
+	local -a a aId
+	local fn fnAns fnClientCrt fnClientKey fnCtl fnKey fnPub fnServerCrt i ini pathCrt pathIni pathKey pathRun peer s
+	local csvSectionMain csvSectionSSL ipsAllowed
+
+	csvSectionMain='bDaemonize;bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
+	csvSectionSSL='cnClient;cnServer'
+	eval $( _defLocal $csvSectionMain $csvSectionSSL )
 
 	DEBUGLEVEL=4
 
-	udfThrowOnCommandNotFound  dig echo false grep ip ipcalc knock openssl ping printf route sed sipcalc tee true wg
+	udfThrowOnCommandNotFound dig echo false grep ip ipcalc knock openssl ping printf route sed sipcalc tee true wg xargs
 
 	pathRun=$( _ pathRun )
 	fnCtl=${pathRun}/kurenma.pid
@@ -127,11 +150,12 @@ udfMain() {
 	pathCrt=${pathIni}/ssl/public
 	pathKey=${pathIni}/ssl/private
 
-	udfIni $ini ':bDaemonize;bDefaultRoute;dev;host;port;tsKeepalive;tsPeerTimeout ssl:cnServer;cnClient'
+	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}"
 
+	: ${bDaemonize:=false}
 	: ${dev:=wg0}
 	: ${i:=256}
-	: ${bDaemonize:=false}
+	: ${portAuth:=42912}
 
 	if udfIsNumber $tsKeepalive; then
 
@@ -143,13 +167,13 @@ udfMain() {
 
 	fi
 
-	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "4hours"
+	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "32min"
 
 	[[ $bDaemonize    =~ ^(false|true)$ ]] || bDaemonize=false
 	[[ $bDefaultRoute =~ ^(false|true)$ ]] || bDefaultRoute=false
 
-	udfDebug 2 "configuration:" && udfShowVariable bDaemonize dev host port cnServer cnClient tsKeepalive tsPeerTimeout
-	udfThrowOnEmptyVariable cnClient cnServer dev host pathIni port tsPeerTimeout
+	udfDebug 2 "configuration:" && udfShowVariable bDaemonize cnServer cnClient dev host portAuth tsKeepalive tsPeerTimeout
+	udfThrowOnEmptyVariable cnClient cnServer dev host pathCrt pathKey pathIni pathRun portAuth tsPeerTimeout
 
 	fnServerCrt=${pathCrt}/${cnServer}.crt
 	fnClientCrt=${pathCrt}/${cnClient}.crt
@@ -177,6 +201,10 @@ udfMain() {
 	udfMakeTemp fnPub
 	udfMakeTemp fnAns
 
+	aId=( $(grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) && udfDebug 4 "$( _ sId ) (с) ${aId[3]}, rev${aId[2]}"
+
+	udfExitIfAlreadyStarted
+
 	while true; do
 
 		s=$( grep keyid $fnServerCrt | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
@@ -201,13 +229,13 @@ udfMain() {
 
 			udfWatchdog $fnCtl 1 || return 0
 
-			nc -w 3 -z ${host} ${port} 2>/dev/null && break
+			nc -w 3 -z ${host} ${portAuth} 2>/dev/null && break
 			udfDebug 2 && echo -n "."
 			i=$((i-1))
 
 			if (( $i <= 0 )); then
 
-				eval $( udfOnError warn iErrorNotPermitted "${host}:${port} are unreacheable" )
+				eval $( udfOnError warn iErrorNotPermitted "${host}:${portAuth} are unreacheable" )
 				i=256
 			fi
 
@@ -215,7 +243,7 @@ udfMain() {
 		udfDebug 2 "ok."
 		udfWatchdog $fnCtl 4 || return 0
 
-		s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $port | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
+		s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $portAuth | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
 
 		udfDebug 4 && \
 		printf -- "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" \
@@ -225,7 +253,7 @@ udfMain() {
 
 		[[ -z "$s" ]] && s="$(< $fnAns)"
 
-		eval $( udfOnError warn iErrorNotValidArgument "malformed answer from ${host}:${port} $s" )
+		eval $( udfOnError warn iErrorNotValidArgument "malformed answer from ${host}:${portAuth} $s" )
 
 		udfWatchdog $fnCtl 8 || return 0
 

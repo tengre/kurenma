@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenma 52 2016-09-07 15:51:09+04:00 toor $
+# $Id: kurenma 53 2016-09-07 16:19:00+04:00 toor $
 #
 _kurenma_sVersion=0.3
 #
@@ -10,7 +10,7 @@ _bashlyk=kurenma . bashlyk
 #
 udfUsage() {
 
-    	local -a aId=( $(grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 )
+    	local -a aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) )
 
 	printf -- "\t%s v%s rev%s, Kurenma Service Management Tool, (c) %s\n" "$(_ s0)" "${sVersion}" "${aId[2]}" "${aId[3]}"
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 52 2016-09-07 15:50:29+04:00 toor $
+# $Id: kurenmac 53 2016-09-07 16:19:00+04:00 toor $
 #
 _kurenmac_sVersion=0.3
 #
@@ -201,7 +201,7 @@ udfMain() {
 	udfMakeTemp fnPub
 	udfMakeTemp fnAns
 
-	aId=( $(grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) && udfDebug 4 "$( _ sId ) (с) ${aId[3]}, rev${aId[2]}"
+	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 4 "$( _ sId ) (с) ${aId[3]}, rev${aId[2]}"
 
 	udfExitIfAlreadyStarted
 

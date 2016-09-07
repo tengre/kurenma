@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 _kurenma_sVersion=0.3
-eval "_kurenma_aRev=($Id: kurenma 48 2016-09-06 17:10:27+04:00 toor $)"
+eval "_kurenma_aRev=($Id: kurenma 51 2016-09-07 12:20:10+04:00 toor $)"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -34,30 +34,31 @@ udfUsage() {
 
 }
 #
-udfCheckNetcat() {
+udfStopProcess() {
 
-	udfIsNumber $1 || eval $( udfOnError throw iErrorNotValidArgument '$1' )
-	local i p
+	local pid s
 
-	p="$( ps -C nc -o pid= -o args= | grep -w "$1" | xargs | cut -f 1 -d' ' )"
+	if udfIsNumber $1; then
 
-	udfIsNumber "$p" || return 1
+		pid=$1
+		shift
 
-	case "$2" in
+	else
 
-		wait)
-				udfIsNumber "$3" && i=$3 || i=8
-				sleep $i
-				;;
+		pid="$( ps -C "$*" -o pid= | xargs )"
 
-		kill)
-				kill -15 $p
-				sleep 0.5
-				p="$( ps -C nc -o pid= -o args= | grep -w "$1" | xargs | cut -f 1 -d' ' )"
-				[[ -n $p ]] && kill -9 $p
-				;;
+	fi
 
-	esac
+	for s in 15 9; do
+
+		udfIsNumber $pid || continue
+
+		sleep 1
+
+		udfCheckStarted $pid $* && kill -${s} $pid
+
+
+	done
 
 	return 0
 
@@ -67,11 +68,11 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-	local cmd fnCtl ini pathIni pathRun pid portAuth s
+	local cmd cmdNetcat fnCtl ini pathIni pathRun pid portAuth s
 
 	DEBUGLEVEL=4
 
-	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill kurenmac kurenmas mkdir nc nohup openssl ps sipcalc sort uniq wg
+	udfThrowOnCommandNotFound cut echo grep kill killall kurenmac kurenmas nohup printf ps sleep uniq xargs
 
 	pathIni=$( _ pathIni )
 	pathRun=$( _ pathRun )
@@ -82,7 +83,7 @@ udfMain() {
 	udfIni $ini ':role;portAuth'
 
 	: ${portAuth:=42912}
-
+	cmdNetcat="nc -k -l -v $portAuth"
 
 	case $role in
 
@@ -109,19 +110,13 @@ udfMain() {
 			udfDebug 1 "service $cmd stopping.."
 
 			echo stop >> $fnCtl
-			[[ -n $portAuth ]] && udfCheckNetcat $portAuth kill
+			udfStopProcess $cmdNetcat
+
+			sleep 5
+
 			[[ -s ${pathRun}/${cmd}.pid ]] && pid=$( head -n 1 ${pathRun}/${cmd}.pid )
-			sleep 8
 
-			for s in 15 9; do
-
-				udfIsNumber $pid || continue
-				sleep 1
-				udfCheckStarted $pid $cmd && kill -${s} $pid
-
-			done
-
-			killall -9 $cmd >/dev/null 2>&1
+			udfStopProcess $pid $cmd
 
 			return 0
 		;;

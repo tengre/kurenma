@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 56 2016-09-08 16:59:35+04:00 toor $
+# $Id: kurenmac 57 2016-09-08 17:28:35+04:00 toor $
 #
 _kurenmac_sVersion=0.3
 #
@@ -140,7 +140,7 @@ udfKnocking() {
 
 	udfDebug 5 "knock  ports sequence: $s"
 
-	udfDebug 2 "check server availibity:"
+	udfDebug 2 "check server $host availibity:"
 
 	while true; do
 
@@ -192,7 +192,7 @@ udfGetTunnelSettings() {
 		s="$( echo $sKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $portAuth | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
 
 		udfDebug 4 && \
-		printf -- "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" \
+		printf -- "\nclient wirequard keys:\nprivate - %s\npublic  - %s\n" \
 			"${sKey:0:10}<skipped>" "$(head -c 10 $fnPub)<skipped>"
 
 		[[ $s =~ ^OK: ]] && break
@@ -227,12 +227,12 @@ udfSetupTunnel() {
 	sKey=$5
 
 	udfDebug 3 && \
-		printf -- "server connection properties:\n\tleased ip: %s\n\t   server: %s\n\t     peer: %s\n\t     port: %s\n\n" \
-			"$ipClient" "$ipServer" "${peer:0:10}<skipped>" "$port"
+		printf -- "connection properties from %s:%s:\n\tserver peer keys: %s\n\tserver tunnel ip: %s\n\tleased tunnel ip: %s\n" \
+			"$host" "$port" "${peer:0:10}<skipped>" "$ipServer" "$ipClient"
 
 	udfThrowOnEmptyVariable peer port ipClient ipServer
 
-	udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>\nwith IP %s to %s:%d: " "${peer:0:10}" "$ipClient" "${host}" "${port}"
+	udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>: " "${peer:0:10}"
 	#
 	try-every-line
 
@@ -307,7 +307,7 @@ udfMain() {
 	## TODO set mode (daemon, one time client and etc.)
 	## TODO checking tunnel availibity
 
-	DEBUGLEVEL=4
+	DEBUGLEVEL=3
 
 	udfThrowOnCommandNotFound dig echo false grep ip ipcalc knock openssl ping printf route sed sipcalc tee true wg xargs
 
@@ -316,6 +316,10 @@ udfMain() {
 	local -a aId
 	local bStart fnClientCrt fnClientKey fnCtl fnServerCrt ini pathCrt pathIni pathKey pathRun s sKey
 	local csvSectionMain csvSectionSSL ipsAllowed
+
+	#
+	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 1 "$( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
+	#
 
 	csvSectionMain='bDaemonize;bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
 	csvSectionSSL='cnClient;cnServer'
@@ -343,7 +347,7 @@ udfMain() {
 	[[ $bDaemonize    =~ ^(false|true)$ ]] || bDaemonize=false
 	[[ $bDefaultRoute =~ ^(false|true)$ ]] || bDefaultRoute=false
 
-	udfDebug 2 "configuration:" && udfShowVariable bDaemonize cnServer cnClient dev host portAuth tsKeepalive tsPeerTimeout
+	udfDebug 4 "configuration:" && udfShowVariable bDaemonize cnServer cnClient dev host portAuth tsKeepalive tsPeerTimeout
 	udfThrowOnEmptyVariable cnClient cnServer dev host pathCrt pathKey pathIni pathRun portAuth tsPeerTimeout
 
 	fnServerCrt=${pathCrt}/${cnServer}.crt
@@ -367,8 +371,6 @@ udfMain() {
 		eval $( udfOnError throw iErrorNoSuchFileOrDir "$fnClientCrt and/or $fnClientKey and/or $fnServerCrt" )
 
 	fi
-
-	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 4 "$( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
 
 	udfExitIfAlreadyStarted
 
@@ -405,7 +407,7 @@ udfMain() {
 				if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
 
 					wg set $dev peer ${s%%:*} remove
-					udfDebug 4 "peer ${s:0:10}<skipped> removed .. $?"
+					udfDebug 3 "peer ${s:0:10}<skipped> removed .. $?"
 					bStart=true
 
 				else

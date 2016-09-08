@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 57 2016-09-08 17:28:35+04:00 toor $
+# $Id: kurenmac 58 2016-09-08 22:43:04+04:00 toor $
 #
 _kurenmac_sVersion=0.3
 #
@@ -26,7 +26,7 @@ udfWatchdog() {
 		if [[ -s $1 && $( tail -n 1 $1 ) == "stop" ]]; then
 
 			i=1
-			udfUptime "."
+			udfUptime "service uptime"
 			break
 
 		fi
@@ -191,8 +191,8 @@ udfGetTunnelSettings() {
 
 		s="$( echo $sKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $portAuth | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
 
-		udfDebug 4 && \
-		printf -- "\nclient wirequard keys:\nprivate - %s\npublic  - %s\n" \
+		udfDebug 3 && \
+		printf -- "\nclient WireGuard keys:\nprivate - %s\npublic  - %s\n" \
 			"${sKey:0:10}<skipped>" "$(head -c 10 $fnPub)<skipped>"
 
 		[[ $s =~ ^OK: ]] && break
@@ -226,9 +226,7 @@ udfSetupTunnel() {
 	ipServer=$( udfGetValidIPsOnly $4 )
 	sKey=$5
 
-	udfDebug 3 && \
-		printf -- "connection properties from %s:%s:\n\tserver peer keys: %s\n\tserver tunnel ip: %s\n\tleased tunnel ip: %s\n" \
-			"$host" "$port" "${peer:0:10}<skipped>" "$ipServer" "$ipClient"
+	udfDebug 3 && printf -- "$fmtCon" "$host" "$port" "${peer:0:10}<skipped>" "$ipClient" "$ipServer"
 
 	udfThrowOnEmptyVariable peer port ipClient ipServer
 
@@ -314,13 +312,14 @@ udfMain() {
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	local -a aId
-	local bStart fnClientCrt fnClientKey fnCtl fnServerCrt ini pathCrt pathIni pathKey pathRun s sKey
+	local bStart fnClientCrt fmtCon fmtSSL fnClientKey fnCtl fnServerCrt ini pathCrt pathIni pathKey pathRun s sKey
 	local csvSectionMain csvSectionSSL ipsAllowed
 
 	#
 	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 1 "$( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
 	#
-
+	fmtSSL="SSL auth info:\nClient Common Name - %s\nServer Common Name - %s\n"
+	fmtCon="Connection properties from %s:\nremote port: %d\nserver  key: %s\ntunnel  IPs: leased/remote - %s/%s\n"
 	csvSectionMain='bDaemonize;bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
 	csvSectionSSL='cnClient;cnServer'
 	eval $( _defLocal $csvSectionMain $csvSectionSSL )
@@ -364,7 +363,7 @@ udfMain() {
 
 	if [[ -f $fnClientCrt && -f $fnClientKey  && -f $fnServerCrt ]]; then
 
-		udfDebug 5 && printf -- "client SSL auth info:\n\tserver cert file\t- %s\n\tclient key file\t- %s\n\tclient Common Name \t- %s\n" "$fnServerCrt" "$fnClientKey" "$cnClient"
+		udfDebug 3 && printf -- "$fmtSSL" "$cnClient" "$cnServer"
 
 	else
 
@@ -396,7 +395,7 @@ udfMain() {
 
 		fi
 
-		echo "check connection every $tsPeerTimeout sec.."
+		udfDebug 2 "check connection every $tsPeerTimeout sec.."
 		## TODO force check with async message
 		udfWatchdog $fnCtl $tsPeerTimeout || break
 
@@ -426,7 +425,6 @@ udfMain() {
 
 	done
 
-	udfFinally "."
 }
 #
 #

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenma 54 2016-09-07 17:00:04+04:00 toor $
+# $Id: kurenma 55 2016-09-08 16:30:33+04:00 toor $
 #
 _kurenma_sVersion=0.3
 #
@@ -73,10 +73,14 @@ udfMain() {
 
 	DEBUGLEVEL=4
 
-	udfThrowOnCommandNotFound cut echo grep kill killall kurenmac kurenmas nohup printf ps sleep uniq xargs
+	udfThrowOnCommandNotFound cut echo grep kill kurenmac kurenmas nohup printf ps sleep uniq xargs
 
 	pathIni=$( _ pathIni )
 	pathRun=$( _ pathRun )
+
+	udfThrowOnEmptyVariable pathIni pathRun
+
+	mkdir -p $pathRun || eval $( udfOnError throw NotExistNotCreated "$pathRun" )
 
 	ini=${pathIni}/kurenma.ini
 	fnCtl=${pathRun}/kurenma.pid
@@ -113,7 +117,7 @@ udfMain() {
 			echo stop >> $fnCtl
 			udfStopProcess $cmdNetcat
 
-			sleep 5
+			sleep 8
 
 			[[ -s ${pathRun}/${cmd}.pid ]] && pid=$( head -n 1 ${pathRun}/${cmd}.pid )
 

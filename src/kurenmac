@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 54 2016-09-07 17:00:04+04:00 toor $
+# $Id: kurenmac 55 2016-09-08 16:30:33+04:00 toor $
 #
 _kurenmac_sVersion=0.3
 #
@@ -122,29 +122,207 @@ _defLocal() {
 
 }
 #
+udfKnocking() {
+
+	udfThrowOnEmptyVariable fnCtl fnServerCrt host portAuth
+
+	local i s
+
+	i=256
+
+	s=$( grep keyid $fnServerCrt | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
+
+	[[ -n "$s" ]] || eval $( udfOnError2 throw "EmptyResult" "$fnServerCrt - not valid format" )
+
+	udfDebug 5 "server crt keyid head: $s"
+
+	s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError2 throw "NotValidArgument" "$fnServerCrt - hexadecimal data expected" )
+
+	udfDebug 5 "knock  ports sequence: $s"
+
+	udfDebug 2 "check server availibity:"
+
+	while true; do
+
+		if ! (( i % 8 )); then
+
+			knock $host $s
+			udfDebug 2 && echo -n "!"
+
+		fi
+
+		udfWatchdog $fnCtl 1 || exit 0
+
+		nc -w 3 -z ${host} ${portAuth} 2>/dev/null && break
+		udfDebug 2 && echo -n "."
+
+		i=$((i-1))
+
+		! (( i % 32 )) && echo ""
+
+		if (( $i <= 0 )); then
+
+			echo "fail after 256 attempts"
+			eval $( udfOnError2 warn NotPermitted "${host}:${portAuth} are unreacheable" )
+			i=256
+
+		fi
+
+	done >&2
+
+	return 0
+
+}
+#
+udfGetTunnelSettings() {
+
+	udfThrowOnEmptyVariable cnClient fnCtl fnClientKey host portAuth
+
+	local fnPub fnAns sKey s
+
+	udfMakeTemp fnPub
+	udfMakeTemp fnAns
+
+	while true; do
+
+		udfKnocking && udfDebug 2 "ok."
+		udfWatchdog $fnCtl 4 || return 2
+		sKey=$( wg genkey )
+
+		s="$( echo $sKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $portAuth | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
+
+		udfDebug 4 && \
+		printf -- "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" \
+			"${sKey:0:10}<skipped>" "$(head -c 10 $fnPub)<skipped>"
+
+		[[ $s =~ ^OK: ]] && break
+
+		[[ -z "$s" ]] && s="$(< $fnAns)"
+
+		eval $( udfOnError2 warn iErrorNotValidArgument "malformed answer from ${host}:${portAuth} $s" )
+
+		udfWatchdog $fnCtl 8 || return 2
+
+	done >&2
+
+	rm -f $fnAns $fnPub
+
+	echo "${s//:/ } $sKey"
+
+	return 0
+}
+#
+udfSetupTunnel() {
+
+	udfThrowOnEmptyVariable dev host
+
+	local ipClient ipServer peer port sKey
+
+	shift
+
+	peer=$( echo $1 | grep -P "^[a-zA-Z0-9+/]+={0,2}$" )
+	udfIsNumber $2 && port=$2 || port=''
+	ipClient=$( udfGetValidIPsOnly $3 )
+	ipServer=$( udfGetValidIPsOnly $4 )
+	sKey=$5
+
+	udfDebug 3 && \
+		printf -- "server connection properties:\n\tleased ip: %s\n\t   server: %s\n\t     peer: %s\n\t     port: %s\n\n" \
+			"$ipClient" "$ipServer" "${peer:0:10}<skipped>" "$port"
+
+	udfThrowOnEmptyVariable peer port ipClient ipServer
+
+	udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>\nwith IP %s to %s:%d: " "${peer:0:10}" "$ipClient" "${host}" "${port}"
+	#
+	try-every-line
+
+		ip link del dev $dev || true
+		ip link add dev $dev type wireguard
+
+		wg set $dev private-key <( echo $sKey ) \
+			peer $peer \
+			allowed-ips 0.0.0.0/0 \
+			persistent-keepalive $tsKeepalive \
+			endpoint "${host}:${port}"
+
+		ip address add "${ipClient}"/24 dev $dev
+		ip link set up dev $dev
+
+	catch-every-line
+
+	return 0
+
+}
+#
+udfSetDefaultRoute() {
+
+	udfThrowOnEmptyVariable dev _peIPv4
+
+	local s
+
+	s="$( wg show $dev endpoints | sed -re 's/.*\t(.*):.*/\1/' )"
+	udfDebug 4 "server endpoint: $s"
+
+	s="$( ip route get $s | grep -Po "$_peIPv4 via $_peIPv4" )"
+	udfDebug 4 "route rule for server: $s"
+
+	if [[ -n "$s" ]]; then
+
+		try-every-line
+
+			ip route add $s || true
+			ip route add 0/1 dev $dev
+			ip route add 128/1 dev $dev
+
+		catch-every-line
+
+		udfDebug 2 "tunnel $dev used as default route ($s):" && route -n
+
+	else
+
+		eval $( udfOnError throw iErrorEmptyOrMissingArgument "default route fail" )
+
+	fi
+
+	return 0
+
+}
+#
+udfShowPeerInfo() {
+
+	udfThrowOnEmptyVariable dev
+
+	printf -- "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
+
+	wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
+
+	ip addr show $dev | grep inet
+
+	printf -- "\n----\n"
+
+}
+#
 udfMain() {
 
 	## TODO set mode (daemon, one time client and etc.)
 	## TODO checking tunnel availibity
 
+	DEBUGLEVEL=4
+
+	udfThrowOnCommandNotFound dig echo false grep ip ipcalc knock openssl ping printf route sed sipcalc tee true wg xargs
+
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
-	local -a a aId
-	local fn fnAns fnClientCrt fnClientKey fnCtl fnKey fnPub fnServerCrt i ini pathCrt pathIni pathKey pathRun peer s
+	local -a aId
+	local bStart fnClientCrt fnClientKey fnCtl fnServerCrt ini pathCrt pathIni pathKey pathRun s sKey
 	local csvSectionMain csvSectionSSL ipsAllowed
 
 	csvSectionMain='bDaemonize;bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
 	csvSectionSSL='cnClient;cnServer'
 	eval $( _defLocal $csvSectionMain $csvSectionSSL )
 
-	DEBUGLEVEL=4
-
-	udfThrowOnCommandNotFound dig echo false grep ip ipcalc knock openssl ping printf route sed sipcalc tee true wg xargs
-
 	pathRun=$( _ pathRun )
 	fnCtl=${pathRun}/kurenma.pid
-	echo start > $fnCtl
-
 	pathIni=$( _ pathIni )
 	ini=${pathIni}/kurenma.ini
 	pathCrt=${pathIni}/ssl/public
@@ -157,15 +335,8 @@ udfMain() {
 	: ${i:=256}
 	: ${portAuth:=42912}
 
-	if udfIsNumber $tsKeepalive; then
-
-		(( $tsKeepalive <= 65355 )) || tsKeepalive=65355
-
-	else
-
-		tsKeepalive=0
-
-	fi
+	udfIsNumber $tsKeepalive || tsKeepalive=0
+	(( $tsKeepalive > 65355 )) && tsKeepalive=65355
 
 	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "32min"
 
@@ -189,7 +360,7 @@ udfMain() {
 
 	if [[ -f $fnClientCrt && -f $fnClientKey  && -f $fnServerCrt ]]; then
 
-		udfDebug 3 && printf -- "client auth info:\n\tremote public key\t- %s\n\tlocal private key\t- %s\n\tlocal Common Name \t- %s\n" "$fnServerCrt" "$fnClientKey" "$cnClient"
+		udfDebug 5 && printf -- "client SSL auth info:\n\tserver cert file\t- %s\n\tclient key file\t- %s\n\tclient Common Name \t- %s\n" "$fnServerCrt" "$fnClientKey" "$cnClient"
 
 	else
 
@@ -197,154 +368,34 @@ udfMain() {
 
 	fi
 
-	udfMakeTemp fnKey
-	udfMakeTemp fnPub
-	udfMakeTemp fnAns
-
 	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 4 "$( _ sId ) (с) ${aId[3]}, rev${aId[2]}"
 
 	udfExitIfAlreadyStarted
 
+	echo start > $fnCtl
+
+	bStart=true
+
 	while true; do
 
-		s=$( grep keyid $fnServerCrt | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
+		if $bStart; then
 
-		[[ -n "$s" ]] || eval $( udfOnError throw "iErrorEmptyOrMissingArgument" "$fnServerCrt - not valid format" )
-		udfDebug 5 "server crt keyid head: $s"
+			## TODO try first use saved wg config
+			udfSetupTunnel $( udfGetTunnelSettings )
+			$bDefaultRoute && udfSetDefaultRoute
+			udfDebug 1 && printf -- "\nclient configuration done.\n"
+			udfDebug 5 && udfShowPeerInfo
 
-		s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError throw "iErrorNotValidArgument" "$fnServerCrt - not valid format" )
+			wg showconf $dev > ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
+			chmod 0600 ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
 
-		udfDebug 5 "knock  ports sequence: $s"
-
-		udfDebug 2 "check server availibity:"
-
-		while true; do
-
-			if ! (( i % 8 )); then
-
-				knock $host $s
-				udfDebug 2 && echo -n "!"
-
-			fi
-
-			udfWatchdog $fnCtl 1 || return 0
-
-			nc -w 3 -z ${host} ${portAuth} 2>/dev/null && break
-			udfDebug 2 && echo -n "."
-			i=$((i-1))
-
-			if (( $i <= 0 )); then
-
-				eval $( udfOnError warn iErrorNotPermitted "${host}:${portAuth} are unreacheable" )
-				i=256
-			fi
-
-		done
-		udfDebug 2 "ok."
-		udfWatchdog $fnCtl 4 || return 0
-
-		s="$( wg genkey | tee $fnKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $portAuth | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
-
-		udfDebug 4 && \
-		printf -- "\nclient wirequard keys:\n\tprivate\t- %s\n\tpublic\t- %s\n\n" \
-			"$(head -c 10 $fnKey)<skipped>" "$(head -c 10 $fnPub)<skipped>"
-
-		[[ $s =~ ^OK: ]] && break
-
-		[[ -z "$s" ]] && s="$(< $fnAns)"
-
-		eval $( udfOnError warn iErrorNotValidArgument "malformed answer from ${host}:${portAuth} $s" )
-
-		udfWatchdog $fnCtl 8 || return 0
-
-	done
-
-	rm -f $fnPub
-
-	a=( ${s//:/ } )
-
-	peer=$( echo ${a[1]} | grep -P "^[a-zA-Z0-9+/]+={0,2}$" )
-	udfIsNumber ${a[2]} && port=${a[2]} || port=''
-	ipClient=$( udfGetValidIPsOnly ${a[3]} )
-	ipServer=$( udfGetValidIPsOnly ${a[4]} )
-
-	udfDebug 3 && \
-		printf -- "server connection properties:\n\tleased ip: %s\n\t   server: %s\n\t     peer: %s\n\t     port: %s\n\n" \
-			"$ipClient" "$ipServer" "${peer:0:10}<skipped>" "$port"
-
-	udfThrowOnEmptyVariable peer port ipClient ipServer
-
-	udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>\nwith IP %s to %s:%d: " "${peer:0:10}" "$ipClient" "${host}" "${port}"
-	#
-	try-every-line
-
-		ip link del dev $dev || true
-		ip link add dev $dev type wireguard
-		wg set $dev private-key $fnKey \
-			peer $peer \
-			allowed-ips 0.0.0.0/0 \
-			persistent-keepalive $tsKeepalive \
-			endpoint "${host}:${port}"
-
-		rm -f $fnKey
-		ip address add "${ipClient}"/24 dev $dev
-		ip link set up dev $dev
-
-	catch-every-line
-
-	if $bDefaultRoute; then
-
-		s="$( wg show $dev endpoints | sed -re 's/.*\t(.*):.*/\1/' )"
-		udfDebug 4 "server endpoint: $s"
-
-		s="$( ip route get $s | grep -Po "$_peIPv4 via $_peIPv4" )"
-		udfDebug 4 "route rule for server: $s"
-
-		if [[ -n "$s" ]]; then
-
-			try-every-line
-
-				ip route add $s || true
-				ip route add 0/1 dev $dev
-				ip route add 128/1 dev $dev
-
-			catch-every-line
-
-			udfDebug 2 "tunnel $dev used as default route ($s):" && route -n
-
-		else
-
-			eval $( udfOnError throw iErrorEmptyOrMissingArgument "default route fail" )
+			ping -q -W 1 -с 3 $ipServer >/dev/null 2>&1
+			$bDaemonize || break
 
 		fi
 
-	fi
-
-	udfDebug 1 && printf -- "\nclient configuration done.\n"
-
-	udfDebug 3 && {
-
-		printf -- "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
-
-		wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
-
-		ip addr show $dev | grep inet
-
-		printf -- "\n----\n"
-
-	} >&2
-
-	wg showconf $dev > ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
-	chmod 0600 ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
-
-	while true; do
-
-		ping -q -W 1 -с 3 $ipServer >/dev/null 2>&1
-
-		$bDaemonize || break
-
 		echo "check connection every $tsPeerTimeout sec.."
-
+		## TODO force check with async message
 		udfWatchdog $fnCtl $tsPeerTimeout || break
 
 		for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
@@ -355,7 +406,11 @@ udfMain() {
 
 					wg set $dev peer ${s%%:*} remove
 					udfDebug 4 "peer ${s:0:10}<skipped> removed .. $?"
-					exec $0
+					bStart=true
+
+				else
+
+					bStart=false
 
 				fi
 
@@ -366,7 +421,6 @@ udfMain() {
 			fi
 
 		done
-
 
 	done
 

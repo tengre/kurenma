@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 55 2016-09-08 16:30:33+04:00 toor $
+# $Id: kurenmac 56 2016-09-08 16:59:35+04:00 toor $
 #
 _kurenmac_sVersion=0.3
 #
@@ -368,7 +368,7 @@ udfMain() {
 
 	fi
 
-	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 4 "$( _ sId ) (с) ${aId[3]}, rev${aId[2]}"
+	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 4 "$( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
 
 	udfExitIfAlreadyStarted
 

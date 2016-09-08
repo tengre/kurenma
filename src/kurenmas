@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 53 2016-09-07 16:20:26+04:00 toor $"
+# $Id: kurenmas 56 2016-09-08 16:59:35+04:00 toor $"
 #
 _kurenmas_sVersion=0.3
 #
@@ -481,7 +481,7 @@ udfMain() {
 
 	cmdNetcat="nc -k -l -v $portAuth"
 
-	aId=( $(grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 4 "$( _ sId ) (с) ${aId[3]}, rev${aId[2]}"
+	aId=( $(grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 4 "$( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
 
 	udfExitIfAlreadyStarted
 

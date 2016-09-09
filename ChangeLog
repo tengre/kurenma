@@ -58,8 +58,8 @@ Fri, 02 Sep 2016 00:37:23 +0400
 
  update-firehol:
  - added locking (flock) with special lock file, used timeout based locking for
-   for inclusion client IP to firehol "white" list. Locking activated by reexec
-   with exported global variable
+   inclusion client IP to firehol "white" list. Locking activated by reexec with
+   exported global variable
  - get current wireguard endpoints list for preserve active peers connections
  - added stat file with records of last client knocking. The contents of this
    file are used for additional protection against collisions of client requests

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 60 2016-09-12 16:53:55+04:00 toor $"
+# $Id: kurenmas 61 2016-09-12 17:10:40+04:00 toor $"
 #
 _kurenmas_sVersion=0.3
 #
@@ -37,8 +37,7 @@ udfWatchdog() {
 
 		if [[ -s $1 && $( tail -n 1 $1 ) == "stop" ]]; then
 
-			i=1
-			udfUptime "."
+			i=$(_ iErrorAbortedBySignal)
 			break
 
 		fi

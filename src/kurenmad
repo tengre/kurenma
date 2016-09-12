@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 62 2016-09-12 17:20:36+04:00 toor $"
+# $Id: kurenmad 63 2016-09-12 23:34:22+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #

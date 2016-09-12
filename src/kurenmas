@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmas 56 2016-09-08 16:59:35+04:00 toor $"
+# $Id: kurenmas 60 2016-09-12 16:53:55+04:00 toor $"
 #
 _kurenmas_sVersion=0.3
 #
@@ -8,6 +8,15 @@ _bashlyk=kurenma . bashlyk
 #
 #
 #
+_bashlyk_iErrorTimeExpired=167
+_bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
+_bashlyk_iErrorNotAvailable=166
+_bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
+_bashlyk_iErrorInvalidArgument=253
+_bashlyk_hError[$_bashlyk_iErrorInvalidArgument]="invalid argument"
+_bashlyk_iErrorInvalidVariable=200
+_bashlyk_hError[$_bashlyk_iErrorInvalidVariable]="invalid variable"
+
 #****m* kurenma/kurenmas
 #  DESCRIPTION
 #    kurenmas - Kurenma Service for WireGuard tunnels
@@ -149,6 +158,20 @@ udfStopProcess() {
 
 }
 #
+udfShowPeerInfo() {
+
+	udfThrowOnEmptyVariable dev
+
+	printf -- "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
+
+	wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
+
+	ip addr show $dev | grep inet
+
+	printf -- "\n----\n"
+
+}
+#
 udfSelfCheck() {
 
 	udfThrowOnEmptyVariable fnCtl portAuth
@@ -239,12 +262,10 @@ udfWaitRequest() {
 #
 udfHandleRequest() {
 
-	## TODO udfThrowOnEmptyArgument
-	[[ -n "$1" ]] || eval $( udfOnError retecho iErrorEmptyOrMissingArgument )
+	udfThrowOnEmptyArgument "$@"
+	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt pathDat pathIni tsKeepalive tsPeerTimeout
 
 	local a csvCIDR cnClient fn fnClientCrt fnLeased peer s
-
-	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt pathDat pathIni tsKeepalive tsPeerTimeout
 
 	udfMakeTemp fn
 
@@ -414,16 +435,7 @@ udfHandleRequest() {
 	done
 
 	udfDebug 1 "server configuration updated."
-
-	udfDebug 3 && {
-
-		printf -- "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
-
-		wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
-
-		printf -- "\n----\n"
-
-	} >&2
+	udfDebug 5 && udfShowPeerInfo >&2
 
 	wg showconf $dev > ${pathIni}/${cnServer}.${dev}.conf
 	chmod 0600 ${pathIni}/${cnServer}.${dev}.conf
@@ -445,30 +457,57 @@ _defLocal() {
 
 }
 #
+udfSetupTunnel() {
+
+	udfThrowOnEmptyVariable dev ipServer port
+
+	udfDebug 4 "Init WireGuard device $dev"
+
+	try-every-line
+
+		ip link del dev $dev 2>/dev/null || true
+		ip link add dev $dev type wireguard
+		ip address add ${ipServer}/24 dev $dev
+		wg set $dev private-key <(wg genkey) listen-port $port
+		ip link set up dev $dev
+
+	catch-every-line
+
+	udfDebug 4 "init new server pub key: $( wg show $dev private-key | wg pubkey | head -c 10 )<skipped>"
+
+	return 0
+
+}
+#
 udfMain() {
 
-	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+	DEBUGLEVEL=3
+
+	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill mkdir nc openssl ps sipcalc sort uniq wg xargs
+
+	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	local -a aId
 	local cmdNetcat fn fnCtl fnServerKey fnTmp ini ip pathIni pathCrt pathDat pathKey pathRun s
 	local csvSectionMain csvSectionSSL ipsAllowed
 
+	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 1 "start $( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
+
 	csvSectionMain='bDaemonize;bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
 	csvSectionSSL='cnClient;cnServer'
 	eval $( _defLocal $csvSectionMain $csvSectionSSL )
 
-	DEBUGLEVEL=4
+	udfExitIfAlreadyStarted
 
-	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill mkdir nc openssl ps sipcalc sort uniq wg xargs
-
-	pathIni=$( _ pathIni )
 	pathDat=$( _ pathDat )
+	pathIni=$( _ pathIni )
 	pathRun=$( _ pathRun )
 
 	pathCrt=${pathIni}/ssl/public
 	pathKey=${pathIni}/ssl/private
 	ini=${pathIni}/kurenma.ini
 	fnCtl=${pathRun}/kurenma.pid
+	mkdir -p $pathDat || eval $( udfOnError retecho NotExistNotCreated $pathDat )
 
 	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}" "ipsAllowed:="
 
@@ -481,51 +520,26 @@ udfMain() {
 
 	cmdNetcat="nc -k -l -v $portAuth"
 
-	aId=( $(grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 4 "$( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
-
-	udfExitIfAlreadyStarted
-
-	if udfIsNumber $tsKeepalive; then
-
-		(( $tsKeepalive <= 65355 )) || tsKeepalive=65355
-
-	else
-
-		tsKeepalive=0
-
-	fi
+	udfIsNumber $tsKeepalive || tsKeepalive=0
+	(( $tsKeepalive > 65355 )) && tsKeepalive=65355
 
 	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "2day"
 
 	udfDebug 2 && udfShowVariable dev port portAuth cnServer ipServer ipsAllowed tsKeepalive tsPeerTimeout
 	udfThrowOnEmptyVariable cnServer dev ipServer pathCrt pathDat pathIni pathKey pathRun port portAuth tsPeerTimeout
 
-	mkdir -p $pathDat || eval $( udfOnError retecho iErrorNotExistNotCreated $pathDat )
+	fnServerKey=${pathKey}/${cnServer}.key
+
+	[[ -f $fnServerKey ]] || eval $(udfOnError exitecho NoSuchFileOrDir "$fnServerKey")
 
 	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then
 
-		udfDebug 4 "Init WireGuard device $dev"
-		try-every-line
-
-			ip link del dev $dev 2>/dev/null || true
-			ip link add dev $dev type wireguard
-			ip address add ${ipServer}/24 dev $dev
-			wg set $dev private-key <(wg genkey) listen-port $port
-			ip link set up dev $dev
-
-		catch-every-line
-
-		udfDebug 4 "init new server pub key: $( wg show $dev private-key | wg pubkey | head -c 10 )<skipped>"
+		udfSetupTunnel
 
 	fi
 
-	fnServerKey=${pathKey}/${cnServer}.key
-
-	[[ -n $fnServerKey && -f $fnServerKey ]] || eval $(udfOnError exitecho iErrorNoSuchFileOrDir "$fnServerKey")
-
-	udfStopProcess $cmdNetcat
-
 	echo "start" > $fnCtl
+	udfStopProcess $cmdNetcat
 	udfSelfCheck &
 	udfAddPid2Clean $!
 
@@ -539,7 +553,7 @@ udfMain() {
 
 	done
 
-	udfFinally "."
+	udfFinally "service down"
 
 }
 #

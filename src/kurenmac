@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 59 2016-09-09 16:14:18+04:00 toor $
+# $Id: kurenmac 60 2016-09-12 16:53:55+04:00 toor $
 #
 _kurenmac_sVersion=0.3
 #
@@ -13,6 +13,11 @@ _bashlyk_iErrorTimeExpired=167
 _bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
+_bashlyk_iErrorInvalidArgument=253
+_bashlyk_hError[$_bashlyk_iErrorInvalidArgument]="invalid argument"
+_bashlyk_iErrorInvalidVariable=200
+_bashlyk_hError[$_bashlyk_iErrorInvalidVariable]="invalid variable"
+
 #
 #
 #
@@ -320,9 +325,6 @@ udfShowPeerInfo() {
 #
 udfMain() {
 
-	## TODO set mode (daemon, one time client and etc.)
-	## TODO checking tunnel availibity
-
 	DEBUGLEVEL=3
 
 	udfThrowOnCommandNotFound dig echo false grep ip ipcalc knock openssl ping printf route sed sipcalc tee true wg xargs
@@ -332,7 +334,6 @@ udfMain() {
 	local -a aId
 	local bStart fnClientCrt fmtCon fmtSSL fnClientKey fnCtl fnServerCrt ini pathCrt pathIni pathKey pathRun s sKey
 	local csvSectionMain csvSectionSSL ipsAllowed
-
 	#
 	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 1 "start $( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
 	#
@@ -342,18 +343,20 @@ udfMain() {
 	csvSectionSSL='cnClient;cnServer'
 	eval $( _defLocal $csvSectionMain $csvSectionSSL )
 
-	pathRun=$( _ pathRun )
-	fnCtl=${pathRun}/kurenma.pid
+	udfExitIfAlreadyStarted
+
 	pathIni=$( _ pathIni )
-	ini=${pathIni}/kurenma.ini
+	pathRun=$( _ pathRun )
+
 	pathCrt=${pathIni}/ssl/public
 	pathKey=${pathIni}/ssl/private
+	ini=${pathIni}/kurenma.ini
+	fnCtl=${pathRun}/kurenma.pid
 
-	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}"
+	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}" "ipsAllowed:="
 
 	: ${bDaemonize:=false}
 	: ${dev:=wg0}
-	: ${i:=256}
 	: ${portAuth:=42912}
 
 	udfIsNumber $tsKeepalive || tsKeepalive=0
@@ -373,23 +376,15 @@ udfMain() {
 
 	s=$( grep Subject: $fnClientCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )
 
-	if [[ $s != $cnClient ]]; then
+	[[ $s != $cnClient ]] && eval $( udfOnError throw NotValidArgument "invalid cert file $fnClientCrt" )
 
-		eval $( udfOnError throw iErrorNotValidArgument "invalid cert file $fnClientCrt" )
+	for s in "$fnClientCrt" "$fnClientKey" "$fnServerCrt"; do
 
-	fi
+		[[ -f $s ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
 
-	if [[ -f $fnClientCrt && -f $fnClientKey  && -f $fnServerCrt ]]; then
+	done
 
-		udfDebug 3 && printf -- "$fmtSSL" "$cnClient" "$cnServer"
-
-	else
-
-		eval $( udfOnError throw iErrorNoSuchFileOrDir "$fnClientCrt and/or $fnClientKey and/or $fnServerCrt" )
-
-	fi
-
-	udfExitIfAlreadyStarted
+	udfDebug 3 && printf -- "$fmtSSL" "$cnClient" "$cnServer"
 
 	echo start > $fnCtl
 
@@ -449,7 +444,7 @@ udfMain() {
 
 	done
 
-	udfFinally "service down after"
+	udfFinally "service down"
 
 }
 #

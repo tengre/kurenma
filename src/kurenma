@@ -1,142 +1,103 @@
-#!/bin/bash
-#
-# $Id: kurenma 55 2016-09-08 16:30:33+04:00 toor $
-#
-_kurenma_sVersion=0.3
-#
-_bashlyk=kurenma . bashlyk
-#
-#
-#
-udfUsage() {
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          skeleton
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Kurenma Service
+# Description:       Kurenma Service for WireGuard devices
+#                    management
+### END INIT INFO
 
-    	local -a aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) )
-
-	printf -- "\t%s v%s rev%s, Kurenma Service Management Tool, (c) %s\n" "$(_ s0)" "$_kurenma_sVersion" "${aId[2]}" "${aId[3]}"
-
-#****h* kurenma/kurenma
-#  DESCRIPTION
-#    kurenma - Kurenma Service for WireGuard tunnels
-#  AUTHOR
-#    Damir Sh. Yakupov <yds@bk.ru>
-#  ARGUMENTS
-	cat <<-EOF | tr -d '#'
-
-		Usage: $(_ s0) start|stop
-		where:
-
-#			start	- start service
-#			stop	- stop  service
+# Author: Damir Sh. Yakupov <yds@bk.ru>
 #
-#		without arguments show this usage and exit
 
-	EOF
-	eval $(udfOnError exit)
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DESC="Kurenma Service for WireGuard devices"
+NAME=kurenma
+DAEMON=/usr/sbin/${NAME}
+DAEMON_ARGS=
+PIDFILE=/var/run/kurenma/$DAEMON.pid
+SCRIPTNAME=/etc/init.d/${NAME}
 
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+# Load the VERBOSE setting and other rcS variables
+. /lib/init/vars.sh
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.2-14) to ensure that this file is present
+# and status_of_proc is working.
+. /lib/lsb/init-functions
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+        $DAEMON "start"
 }
-#******
-udfStopProcess() {
 
-	local pid s
-
-	if udfIsNumber $1; then
-
-		pid=$1
-		shift
-
-	else
-
-		pid="$( ps -C "$*" -o pid= | xargs )"
-
-	fi
-
-	for s in 15 9; do
-
-		udfIsNumber $pid || continue
-
-		sleep 1
-
-		udfCheckStarted $pid $* && kill -${s} $pid
-
-
-	done
-
-	return 0
-
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+        $DAEMON "stop"
 }
-#
-udfMain() {
 
-	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+case "$1" in
+  start)
+        [ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+        do_start
+        case "$?" in
+                0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+                  2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+        esac
+        ;;
+  stop)
+        [ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+        do_stop
+        case "$?" in
+                0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+                  2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+        esac
+        ;;
+  status)
+        status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
+        ;;
+  restart|force-reload)
+        #
+        # If the "reload" option is implemented then remove the
+        # 'force-reload' alias
+        #
+        log_daemon_msg "Restarting $DESC" "$NAME"
+        do_stop
+        case "$?" in
+          0|1)
+                do_start
+                case "$?" in
+                        0) log_end_msg 0 ;;
+                        1) log_end_msg 1 ;; # Old process is still running
+                        *) log_end_msg 1 ;; # Failed to start
+                esac
+                ;;
+          *)
+                # Failed to stop
+                log_end_msg 1
+                ;;
+        esac
+        ;;
+  *)
+        echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+        exit 3
+        ;;
+esac
 
-	local cmd cmdNetcat fnCtl ini pathIni pathRun pid portAuth s
-
-	DEBUGLEVEL=4
-
-	udfThrowOnCommandNotFound cut echo grep kill kurenmac kurenmas nohup printf ps sleep uniq xargs
-
-	pathIni=$( _ pathIni )
-	pathRun=$( _ pathRun )
-
-	udfThrowOnEmptyVariable pathIni pathRun
-
-	mkdir -p $pathRun || eval $( udfOnError throw NotExistNotCreated "$pathRun" )
-
-	ini=${pathIni}/kurenma.ini
-	fnCtl=${pathRun}/kurenma.pid
-
-	udfIni $ini ':role;portAuth'
-
-	: ${portAuth:=42912}
-	cmdNetcat="nc -k -l -v $portAuth"
-
-	case $role in
-
-	 client) cmd=kurenmac;;
-	 server) cmd=kurenmas;;
-	      *) eval $( udfOnError throw NonValidArgument "role ${role}, (see ${ini})" );;
-
-	esac
-
-	eval set -- $(_ sArg)
-
-	case "$1" in
-
-		start)
-			udfDebug 1 "service $cmd starting.."
-
-			cd /
-			nohup $cmd </dev/null >/dev/null 2>/dev/null &
-
-			return 0
-		;;
-
-		 stop)
-			udfDebug 1 "service $cmd stopping.."
-
-			echo stop >> $fnCtl
-			udfStopProcess $cmdNetcat
-
-			sleep 8
-
-			[[ -s ${pathRun}/${cmd}.pid ]] && pid=$( head -n 1 ${pathRun}/${cmd}.pid )
-
-			udfStopProcess $pid $cmd
-
-			return 0
-		;;
-
-		    *)
-			udfDebug 1 && udfUsage
-			return 1
-		;;
-
-	esac
-
-	return 0
-}
-#
-#
-#
-udfMain
-#
+:

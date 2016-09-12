@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 46 2016-09-05 17:19:00+04:00 toor $
+## $Id: Makefile.am 60 2016-09-12 16:58:38+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -7,7 +7,9 @@ AUTOMAKE_OPTIONS	= -Wno-portability
 PACKAGE			= kurenma
 ETC			= /etc
 bin_SCRIPTS		= update-firehol gen-ssl-kurenma
-sbin_SCRIPTS		= kurenma kurenmas kurenmac
+sbin_SCRIPTS		= kurenmactl kurenmas kurenmac
+systemvdir		= ${ETC}/init.d
+systemv_SCRIPTS		= ${PACKAGE}
 systemddir		= /lib/systemd/system
 systemd_DATA		= ${PACKAGE}.service
 sysconfdir		= ${ETC}/${PACKAGE}
@@ -17,4 +19,10 @@ syslib_DATA		= knockd.conf.example openssl.cnf.template
 DESTDIR			=
 
 install-data-hook:
-	$(shell) ln -sf /lib/systemd/system/${PACKAGE}.service /etc/systemd/system/${PACKAGE}.service && systemctl daemon-reload || true
+	$(shell) which systemctl || chmod +x ${systemv_SCRIPTS} && update-rc.d ${systemv_SCRIPTS} defaults || true
+	$(shell) which systemctl && ln -sf /lib/systemd/system/${PACKAGE}.service /etc/systemd/system/${PACKAGE}.service && systemctl daemon-reload || true
+
+uninstall-hook:
+	$(shell) which systemctl || update-rc.d -f ${systemv_SCRIPTS} remove || true
+	$(shell) which systemctl && rm -f /etc/systemd/system/${PACKAGE}.service && systemctl daemon-reload || true
+

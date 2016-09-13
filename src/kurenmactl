@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 60 2016-09-12 16:53:55+04:00 toor $
+# $Id: kurenmactl 63 2016-09-13 11:51:57+04:00 toor $
 #
 _kurenma_sVersion=0.3
 #
@@ -97,6 +97,8 @@ udfMain() {
 	      *) eval $( udfOnError throw NonValidArgument "role ${role}, (see ${ini})" );;
 
 	esac
+
+	export _KURENMA_SERVICE_ROLE=$role
 
 	eval set -- $(_ sArg)
 

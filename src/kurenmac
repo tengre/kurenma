@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmac 60 2016-09-12 16:53:55+04:00 toor $
+# $Id: kurenmac 63 2016-09-13 11:51:56+04:00 toor $
 #
 _kurenmac_sVersion=0.3
 #
@@ -335,7 +335,7 @@ udfMain() {
 	local bStart fnClientCrt fmtCon fmtSSL fnClientKey fnCtl fnServerCrt ini pathCrt pathIni pathKey pathRun s sKey
 	local csvSectionMain csvSectionSSL ipsAllowed
 	#
-	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 1 "start $( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
+	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 1 "start role=$_KURENMA_SERVICE_ROLE $( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
 	#
 	fmtSSL="SSL auth info:\nClient Common Name - %s\nServer Common Name - %s\n"
 	fmtCon="Connection properties from %s:\nremote port: %d\nserver  key: %s\ntunnel  IPs: leased/remote - %s/%s\n"

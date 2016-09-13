@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 66 2016-09-13 14:39:16+04:00 toor $
+# $Id: kurenmactl 68 2016-09-13 15:56:26+04:00 toor $
 #
 _kurenma_sVersion=0.3
 #
@@ -63,7 +63,7 @@ udfMain() {
 
 	DEBUGLEVEL=3
 
-	udfThrowOnCommandNotFound cut echo grep kill kurenmac kurenmas nohup printf ps sleep uniq xargs
+	udfThrowOnCommandNotFound cut echo grep kill kurenmad nohup printf ps sleep uniq xargs
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 

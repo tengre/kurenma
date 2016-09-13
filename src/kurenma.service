@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.service 48 2016-09-06 17:10:27+04:00 toor $
+# $Id: kurenma.service 67 2016-09-13 15:49:50+04:00 toor $
 #
 [Unit]
 Description=Kurenma Auth Service for Wireguard Network
@@ -7,8 +7,8 @@ Description=Kurenma Auth Service for Wireguard Network
 [Service]
 Type=forking
 TimeoutSec=8
-ExecStart=/usr/sbin/kurenma start
-ExecStop=/usr/sbin/kurenma stop
+ExecStart=/usr/sbin/kurenmactl start
+ExecStop=/usr/sbin/kurenmactl stop
 
 [Install]
 WantedBy=multi-user.target

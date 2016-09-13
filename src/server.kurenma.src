@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: server.kurenma.src 70 2016-09-13 16:11:34+04:00 toor $"
+# $Id: server.kurenma.src 71 2016-09-13 16:20:51+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -194,7 +194,7 @@ udfHandleRequest() {
 
 	{
 
-		udfDebug 4 && \
+		udfDebug 3 && \
 			printf -- "\nremote peer info:\n\tClient Common Name\t- %s\n\tPublic key for %s\t- %s\n" \
 				"$cnClient" "$dev" "${peer:0:10}<skipped>" >&2
 
@@ -208,13 +208,13 @@ udfHandleRequest() {
 
 			if udfIsNumber ${s##*:}; then
 
-				udfDebug 4 "$(date +%s) - ${s##*:} > $tsPeerTimeout"
+				udfDebug 3 "$(date +%s) - ${s##*:} > $tsPeerTimeout"
 				(( ${s##*:} < 999 )) && continue
 				## TODO update latest handshake for peer in $fnLeased
 				if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
 
 					wg set $dev peer ${s%%:*} remove
-					udfDebug 4 "peer ${s:0:10}<skipped> removed .. $?"
+					udfDebug 3 "peer ${s:0:10}<skipped> removed .. $?"
 
 				fi
 
@@ -229,7 +229,7 @@ udfHandleRequest() {
 		if [[ "$ipClient" == "commonname" ]]; then
 
 			ipClient=$( udfGetValidIPsOnly $cnClient )
-			udfDebug 5 "Leased IP by CN to $cnClient - $ipClient"
+			udfDebug 5 "Leased IP by Common Name to $cnClient - $ipClient"
 
 		fi
 
@@ -303,7 +303,7 @@ udfHandleRequest() {
 	for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
 
 		wg set $dev peer $s remove
-		udfDebug 4 "${dev}: remove unused peer ${s:0:10}<skipped> .. $?"
+		udfDebug 3 "${dev}: remove unused peer ${s:0:10}<skipped> .. $?"
 
 	done
 
@@ -319,7 +319,7 @@ udfSetupTunnel() {
 
 	udfThrowOnEmptyVariable dev ipServer port
 
-	udfDebug 4 "Init WireGuard device $dev"
+	udfDebug 3 "Init WireGuard device $dev"
 
 	try-every-line
 
@@ -331,7 +331,7 @@ udfSetupTunnel() {
 
 	catch-every-line
 
-	udfDebug 4 "init new server pub key: $( wg show $dev private-key | wg pubkey | head -c 10 )<skipped>"
+	udfDebug 3 "init new server pub key: $( wg show $dev private-key | wg pubkey | head -c 10 )<skipped>"
 
 	return 0
 
@@ -407,7 +407,7 @@ udfMain() {
 
 	while true; do
 
-		udfDebug 4 "Daemon for WireGuard clients (re)started.."
+		udfDebug 3 "Daemon for WireGuard clients (re)started.."
 		udfMakeFifo fnTmp
 		cat $fnTmp | udfWaitRequest | $cmdNetcat > $fnTmp
 		udfWatchdog $fnCtl 1 || break

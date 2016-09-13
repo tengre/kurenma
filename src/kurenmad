@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 63 2016-09-13 12:47:26+04:00 toor $"
+# $Id: kurenmad 66 2016-09-13 14:39:16+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -19,9 +19,9 @@ _kurenma_pathLib=/usr/share/kurenma
 #
 #
 udfThrowOnEmptyVariable _KURENMA_SERVICE_ROLE
-[[ $_KURENMA_SERVICE_ROLE =~ "^(client|service)$" ]] || eval $( udfOnError throw InvalidArgument "$_KURENMA_SERVICE_ROLE" )
+[[ $_KURENMA_SERVICE_ROLE =~ ^(client|service)$ ]] || eval $( udfOnError throw InvalidArgument "$_KURENMA_SERVICE_ROLE" )
 [[ -d $_kurenma_pathLib ]] || eval $( udfOnError throw NoSuchFileOrDir "$_kurenma_pathLib" )
-[[ -s ${_kurenma_pathLib}/${_KURENMA_SERVICE_ROLE}-kurenma.src ]] || eval $( udfOnError throw NoSuchFileOrDir "${_KURENMA_SERVICE_ROLE}-kurenma.src" )
+[[ -s ${_kurenma_pathLib}/${_KURENMA_SERVICE_ROLE}.kurenma.src ]] || eval $( udfOnError throw NoSuchFileOrDir "${_KURENMA_SERVICE_ROLE}.kurenma.src" )
 #
 #
 #
@@ -150,8 +150,7 @@ udfShowPeerInfo() {
 #
 #
 #
-. ${_kurenma_pathLib}/${_KURENMA_SERVICE_ROLE}-kurenma.src
-unset _KURENMA_SERVICE_ROLE
+. ${_kurenma_pathLib}/${_KURENMA_SERVICE_ROLE}.kurenma.src
 #
 #
 #

@@ -1,60 +1,10 @@
 #!/bin/bash
 #
-# $Id: kurenmas 63 2016-09-13 11:51:56+04:00 toor $"
-#
-_kurenmas_sVersion=0.3
+# $Id: server.kurenma.src 66 2016-09-13 14:39:17+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
 #
-#
-_bashlyk_iErrorTimeExpired=167
-_bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
-_bashlyk_iErrorNotAvailable=166
-_bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
-_bashlyk_iErrorInvalidArgument=253
-_bashlyk_hError[$_bashlyk_iErrorInvalidArgument]="invalid argument"
-_bashlyk_iErrorInvalidVariable=200
-_bashlyk_hError[$_bashlyk_iErrorInvalidVariable]="invalid variable"
-
-#****m* kurenma/kurenmas
-#  DESCRIPTION
-#    kurenmas - Kurenma Service for WireGuard tunnels
-#  AUTHOR
-#    Damir Sh. Yakupov <yds@bk.ru>
-#******
-#
-udfWatchdog() {
-
-	udfOn EmptyOrMissingArgument throw "$1"
-	udfIsNumber $2 || eval $( udfOnError2 throw iErrorNonValidArgument "$2" )
-
-	local i=0
-
-	while true; do
-
-		i=$((i+1))
-
-		if [[ -s $1 && $( tail -n 1 $1 ) == "stop" ]]; then
-
-			i=$(_ iErrorAbortedBySignal)
-			break
-
-		fi
-
-		sleep 1
-
-		if (( i >= $2 )); then
-
-			i=0
-			break
-
-		fi
-
-	done
-
-	return $i
-}
 #
 udfMakeFifo() {
 
@@ -62,68 +12,6 @@ udfMakeFifo() {
 	udfMakeTemp $1 path=$( _ pathRun )
 	rm -f ${!1}
 	mkfifo ${!1}
-
-}
-#
-udfGetTimeInSec() {
-
-	if [[ "$1" == "-v" ]]; then
-
-		udfIsValidVariable "$2" || eval $( udfOnError2 iErrorNotValidArgument "$2 - variable name required" )
-
-		[[ "$3" == "-v" ]] && eval $( udfOnError2 iErrorNotValidArgument "$3 - number with time suffix expected" )
-
-		eval 'export $2="$( udfGetTimeInSec $3 )"'
-		[[ -n ${!2} ]] || eval 'export $2="$( udfGetTimeInSec $4 )"'
-		[[ -n ${!2} ]] || eval $( udfOnError2 iErrorEmptyResult "$2 - empty variable" )
-
-		return $?
-
-	fi
-
-	local i=${1%%[[:alpha:]]*}
-
-	udfIsNumber $i || eval $( udfOnError2 iErrorNotValidArgument "$i - number expected" )
-
-	case ${1##*[[:digit:]]} in
-
-		seconds|second|sec|s|'') echo $i;;
-		   minutes|minute|min|m) echo $(( i*60 ));;
-		        hours|hour|hr|h) echo $(( i*3600 ));;
-		             days|day|d) echo $(( i*3600*24 ));;
-		           weeks|week|w) echo $(( i*3600*24*7 ));;
-		       months|month|mon) echo $(( i*3600*24*30 ));;
-		           years|year|y) echo $(( i*3600*24*365 ));;
-	                              *) echo ""
-                                       eval $( udfOnError2 iErrorNotValidArgument "$1 - number with time suffix expected" )
-
-	esac
-
-    return $?
-
-}
-#
-udfGetValidIPsOnly() {
-
-	[[ -n "$*" ]] || eval $( udfOnError return iErrorEmptyOrMissingArgument )
-
-	local s sDig sOut
-
-	for s in $*; do
-
-		[[ $s =~ ^[0-9.]+$ ]] && ipcalc "$s" | grep '^INVALID ADDRESS:' && continue
-		sipcalc -d4 "$s" | grep '^-\[ERR :' && continue
-		sDig=$( dig +short $s | xargs )
-		[[ -n "$sDig" ]] && s="$sDig"
-		sOut+="$s "
-
-	done >/dev/null 2>&1
-
-	echo ${sOut% *} | tr ' ' '\n' | sort | uniq | xargs
-
-	[[ -n "${sOut% *}" ]] || eval $( udfOnError return iErrorEmptyResult )
-
-	return 0
 
 }
 #
@@ -154,20 +42,6 @@ udfStopProcess() {
 	done
 
 	return 0
-
-}
-#
-udfShowPeerInfo() {
-
-	udfThrowOnEmptyVariable dev
-
-	printf -- "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
-
-	wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
-
-	ip addr show $dev | grep inet
-
-	printf -- "\n----\n"
 
 }
 #
@@ -441,21 +315,6 @@ udfHandleRequest() {
 
 }
 #
-_defLocal() {
-
-	local s S
-
-	for s in ${*//[;,]/ }; do
-
-		udfIsValidVariable $s || eval $( udfOnError throw iErrorNonValidVariable "$s" )
-		S+="$s "
-
-	done
-
-	echo "local ${S% *}"
-
-}
-#
 udfSetupTunnel() {
 
 	udfThrowOnEmptyVariable dev ipServer port
@@ -490,7 +349,11 @@ udfMain() {
 	local cmdNetcat fn fnCtl fnServerKey fnTmp ini ip pathIni pathCrt pathDat pathKey pathRun s
 	local csvSectionMain csvSectionSSL ipsAllowed
 
-	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && udfDebug 1 "start role=$_KURENMA_SERVICE_ROLE $( _ s0 ) (с) ${aId[3]}, rev${aId[2]}"
+	if aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ); then
+
+		udfDebug 1 "start $( _ s0 ) as ${_KURENMA_SERVICE_ROLE}, (с) ${aId[3]}, rev${aId[2]}"
+
+	fi
 
 	csvSectionMain='bDaemonize;bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
 	csvSectionSSL='cnClient;cnServer'
@@ -557,6 +420,4 @@ udfMain() {
 }
 #
 #
-#
-udfMain
 #

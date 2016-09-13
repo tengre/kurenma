@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 63 2016-09-13 11:51:57+04:00 toor $
+# $Id: kurenmactl 66 2016-09-13 14:39:16+04:00 toor $
 #
 _kurenma_sVersion=0.3
 #
@@ -14,12 +14,6 @@ udfUsage() {
 
 	printf -- "\t%s v%s rev%s, Kurenma Service Management Tool, (c) %s\n" "$(_ s0)" "$_kurenma_sVersion" "${aId[2]}" "${aId[3]}"
 
-#****h* kurenma/kurenma
-#  DESCRIPTION
-#    kurenma - Kurenma Service for WireGuard tunnels
-#  AUTHOR
-#    Damir Sh. Yakupov <yds@bk.ru>
-#  ARGUMENTS
 	cat <<-EOF | tr -d '#'
 
 		Usage: $(_ s0) start|stop
@@ -67,14 +61,15 @@ udfStopProcess() {
 #
 udfMain() {
 
+	DEBUGLEVEL=3
+
+	udfThrowOnCommandNotFound cut echo grep kill kurenmac kurenmas nohup printf ps sleep uniq xargs
+
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
 	local cmd cmdNetcat fnCtl ini pathIni pathRun pid portAuth s
 
-	DEBUGLEVEL=4
-
-	udfThrowOnCommandNotFound cut echo grep kill kurenmac kurenmas nohup printf ps sleep uniq xargs
-
+	cmd=kurenmad
 	pathIni=$( _ pathIni )
 	pathRun=$( _ pathRun )
 
@@ -90,13 +85,7 @@ udfMain() {
 	: ${portAuth:=42912}
 	cmdNetcat="nc -k -l -v $portAuth"
 
-	case $role in
-
-	 client) cmd=kurenmac;;
-	 server) cmd=kurenmas;;
-	      *) eval $( udfOnError throw NonValidArgument "role ${role}, (see ${ini})" );;
-
-	esac
+	[[ $role =~ ^(client|service)$ ]] || eval $( udfOnError throw InvalidArgument "$role" )
 
 	export _KURENMA_SERVICE_ROLE=$role
 

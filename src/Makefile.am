@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 60 2016-09-12 16:58:38+04:00 toor $
+## $Id: Makefile.am 66 2016-09-13 14:39:16+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -7,7 +7,7 @@ AUTOMAKE_OPTIONS	= -Wno-portability
 PACKAGE			= kurenma
 ETC			= /etc
 bin_SCRIPTS		= update-firehol gen-ssl-kurenma
-sbin_SCRIPTS		= kurenmactl kurenmas kurenmac
+sbin_SCRIPTS		= kurenmactl kurenmad
 systemvdir		= ${ETC}/init.d
 systemv_SCRIPTS		= ${PACKAGE}
 systemddir		= /lib/systemd/system
@@ -15,7 +15,7 @@ systemd_DATA		= ${PACKAGE}.service
 sysconfdir		= ${ETC}/${PACKAGE}
 sysconf_DATA		= ipslist.ini ${PACKAGE}.ini.example dn.${PACKAGE}.ini
 syslibdir		= /usr/share/${PACKAGE}
-syslib_DATA		= knockd.conf.example openssl.cnf.template
+syslib_DATA		= knockd.conf.example openssl.cnf.template client.kurenma.src server.kurenma.src
 DESTDIR			=
 
 install-data-hook:

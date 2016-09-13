@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: server.kurenma.src 66 2016-09-13 14:39:17+04:00 toor $"
+# $Id: server.kurenma.src 70 2016-09-13 16:11:34+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -135,7 +135,7 @@ udfWaitRequest() {
 #
 udfHandleRequest() {
 
-	udfThrowOnEmptyArgument "$@"
+	udfThrowOnEmptyOrMissingArgument "$@"
 	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt pathDat pathIni tsKeepalive tsPeerTimeout
 
 	local a csvCIDR cnClient fn fnClientCrt fnLeased peer s

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: server.kurenma.src 71 2016-09-13 16:20:51+04:00 toor $"
+# $Id: server.kurenma.src 72 2016-09-14 16:11:14+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -138,7 +138,7 @@ udfHandleRequest() {
 	udfThrowOnEmptyOrMissingArgument "$@"
 	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt pathDat pathIni tsKeepalive tsPeerTimeout
 
-	local a csvCIDR cnClient fn fnClientCrt fnLeased peer s
+	local a aCIDR cnClient fn fnClientCrt fnLeased peer s
 
 	udfMakeTemp fn
 
@@ -256,31 +256,12 @@ udfHandleRequest() {
 
 		fi
 
-		csvCIDR="${ipClient}/32"
-
-		for s in ${ipsAllowed//[;,]/ }; do
-
-			[[ -n "$( udfGetValidIPsOnly ${s%/*} )" ]] || continue
-
-			if [[ $s == ${s##*/} ]]; then
-
-				s="$( udfGetValidIPsOnly ${s%/*} )"
-
-			else
-
-				udfIsNumber "${s##*/}" && (( "${s##*/}" > 33 )) && continue
-				udfIsNumber "${s##*/}" || continue
-
-			fi
-
-			csvCIDR+=",$s"
-
-		done
+		aCIDR=$( udfGetValidCIDR ${ipClient}/32 ${ipsAllowed//[;,]/} )
 
 		udfDebug 5 "allowed-ips: $csvCIDR"
 
 		udfMakeTemp fn
-		if wg set $dev peer "$peer" allowed-ips "$csvCIDR" persistent-keepalive $tsKeepalive 2>$fn; then
+		if wg set $dev peer "$peer" allowed-ips "${aCIDR// /,}" persistent-keepalive $tsKeepalive 2>$fn; then
 
 			echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${ipServer}"
 
@@ -339,7 +320,7 @@ udfSetupTunnel() {
 #
 udfMain() {
 
-	DEBUGLEVEL=3
+	DEBUGLEVEL=5
 
 	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill mkdir nc openssl ps sipcalc sort uniq wg xargs
 

@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 66 2016-09-13 14:39:16+04:00 toor $
+## $Id: Makefile.am 72 2016-09-14 16:11:15+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -19,10 +19,12 @@ syslib_DATA		= knockd.conf.example openssl.cnf.template client.kurenma.src serve
 DESTDIR			=
 
 install-data-hook:
-	$(shell) which systemctl || chmod +x ${systemv_SCRIPTS} && update-rc.d ${systemv_SCRIPTS} defaults || true
-	$(shell) which systemctl && ln -sf /lib/systemd/system/${PACKAGE}.service /etc/systemd/system/${PACKAGE}.service && systemctl daemon-reload || true
+	$(shell) which systemctl || update-rc.d ${systemv_SCRIPTS} defaults || true
+	$(shell) which systemctl && chmod -x ${systemvdir}/${systemv_SCRIPTS} && mv -v ${systemvdir}/${systemv_SCRIPTS} ${systemvdir}/${systemv_SCRIPTS}.disabled || true
+	$(shell) which systemctl && systemctl enable ${PACKAGE} && systemctl daemon-reload || true
 
 uninstall-hook:
 	$(shell) which systemctl || update-rc.d -f ${systemv_SCRIPTS} remove || true
-	$(shell) which systemctl && rm -f /etc/systemd/system/${PACKAGE}.service && systemctl daemon-reload || true
+	$(shell) which systemctl && rm -f ${systemvdir}/${systemv_SCRIPTS}.disabled || true
+	$(shell) which systemctl && systemctl disable ${PACKAGE} && systemctl daemon-reload || true
 

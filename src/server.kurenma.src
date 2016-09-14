@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: server.kurenma.src 72 2016-09-14 16:11:14+04:00 toor $"
+# $Id: server.kurenma.src 73 2016-09-14 17:07:31+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -258,7 +258,7 @@ udfHandleRequest() {
 
 		aCIDR=$( udfGetValidCIDR ${ipClient}/32 ${ipsAllowed//[;,]/} )
 
-		udfDebug 5 "allowed-ips: $csvCIDR"
+		udfDebug 5 "allowed-ips: $aCIDR"
 
 		udfMakeTemp fn
 		if wg set $dev peer "$peer" allowed-ips "${aCIDR// /,}" persistent-keepalive $tsKeepalive 2>$fn; then

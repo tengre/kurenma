@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: server.kurenma.src 73 2016-09-14 17:07:31+04:00 toor $"
+# $Id: server.kurenma.src 74 2016-09-15 12:10:41+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -258,7 +258,7 @@ udfHandleRequest() {
 
 		aCIDR=$( udfGetValidCIDR ${ipClient}/32 ${ipsAllowed//[;,]/} )
 
-		udfDebug 5 "allowed-ips: $aCIDR"
+		udfDebug 5 "allowed ips: $aCIDR"
 
 		udfMakeTemp fn
 		if wg set $dev peer "$peer" allowed-ips "${aCIDR// /,}" persistent-keepalive $tsKeepalive 2>$fn; then
@@ -322,21 +322,19 @@ udfMain() {
 
 	DEBUGLEVEL=5
 
-	udfThrowOnCommandNotFound cut dig echo grep ip ipcalc kill mkdir nc openssl ps sipcalc sort uniq wg xargs
+	udfThrowOnCommandNotFound dig echo grep ip ipcalc mkdir nc openssl printf sed sipcalc wg xargs
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	local -a aId
-	local cmdNetcat fn fnCtl fnServerKey fnTmp ini ip pathIni pathCrt pathDat pathKey pathRun s
-	local csvSectionMain csvSectionSSL ipsAllowed
+	local fnCtl ini pathCrt pathDat pathIni pathKey pathRun s
+	local csvSectionMain csvSectionSSL ipsAllowed aReqOptByRole
 
-	if aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ); then
+	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, rev${aId[2]}"
 
-		udfDebug 1 "start $( _ s0 ) as ${_KURENMA_SERVICE_ROLE}, (с) ${aId[3]}, rev${aId[2]}"
+	udfDebug 1 "start $( _ s0 ) as ${_KURENMA_SERVICE_ROLE}${s}"
 
-	fi
-
-	csvSectionMain='bDaemonize;bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
+	csvSectionMain='bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
 	csvSectionSSL='cnClient;cnServer'
 	eval $( _defLocal $csvSectionMain $csvSectionSSL )
 
@@ -355,21 +353,38 @@ udfMain() {
 	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}" "ipsAllowed:="
 
 	: ${dev:=wg0}
-	: ${ipClient:=dynamic}
-	: ${ipServer:=192.168.29.1}
-	: ${port:=12912}
 	: ${portAuth:=42912}
-	: ${tsPeerTimeout:=12hours}
-
-	cmdNetcat="nc -k -l -v $portAuth"
 
 	udfIsNumber $tsKeepalive || tsKeepalive=0
 	(( $tsKeepalive > 65355 )) && tsKeepalive=65355
 
-	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "2day"
+	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "32min"
 
-	udfDebug 2 && udfShowVariable dev port portAuth cnServer ipServer ipsAllowed tsKeepalive tsPeerTimeout
-	udfThrowOnEmptyVariable cnServer dev ipServer pathCrt pathDat pathIni pathKey pathRun port portAuth tsPeerTimeout
+	case $role in
+
+		client)
+			aReqOptByRole="cnClient host"
+		;;
+
+		server)
+			aReqOptByRole="ipServer port"
+			: ${ipClient:=dynamic}
+			: ${ipServer:=192.168.29.1}
+			: ${port:=12912}
+		;;
+
+	esac
+
+	udfDebug 3 "configuration:" && udfShowVariable cnServer dev ipsAllowed portAuth tsKeepalive tsPeerTimeout $aReqOptByRole
+	udfThrowOnEmptyVariable cnServer dev pathCrt pathDat pathIni pathKey pathRun portAuth tsPeerTimeout $aRequiredByRole
+
+	echo "start" > $fnCtl
+
+	udfThrowOnCommandNotFound cut kill ps sort
+
+	local cmdNetcat fnServerKey fnTmp ip
+
+	cmdNetcat="nc -k -l -v $portAuth"
 
 	fnServerKey=${pathKey}/${cnServer}.key
 
@@ -381,7 +396,6 @@ udfMain() {
 
 	fi
 
-	echo "start" > $fnCtl
 	udfStopProcess $cmdNetcat
 	udfSelfCheck &
 	udfAddPid2Clean $!

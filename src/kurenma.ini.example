@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 52 2016-09-07 15:15:49+04:00 toor $
+# $Id: kurenma.ini.example 74 2016-09-15 12:10:41+04:00 toor $
 #
 	role		= client
 #	role		= server
@@ -13,7 +13,6 @@
 	tsPeer￼Timeout   = 8min
 #	tsPeer￼Timeout   = 12hours
 
-	bDaemonize	= false
 	bDefaultRoute	= false
 
 	ipServer	= 192.168.29.1

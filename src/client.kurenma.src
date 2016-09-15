@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: client.kurenma.src 72 2016-09-14 16:11:14+04:00 toor $
+# $Id: client.kurenma.src 74 2016-09-15 12:10:40+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -32,6 +32,9 @@ udfKnocking() {
 
 	while true; do
 
+		nc -w 3 -z ${host} ${portAuth} 2>/dev/null && break
+		udfDebug 2 && echo -n "."
+
 		if ! (( i % 8 )); then
 
 			knock $host $s
@@ -45,9 +48,6 @@ udfKnocking() {
 			return $(_ iErrorAbortedBySignal)
 
 		fi
-
-		nc -w 3 -z ${host} ${portAuth} 2>/dev/null && break
-		udfDebug 2 && echo -n "."
 
 		i=$((i-1))
 
@@ -191,30 +191,27 @@ udfSetDefaultRoute() {
 #
 udfMain() {
 
-	DEBUGLEVEL=3
+	DEBUGLEVEL=5
 
-	udfThrowOnCommandNotFound dig echo false grep ip ipcalc knock openssl ping printf route sed sipcalc tee true wg xargs
+	udfThrowOnCommandNotFound dig echo grep ip ipcalc mkdir nc openssl printf sed sipcalc wg xargs
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	local -a aId
-	local bStart fnClientCrt fmtCon fmtSSL fnClientKey fnCtl fnServerCrt ini pathCrt pathIni pathKey pathRun s sKey
-	local csvSectionMain csvSectionSSL ipsAllowed
-	#
-	if aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ); then
+	local fnCtl ini pathCrt pathDat pathIni pathKey pathRun s
+	local csvSectionMain csvSectionSSL ipsAllowed aReqOptByRole
 
-		udfDebug 1 "start $( _ s0 ) as ${_KURENMA_SERVICE_ROLE}, (с) ${aId[3]}, rev${aId[2]}"
+	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, rev${aId[2]}"
 
-	fi
-	#
-	fmtSSL="SSL auth info:\nClient Common Name - %s\nServer Common Name - %s\n"
-	fmtCon="Connection properties from %s:\nremote port: %d\nserver  key: %s\ntunnel  IPs: leased/remote - %s/%s\n"
-	csvSectionMain='bDaemonize;bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
+	udfDebug 1 "start $( _ s0 ) as ${_KURENMA_SERVICE_ROLE}${s}"
+
+	csvSectionMain='bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
 	csvSectionSSL='cnClient;cnServer'
 	eval $( _defLocal $csvSectionMain $csvSectionSSL )
 
 	udfExitIfAlreadyStarted
 
+	pathDat=$( _ pathDat )
 	pathIni=$( _ pathIni )
 	pathRun=$( _ pathRun )
 
@@ -222,10 +219,10 @@ udfMain() {
 	pathKey=${pathIni}/ssl/private
 	ini=${pathIni}/kurenma.ini
 	fnCtl=${pathRun}/kurenma.pid
+	mkdir -p $pathDat || eval $( udfOnError retecho NotExistNotCreated $pathDat )
 
 	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}" "ipsAllowed:="
 
-	: ${bDaemonize:=false}
 	: ${dev:=wg0}
 	: ${portAuth:=42912}
 
@@ -234,11 +231,31 @@ udfMain() {
 
 	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "32min"
 
-	[[ $bDaemonize    =~ ^(false|true)$ ]] || bDaemonize=false
-	[[ $bDefaultRoute =~ ^(false|true)$ ]] || bDefaultRoute=false
+	case $role in
 
-	udfDebug 4 "configuration:" && udfShowVariable bDaemonize cnServer cnClient dev host portAuth tsKeepalive tsPeerTimeout
-	udfThrowOnEmptyVariable cnClient cnServer dev host pathCrt pathKey pathIni pathRun portAuth tsPeerTimeout
+		client)
+			aReqOptByRole="cnClient host"
+		;;
+
+		server)
+			aReqOptByRole="ipServer port"
+			: ${ipClient:=dynamic}
+			: ${ipServer:=192.168.29.1}
+			: ${port:=12912}
+		;;
+
+	esac
+
+	udfDebug 3 "configuration:" && udfShowVariable cnServer dev ipsAllowed portAuth tsKeepalive tsPeerTimeout $aReqOptByRole
+	udfThrowOnEmptyVariable cnServer dev pathCrt pathDat pathIni pathKey pathRun portAuth tsPeerTimeout $aRequiredByRole
+
+	echo start > $fnCtl
+
+	udfThrowOnCommandNotFound false knock ping route tee true
+
+	local bStart fmtCon fmtSSL fnClientCrt fnClientKey fnServerCrtsKey
+	fmtSSL="SSL auth info:\nClient Common Name - %s\nServer Common Name - %s\n"
+	fmtCon="Connection properties from %s:\nremote port: %d\nserver  key: %s\ntunnel  IPs: leased/remote - %s/%s\n"
 
 	fnServerCrt=${pathCrt}/${cnServer}.crt
 	fnClientCrt=${pathCrt}/${cnClient}.crt
@@ -254,9 +271,9 @@ udfMain() {
 
 	done
 
-	udfDebug 3 && printf -- "$fmtSSL" "$cnClient" "$cnServer"
+	[[ $bDefaultRoute =~ ^(false|true)$ ]] || bDefaultRoute=false
 
-	echo start > $fnCtl
+	udfDebug 3 && printf -- "$fmtSSL" "$cnClient" "$cnServer"
 
 	bStart=true
 
@@ -280,7 +297,6 @@ udfMain() {
 			chmod 0600 ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
 
 			ping -q -W 1 -с 3 $ipServer >/dev/null 2>&1
-			$bDaemonize || break
 
 		fi
 

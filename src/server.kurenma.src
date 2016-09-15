@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: server.kurenma.src 74 2016-09-15 12:10:41+04:00 toor $"
+# $Id: server.kurenma.src 75 2016-09-15 13:37:17+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -318,69 +318,10 @@ udfSetupTunnel() {
 
 }
 #
-udfMain() {
-
-	DEBUGLEVEL=5
-
-	udfThrowOnCommandNotFound dig echo grep ip ipcalc mkdir nc openssl printf sed sipcalc wg xargs
-
-	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
-
-	local -a aId
-	local fnCtl ini pathCrt pathDat pathIni pathKey pathRun s
-	local csvSectionMain csvSectionSSL ipsAllowed aReqOptByRole
-
-	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, rev${aId[2]}"
-
-	udfDebug 1 "start $( _ s0 ) as ${_KURENMA_SERVICE_ROLE}${s}"
-
-	csvSectionMain='bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
-	csvSectionSSL='cnClient;cnServer'
-	eval $( _defLocal $csvSectionMain $csvSectionSSL )
-
-	udfExitIfAlreadyStarted
-
-	pathDat=$( _ pathDat )
-	pathIni=$( _ pathIni )
-	pathRun=$( _ pathRun )
-
-	pathCrt=${pathIni}/ssl/public
-	pathKey=${pathIni}/ssl/private
-	ini=${pathIni}/kurenma.ini
-	fnCtl=${pathRun}/kurenma.pid
-	mkdir -p $pathDat || eval $( udfOnError retecho NotExistNotCreated $pathDat )
-
-	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}" "ipsAllowed:="
-
-	: ${dev:=wg0}
-	: ${portAuth:=42912}
-
-	udfIsNumber $tsKeepalive || tsKeepalive=0
-	(( $tsKeepalive > 65355 )) && tsKeepalive=65355
-
-	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "32min"
-
-	case $role in
-
-		client)
-			aReqOptByRole="cnClient host"
-		;;
-
-		server)
-			aReqOptByRole="ipServer port"
-			: ${ipClient:=dynamic}
-			: ${ipServer:=192.168.29.1}
-			: ${port:=12912}
-		;;
-
-	esac
-
-	udfDebug 3 "configuration:" && udfShowVariable cnServer dev ipsAllowed portAuth tsKeepalive tsPeerTimeout $aReqOptByRole
-	udfThrowOnEmptyVariable cnServer dev pathCrt pathDat pathIni pathKey pathRun portAuth tsPeerTimeout $aRequiredByRole
-
-	echo "start" > $fnCtl
+udfService() {
 
 	udfThrowOnCommandNotFound cut kill ps sort
+	udfThrowOnEmptyVariable cnServer dev fnCtl ipServer pathKey port portAuth
 
 	local cmdNetcat fnServerKey fnTmp ip
 

@@ -1,49 +1,10 @@
 #!/bin/bash
 #
-# $Id: server.kurenma.src 76 2016-09-16 16:01:02+04:00 toor $"
+# $Id: server.kurenma.src 78 2016-09-25 00:24:49+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
 #
-#
-udfMakeFifo() {
-
-	[[ -n "$1" ]] || eval $( udfOnError iErrorEmptyOrMissingArgument )
-	udfMakeTemp $1 path=$( _ pathRun )
-	rm -f ${!1}
-	mkfifo ${!1}
-
-}
-#
-udfStopProcess() {
-
-	local pid s
-
-	if udfIsNumber $1; then
-
-		pid=$1
-		shift
-
-	else
-
-		pid="$( ps -C "$*" -o pid= | xargs )"
-
-	fi
-
-	for s in 15 9; do
-
-		udfIsNumber $pid || continue
-
-		sleep 1
-
-		udfCheckStarted $pid $* && kill -${s} $pid
-
-
-	done
-
-	return 0
-
-}
 #
 udfSelfCheck() {
 
@@ -344,7 +305,7 @@ udfService() {
 	while true; do
 
 		udfDebug 3 "Daemon for WireGuard clients (re)started.."
-		udfMakeFifo fnTmp
+		udfMakeTemp type=pipe fnTmp
 		udfWaitRequest < $fnTmp | $cmdNetcat > $fnTmp
 		udfWatchdog $fnCtl 1 || break
 		rm -f $fnTmp

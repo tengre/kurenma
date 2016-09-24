@@ -1,12 +1,12 @@
 ##
-## $Id: Makefile.am 72 2016-09-14 16:11:15+04:00 toor $
+## $Id: Makefile.am 78 2016-09-25 00:24:48+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
 #
 PACKAGE			= kurenma
 ETC			= /etc
-bin_SCRIPTS		= update-firehol gen-ssl-kurenma
+bin_SCRIPTS		= update-firehol gen-ssl-kurenma setup-knockd
 sbin_SCRIPTS		= kurenmactl kurenmad
 systemvdir		= ${ETC}/init.d
 systemv_SCRIPTS		= ${PACKAGE}

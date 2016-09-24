@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 77 2016-09-24 20:48:34+04:00 toor $
+# $Id: kurenmactl 78 2016-09-25 00:24:49+04:00 toor $
 #
 _kurenma_sVersion=0.3
 #
@@ -29,36 +29,6 @@ udfUsage() {
 
 }
 #******
-udfStopProcess() {
-
-	local pid s
-
-	if udfIsNumber $1; then
-
-		pid=$1
-		shift
-
-	else
-
-		pid="$( ps -C "$*" -o pid= | xargs )"
-
-	fi
-
-	for s in 15 9; do
-
-		udfIsNumber $pid || continue
-
-		sleep 1
-
-		udfCheckStarted $pid $* && kill -${s} $pid
-
-
-	done
-
-	return 0
-
-}
-#
 udfMain() {
 
 	DEBUGLEVEL=3
@@ -109,8 +79,11 @@ udfMain() {
 			[[ -s ${pathRun}/${cmd}.pid ]] && pid=$( head -n 1 ${pathRun}/${cmd}.pid )
 
 			udfStopProcess $pid $cmd
+            s=$?
 
-			return $?
+            [[ $s == $( _ iErrorNoSuchProcess ) ]] && s=0
+
+			return $s
 		;;
 
 		    *)

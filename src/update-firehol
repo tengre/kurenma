@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 73 2016-09-14 17:07:31+04:00 toor $
+# $Id: update-firehol 78 2016-09-25 00:24:49+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -12,29 +12,6 @@ _bashlyk_iErrorTimeExpired=167
 _bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 #
 #
-#
-udfGetValidIPsOnly() {
-
-	udfOn EmptyOrMissingArgument "$*" || return $?
-
-	local s sDig
-	local -A h
-
-	for s in $*; do
-
-		[[ $s =~ ^[0-9.]+$ ]] && ipcalc "$s" | grep '^INVALID ADDRESS:' && continue
-		sipcalc -d4 "$s" | grep '^-\[ERR :' && continue
-		sDig=$( dig +short $s | xargs )
-		[[ -n "$sDig" ]] && s="$sDig"
-		h[$s]=$s
-
-	done >/dev/null 2>&1
-
-	echo "${h[@]}"
-
-	udfOn EmptyOrMissingArgument return "${h[@]}"
-
-}
 #
 udfMain() {
 
@@ -60,7 +37,8 @@ udfMain() {
 
 		udfDebug 0 "try lock from $s"
 
-		(( ${#_bashlyk_afnClean[$BASHPID]} > 0 )) && rm -f ${_bashlyk_afnClean[$BASHPID]}
+		## TODO check fo
+		(( ${#_bashlyk_afoClean[$BASHPID]} > 0 )) && rm -f ${_bashlyk_afoClean[$BASHPID]}
 		exec env _kurenma_flock="$$" flock -x -w 99 $fnLock $0 $s $$
 
 	fi

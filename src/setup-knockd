@@ -1,36 +1,20 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 29 2016-08-12 15:41:17+04:00 toor $
+# $Id: setup-knockd 78 2016-09-25 00:24:49+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
-#
-_defLocal() {
-
-	local s S
-
-	for s in ${*//[;,]/ }; do
-
-		udfIsValidVariable $s || eval $( udfOnError throw iErrorNonValidVariable "$s" )
-		S+="$s "
-
-	done
-
-	echo "local ${S% *}"
-
-}
 #
 udfMain() {
 
 	udfThrowOnCommandNotFound grep sed
 
 	local crtServer cnServer fmtKnockd iniServer iniKnockd pathIni s
-	## TODO <procent> is temporary fix bug of bashlyk library 1.84 (libini)
-	fmtKnockd="sequence=%d,%d,%d;seq_timeout=5;command=/usr/bin/update-firehol <procent>IP<procent>;tcpflags=syn"
+	fmtKnockd="sequence=%d,%d,%d;seq_timeout=5;command=/usr/bin/update-firehol %%IP%%;tcpflags=syn"
 
 	pathIni=$( _ pathIni )
-	iniServer=${pathIni}/server.kurenma.ini
+	iniServer=${pathIni}/kurenma.ini
 	iniKnockd="/etc/knockd.conf"
 	#
 	udfIni $iniServer "ssl:cnServer"
@@ -45,13 +29,7 @@ udfMain() {
 	s=$( printf -- "$fmtKnockd" $s )
 	udfDebug 2 "  sequence: $s"
 
-	## temporary bug fix
-	sed -i -r -e "s/%/<procent>/g" $iniKnockd
-	##
 	udfIniChange $iniKnockd "$s" "kurenma"
-	## temporary bug fix
-	sed -i -r -e "s/<procent>/%/g" $iniKnockd
-	##
 
 	udfDebug 2 && cat $iniKnockd
 

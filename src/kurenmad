@@ -1,97 +1,16 @@
 #!/bin/bash
 #
-# $Id: kurenmad 77 2016-09-24 20:48:34+04:00 toor $"
+# $Id: kurenmad 78 2016-09-25 00:24:49+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
-_reIPv4='[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
-_bashlyk_iErrorTimeExpired=167
-_bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
-_bashlyk_iErrorInvalidArgument=253
-_bashlyk_hError[$_bashlyk_iErrorInvalidArgument]="invalid argument"
-_bashlyk_iErrorInvalidVariable=200
-_bashlyk_hError[$_bashlyk_iErrorInvalidVariable]="invalid variable"
 _kurenma_pathLib=/usr/share/kurenma
 #
 #
-#
-_defLocal() {
-
-	local s S
-
-	for s in ${*//[;,]/ }; do
-
-		udfIsValidVariable $s || eval $( udfOnError throw iErrorNonValidVariable "$s" )
-		S+="$s "
-
-	done
-
-	echo "local ${S% *}"
-
-}
-#
-udfGetValidIPsOnly() {
-
-	udfOn EmptyOrMissingArgument "$*" || return $?
-
-	local s sDig
-	local -A h
-
-	for s in $*; do
-
-		[[ $s =~ ^[0-9.]+$ ]] && ipcalc "$s" | grep '^INVALID ADDRESS:' && continue
-		sipcalc -d4 "$s" | grep '^-\[ERR :' && continue
-		sDig=$( dig +short $s | xargs )
-		[[ -n "$sDig" ]] && s="$sDig"
-		h[$s]=$s
-
-	done >/dev/null 2>&1
-
-	echo "${h[@]}"
-
-	udfOn EmptyOrMissingArgument return "${h[@]}"
-
-}
-#
-udfGetValidCIDR() {
-
-	udfThrowOnEmptyVariable _reIPv4
-	udfOn EmptyOrMissingArgument "$*" || return $?
-
-	local s i
-	local -A h
-
-	for s in $*; do
-
-	[[ $s =~ $_reIPv4 ]] || continue
-
-	i=${s##*/}
-	if [[ $s == $i ]]; then
-
-		s=$( udfGetValidIPsOnly $s ) || continue
-
-	else
-
-		udfIsNumber $i && (( i <= 32 )) || continue
-
-		s=$( udfGetValidIPsOnly ${s%/*} ) || continue
-		s="${s}/${i}"
-
-	fi
-
-	[[ -n "$s" ]] && h[$s]="$s"
-
-	done
-
-	echo "${h[@]}"
-
-	udfOn EmptyOrMissingArgument return "${h[@]}"
-
-}
 #
 udfGetTimeInSec() {
 
@@ -191,7 +110,7 @@ udfMain() {
 
 	csvSectionMain='bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
 	csvSectionSSL='cnClient;cnServer'
-	eval $( _defLocal $csvSectionMain $csvSectionSSL )
+	eval $( udfLocalVarFromCSV $csvSectionMain $csvSectionSSL )
 
 	udfExitIfAlreadyStarted
 

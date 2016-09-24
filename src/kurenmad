@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 75 2016-09-15 13:37:17+04:00 toor $"
+# $Id: kurenmad 77 2016-09-24 20:48:34+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -103,7 +103,7 @@ udfGetTimeInSec() {
 
 		eval 'export $2="$( udfGetTimeInSec $3 )"'
 		[[ -n ${!2} ]] || eval 'export $2="$( udfGetTimeInSec $4 )"'
-		[[ -n ${!2} ]] || eval $( udfOnError2 iErrorEmptyResult "$2 - empty variable" )
+		[[ -n ${!2} ]] || eval $( udfOnError2 iErrorEmptyResult "$2" )
 
 		return $?
 

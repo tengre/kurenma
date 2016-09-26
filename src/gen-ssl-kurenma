@@ -1,25 +1,10 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 24 2016-08-04 11:01:47+04:00 toor $
+# $Id: gen-ssl-kurenma 78 2016-09-25 00:24:48+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
-#
-_defLocal() {
-
-	local s S
-
-	for s in ${*//[;,]/ }; do
-
-		udfIsValidVariable $s || eval $( udfOnError throw iErrorNonValidVariable "$s" )
-		S+="$s "
-
-	done
-
-	echo "local ${S% *}"
-
-}
 #
 udfMain() {
 
@@ -39,7 +24,7 @@ udfMain() {
 	fnTemplate=/usr/share/kurenma/openssl.cnf.template
 	csv='C;ST;L;O;OU;CN;EA'
 
-	eval $(_defLocal $csv)
+	eval $( udfLocalVarFromCSV $csv )
 
 	udfIni $confDN ":${csv}"
 

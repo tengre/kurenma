@@ -1,0 +1,34 @@
+#
+# $Id: kurenma.ini.example 74 2016-09-15 12:10:41+04:00 toor $
+#
+	role		= client
+#	role		= server
+
+	host		= server.domain
+	port		= 12912
+	portAuth	= 42912
+
+	tsKeepalive	= 25
+
+	tsPeer￼Timeout   = 8min
+#	tsPeer￼Timeout   = 12hours
+
+	bDefaultRoute	= false
+
+	ipServer	= 192.168.29.1
+
+	ipClient	= dynamic
+#	ipClient	= commonname
+
+
+[ssl]
+
+	cnClient	= client.common.name
+	cnServer	= server.common.name
+
+[ipsAllowed]
+
+	192.168.29.0/24
+
+
+

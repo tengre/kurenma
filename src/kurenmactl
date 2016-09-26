@@ -1,0 +1,102 @@
+#!/bin/bash
+#
+# $Id: kurenmactl 80 2016-09-26 16:54:50+04:00 toor $
+#
+_kurenma_sVersion=0.4
+#
+_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
+#
+#
+#
+udfUsage() {
+
+    	local -a aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) )
+
+	printf -- "\t%s v%s rev%s, Kurenma Service Management Tool, (c) %s\n" "$(_ s0)" "$_kurenma_sVersion" "${aId[2]}" "${aId[3]}"
+
+	cat <<-EOF | tr -d '#'
+
+		Usage: $(_ s0) start|stop
+		where:
+
+#			start	- start service
+#			stop	- stop  service
+#
+#		without arguments show this usage and exit
+
+	EOF
+	eval $(udfOnError exit)
+
+}
+#******
+udfMain() {
+
+	DEBUGLEVEL=3
+
+	udfThrowOnCommandNotFound cut echo grep kill kurenmad nohup printf ps sleep uniq xargs
+
+	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+
+	local cmd cmdNetcat fnCtl ini pathIni pathRun pid portAuth s
+
+	cmd=kurenmad
+	pathIni=$( _ pathIni )
+	pathRun=$( _ pathRun )
+
+	udfThrowOnEmptyVariable pathIni pathRun
+
+	mkdir -p $pathRun || eval $( udfOnError throw NotExistNotCreated "$pathRun" )
+
+	ini=${pathIni}/kurenma.ini
+	fnCtl=${pathRun}/kurenma.pid
+
+	udfIni $ini ':portAuth'
+
+	: ${portAuth:=42912}
+	cmdNetcat="nc -k -l -v $portAuth"
+
+	eval set -- $(_ sArg)
+
+	case "$1" in
+
+		start)
+			udfDebug 1 "service $cmd starting.."
+
+			cd /
+			nohup $cmd </dev/null >/dev/null 2>/dev/null &
+
+			return 0
+		;;
+
+		 stop)
+			udfDebug 1 "service $cmd stopping.."
+
+			echo stop >> $fnCtl
+			udfStopProcess $cmdNetcat
+
+			sleep 8
+
+			[[ -s ${pathRun}/${cmd}.pid ]] && pid=$( head -n 1 ${pathRun}/${cmd}.pid )
+
+			udfStopProcess $pid $cmd
+            s=$?
+
+            [[ $s == $( _ iErrorNoSuchProcess ) ]] && s=0
+
+			return $s
+		;;
+
+		    *)
+			udfDebug 1 && udfUsage
+			return 1
+		;;
+
+	esac
+
+	return 0
+}
+#
+#
+#
+udfMain
+#

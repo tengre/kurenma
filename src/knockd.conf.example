@@ -6,9 +6,3 @@
 	seq_timeout = 5
 	command     = /usr/bin/update-firehol %IP%
 	tcpflags    = syn
-
-[delHost]
-	sequence    = 50000,30000,10000
-	seq_timeout = 5
-	command     = /usr/bin/update-firehol
-	tcpflags    = syn

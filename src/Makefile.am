@@ -1,20 +1,33 @@
 ##
-## $Id: Makefile.am 39 2016-08-25 02:36:10+04:00 toor $
+## $Id: Makefile.am 80 2016-09-26 16:54:50+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
 #
 PACKAGE			= kurenma
 ETC			= /etc
-bin_SCRIPTS		= update-firehol gen-ssl-kurenma kurenmac
-sbin_SCRIPTS		= kurenmas
+bin_SCRIPTS		= update-firehol gen-ssl-kurenma setup-knockd
+sbin_SCRIPTS		= kurenmactl kurenmad
+systemvdir		= ${ETC}/init.d
+systemv_SCRIPTS		= ${PACKAGE}
 systemddir		= /lib/systemd/system
 systemd_DATA		= ${PACKAGE}.service
 sysconfdir		= ${ETC}/${PACKAGE}
-sysconf_DATA		= ipslist.ini client.${PACKAGE}.ini.example server.${PACKAGE}.ini.example dn.${PACKAGE}.ini
+sysconf_DATA		= ipslist.ini ${PACKAGE}.ini.example dn.${PACKAGE}.ini
 syslibdir		= /usr/share/${PACKAGE}
-syslib_DATA		= knockd.conf.example openssl.cnf.template
+syslib_DATA		= knockd.conf.example openssl.cnf.template client.kurenma.src server.kurenma.src
+PACKAGEVERSION		= $(shell test -f ../ChangeLog && sed -n "3p" ../ChangeLog | sed -e "s/.*Version.//")
 DESTDIR			=
 
 install-data-hook:
-	$(shell) ln -sf /lib/systemd/system/${PACKAGE}.service /etc/systemd/system/${PACKAGE}.service && systemctl daemon-reload || true
+	$(shell) which systemctl || update-rc.d ${systemv_SCRIPTS} defaults || true
+	$(shell) which systemctl && chmod -x ${systemvdir}/${systemv_SCRIPTS} && mv -v ${systemvdir}/${systemv_SCRIPTS} ${systemvdir}/${systemv_SCRIPTS}.disabled || true
+	$(shell) which systemctl && systemctl enable ${PACKAGE} && systemctl daemon-reload || true
+
+uninstall-hook:
+	$(shell) which systemctl || update-rc.d -f ${systemv_SCRIPTS} remove || true
+	$(shell) which systemctl && rm -f ${systemvdir}/${systemv_SCRIPTS}.disabled || true
+	$(shell) which systemctl && systemctl disable ${PACKAGE} && systemctl daemon-reload || true
+
+all:
+	$(shell) sed -i -e "s/_kurenma_sVersion=.*/_kurenma_sVersion=${PACKAGEVERSION}/" kurenmactl

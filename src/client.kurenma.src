@@ -1,0 +1,275 @@
+#!/bin/bash
+#
+# $Id: client.kurenma.src 78 2016-09-25 00:24:48+04:00 toor $
+#
+_bashlyk=kurenma . bashlyk
+#
+#
+#
+udfKnocking() {
+
+	udfThrowOnEmptyVariable fnCtl fnServerCrt host portAuth
+
+	local i s
+
+	i=256
+
+	s=$( grep keyid $fnServerCrt | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
+
+	[[ -n "$s" ]] || eval $( udfOnError2 throw "EmptyResult" "$fnServerCrt - not valid format" )
+
+	udfDebug 5 "server crt keyid head: $s"
+
+	s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError2 throw "NotValidArgument" "$fnServerCrt - hexadecimal data expected" )
+
+	udfDebug 5 "knock  ports sequence: $s"
+
+	udfDebug 2 "check server $host availibity:"
+
+	while true; do
+
+		nc -w 3 -z ${host} ${portAuth} 2>/dev/null && break
+		udfDebug 2 && echo -n "."
+
+		if ! (( i % 8 )); then
+
+			knock $host $s
+			udfDebug 2 && echo -n "!"
+
+		fi
+
+		if ! udfWatchdog $fnCtl 1; then
+
+			echo "x"
+			return $(_ iErrorAbortedBySignal)
+
+		fi
+
+		i=$((i-1))
+
+		! (( i % 32 )) && echo ""
+
+		if (( $i <= 0 )); then
+
+			echo "fail after 256 attempts.. try again"
+			eval $( udfOnError2 warn NotAvailable "${host}:${portAuth}" )
+			i=256
+
+		fi
+
+	done >&2
+
+	return 0
+
+}
+#
+udfGetTunnelSettings() {
+
+	udfThrowOnEmptyVariable cnClient fnCtl fnClientKey host portAuth
+
+	local fnPub fnAns sKey s
+
+	s="$(_ iErrorAbortedBySignal) stop signal received"
+
+	udfMakeTemp fnPub
+	udfMakeTemp fnAns
+
+	while true; do
+
+		udfKnocking || break
+
+		udfDebug 2 "ok."
+
+		udfWatchdog $fnCtl 4 || break
+
+		sKey=$( wg genkey )
+
+		s="$( echo $sKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $portAuth | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
+
+		udfDebug 3 && \
+		printf -- "\nclient WireGuard keys:\nprivate - %s\npublic  - %s\n" \
+			"${sKey:0:10}<skipped>" "$(head -c 10 $fnPub)<skipped>"
+
+		[[ $s =~ ^OK: ]] && break
+
+		[[ -z "$s" ]] && s="$(< $fnAns)"
+
+		eval $( udfOnError2 warn iErrorNotValidArgument "malformed answer from ${host}:${portAuth} $s" )
+
+		s="$(_ iErrorAbortedBySignal ) stop signal received"
+		udfWatchdog $fnCtl 8 || break
+
+	done >&2
+
+	rm -f $fnAns $fnPub
+
+	echo "${s//:/ } $sKey"
+
+	return 0
+}
+#
+udfSetupTunnel() {
+
+	udfThrowOnEmptyVariable dev host
+
+	local ipClient ipServer peer port sKey
+
+	[[ $1 == $( _ iErrorAbortedBySignal  ) ]] && return $( _ iErrorAbortedBySignal  )
+	[[ $1 != "OK"   ]] && return $( _ iErrorNonValidArgument )
+
+	shift
+
+	peer=$( echo $1 | grep -P "^[a-zA-Z0-9+/]+={0,2}$" )
+	udfIsNumber $2 && port=$2 || port=''
+	ipClient=$( udfGetValidIPsOnly $3 )
+	ipServer=$( udfGetValidIPsOnly $4 )
+	sKey=$5
+
+	udfDebug 3 && printf -- "$fmtCon" "$host" "$port" "${peer:0:10}<skipped>" "$ipClient" "$ipServer"
+
+	udfThrowOnEmptyVariable peer port ipClient ipServer
+
+	udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>: " "${peer:0:10}"
+	#
+	try-every-line
+
+		ip link del dev $dev || true
+		ip link add dev $dev type wireguard
+
+		wg set $dev private-key <( echo $sKey ) \
+			peer $peer \
+			allowed-ips 0.0.0.0/0 \
+			persistent-keepalive $tsKeepalive \
+			endpoint "${host}:${port}"
+
+		ip address add "${ipClient}"/24 dev $dev
+		ip link set up dev $dev
+
+	catch-every-line
+
+	return 0
+
+}
+#
+udfSetDefaultRoute() {
+
+	udfThrowOnEmptyVariable dev _peIPv4
+
+	local s
+
+	s="$( wg show $dev endpoints | sed -re 's/.*\t(.*):.*/\1/' )"
+	udfDebug 4 "server endpoint: $s"
+
+	s="$( ip route get $s | grep -Po "$_peIPv4 via $_peIPv4" )"
+	udfDebug 4 "route rule for server: $s"
+
+	if [[ -n "$s" ]]; then
+
+		try-every-line
+
+			ip route add $s || true
+			ip route add 0/1 dev $dev
+			ip route add 128/1 dev $dev
+
+		catch-every-line
+
+		udfDebug 2 "tunnel $dev used as default route ($s):" && route -n
+
+	else
+
+		eval $( udfOnError throw iErrorEmptyOrMissingArgument "default route fail" )
+
+	fi
+
+	return 0
+
+}
+#
+udfService() {
+
+	udfThrowOnCommandNotFound false knock ping route tee true
+	udfThrowOnEmptyVariable bDefaultRoute cnClient cnServer dev fnCtl pathIni pathKey port portAuth tsPeerTimeout
+
+	local bStart fmtCon fmtSSL fnClientCrt fnClientKey fnServerCrt s
+
+	fmtSSL="SSL auth info:\nClient Common Name - %s\nServer Common Name - %s\n"
+	fmtCon="Connection properties from %s:\nremote port: %d\nserver  key: %s\ntunnel  IPs: leased/remote - %s/%s\n"
+	fnServerCrt=${pathCrt}/${cnServer}.crt
+	fnClientCrt=${pathCrt}/${cnClient}.crt
+	fnClientKey=${pathKey}/${cnClient}.key
+
+	s=$( grep Subject: $fnClientCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )
+
+	[[ $s != $cnClient ]] && eval $( udfOnError throw NotValidArgument "invalid cert file $fnClientCrt" )
+
+	for s in "$fnClientCrt" "$fnClientKey" "$fnServerCrt"; do
+
+		[[ -f $s ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
+
+	done
+
+	[[ $bDefaultRoute =~ ^(false|true)$ ]] || bDefaultRoute=false
+
+	udfDebug 3 && printf -- "$fmtSSL" "$cnClient" "$cnServer"
+
+	bStart=true
+
+	while true; do
+
+		if $bStart; then
+
+			## TODO try first use saved wg config
+
+			udfSetupTunnel $( udfGetTunnelSettings ) || {
+
+				eval $( udfOnError2 warn $? "setup tunnel settings" )
+				break
+			}
+
+			$bDefaultRoute && udfSetDefaultRoute
+			udfDebug 1 && printf -- "\nclient configuration done.\n"
+			udfDebug 5 && udfShowPeerInfo
+
+			wg showconf $dev > ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
+			chmod 0600 ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
+
+			ping -q -W 1 -с 3 $ipServer >/dev/null 2>&1
+
+		fi
+
+		udfDebug 2 "check connection every $tsPeerTimeout sec.."
+		## TODO force check with async message
+		udfWatchdog $fnCtl $tsPeerTimeout || break
+
+		for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
+
+			if udfIsNumber ${s##*:}; then
+
+				if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
+
+					wg set $dev peer ${s%%:*} remove
+					udfDebug 3 "peer ${s:0:10}<skipped> removed .. $?"
+					bStart=true
+
+				else
+
+					bStart=false
+
+				fi
+
+			else
+
+				eval $( udfOnError2 warn iErrorNotValidArgument "${s##*:}" )
+
+			fi
+
+		done
+
+	done
+
+	udfFinally "service down"
+
+}
+#
+#
+#

@@ -1,0 +1,320 @@
+#!/bin/bash
+#
+# $Id: server.kurenma.src 79 2016-09-25 00:42:23+04:00 toor $"
+#
+_bashlyk=kurenma . bashlyk
+#
+#
+#
+udfSelfCheck() {
+
+	udfThrowOnEmptyVariable fnCtl portAuth
+	udfIsNumber $portAuth || eval $( udfOnError throw NotValidArgument "$portAuth" )
+
+	local fn iA iB iC=0 s
+
+	fn=$( _ fnLog )
+
+	[[ -f $fn ]] || eval $( udfOnError throw iErrorNoSuchFileOrDir "$fn" )
+
+	while true; do
+
+		## TODO check peers expiring
+		## TODO implement auto sleep mode
+
+		udfWatchdog $fnCtl 15 || break
+
+		iB=$( sed -rn "/.* Connection from .* port .* .* accepted .*/{=}" $fn | tail -n 1 )
+
+		udfWatchdog $fnCtl 15 || break
+
+		iA=$( sed -rn "/.* (Listening on .* .*|Connection closed, listening again.)/{=}" $fn | tail -n 1 )
+
+		udfIsNumber "$iA" || iA=0
+		udfIsNumber "$iB" || iB='-1'
+
+		(( iA - iB > 0 )) && continue
+
+		udfDebug 4 "selfcheck checkpoint - iA=$iA iB=$iB"
+
+		if (( iA == iC )); then
+
+			udfDebug 4 "maybe netcat is hung - iA=$iA iB=$iB - try restart.."
+			udfStopProcess $cmdNetcat
+
+		else
+
+			(( iA == -1 )) && iC=0 || iC=$iA
+			udfWatchdog $fnCtl 15 || break
+
+		fi
+
+	done
+
+	return 0
+}
+#
+udfWaitRequest() {
+
+	local -r iMax=32
+	local i=0 s csv
+	#
+	while read -n 66 s; do
+
+		udfDebug 5 "input line ${i}: ${s:0:10}<skipped>"
+
+		if [[ $s =~ ^-----BEGIN.PKCS7-----$ ]]; then
+
+			csv=""
+			i=0
+
+		fi
+
+		csv+="${s}:"
+		i=$((i+1))
+
+		if (( $i > $iMax )); then
+
+			udfDebug 0 "Warn: too many lines received, ignore .."
+			csv=""
+			i=0
+
+		fi
+
+		if [[ $csv =~ ^-----BEGIN.PKCS7-----.*-----END.PKCS7-----:$ ]]; then
+
+			udfDebug 5 "start request handling."
+			udfHandleRequest "$csv"
+			csv=""
+			i=0
+
+		fi
+
+	done
+
+}
+#
+udfHandleRequest() {
+
+	udfThrowOnEmptyOrMissingArgument "$@"
+	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt pathDat pathIni tsKeepalive tsPeerTimeout
+
+	local a aCIDR cnClient fn fnClientCrt fnLeased peer s
+
+	udfMakeTemp fn
+
+	printf -- "${1//:/\\n}" | openssl smime -decrypt -inform PEM -inkey $fnServerKey | tr -d '\r' > $fn
+
+	udfDebug 5 && {
+
+		printf -- "\nreceived data:\n--------------\n"
+		head -n 2 $fn
+		echo "$( tail -n +3 $fn | head -c 10 )<skipped>"
+		echo "--------------"
+
+	} >&2
+
+	if [[ $( wc -l < $fn ) != 3 ]]; then
+
+		echo "Error - unexpected format"
+		eval $( udfOnError2 retwarn iErrorNotValidArgument "untrusted input data" )
+
+	fi
+
+	peer="$( tail -n +3 $fn )"
+	s=$( head -n 1 $fn )
+	rm -f $fn
+
+	for fn in $( ls $pathCrt ); do
+
+		if [[ -f ${pathCrt}/${fn} && $fn =~ .crt ]]; then
+
+			cnClient="$( grep 'Subject:' ${pathCrt}/${fn} | sed -re "s/.*CN=(.*)\/email.*/\1/" )"
+
+		else
+
+			continue
+
+		fi
+
+		[[ $s == $cnClient ]] || continue
+
+		fnClientCrt=${pathCrt}/${fn}
+		break
+
+	done
+
+	if [[ -z "$fnClientCrt" ]]; then
+
+		echo "Error - unexpected request"
+		eval $( udfOnError2 retecho iErrorNotPermitted "client certificate not found" )
+
+	fi
+
+	fnLeased=${pathDat}/${cnServer}.${dev}.leased
+
+	{
+
+		udfDebug 3 && \
+			printf -- "\nremote peer info:\n\tClient Common Name\t- %s\n\tPublic key for %s\t- %s\n" \
+				"$cnClient" "$dev" "${peer:0:10}<skipped>" >&2
+
+		if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
+
+			wg set $dev peer $(wg show $dev latest-handshakes | sort -k 2 -b -n | head -n 1 | cut -f 1) remove
+
+		fi
+
+		for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
+
+			if udfIsNumber ${s##*:}; then
+
+				udfDebug 3 "$(date +%s) - ${s##*:} > $tsPeerTimeout"
+				(( ${s##*:} < 999 )) && continue
+				## TODO update latest handshake for peer in $fnLeased
+				if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
+
+					wg set $dev peer ${s%%:*} remove
+					udfDebug 3 "peer ${s:0:10}<skipped> removed .. $?"
+
+				fi
+
+			else
+
+				eval $( udfOnError2 warn iErrorNotValidArgument "${s##*:}" )
+
+			fi
+
+		done
+
+		if [[ "$ipClient" == "commonname" ]]; then
+
+			ipClient=$( udfGetValidIPsOnly $cnClient )
+			udfDebug 5 "Leased IP by Common Name to $cnClient - $ipClient"
+
+		fi
+
+		if [[ -z "$ipClient" || $ipClient == "dynamic" ]]; then
+
+			[[ -f $fnLeased ]] || touch $fnLeased
+
+			ipClient=$( grep -P "^${cnClient}:\S+$" $fnLeased | tail -n 1 | cut -f 2 -d':' | xargs )
+			ipClient=$( udfGetValidIPsOnly $ipClient )
+
+		fi
+
+		if [[ -z "$ipClient" ]]; then
+
+			ipClient=$( s="$( wg show $dev allowed-ips )"; for ((i=2; i<=254; i++)); do ip="${ipServer%.*}.$i"; [[ $s != *${ip}/32* ]] && echo $ip && break; done )
+			ipClient=$( udfGetValidIPsOnly $ipClient )
+
+		fi
+
+		if [[ -z "$ipClient" ]]; then
+
+			echo "not allocated IP to the client"
+			eval $( udfOnError2 retecho iErrorEmptyOrMissingArgument "not allocated IP to the client" )
+
+		fi
+
+		aCIDR=$( udfGetValidCIDR ${ipClient}/32 ${ipsAllowed//[;,]/} )
+
+		udfDebug 5 "allowed ips: $aCIDR"
+
+		udfMakeTemp fn
+		if wg set $dev peer "$peer" allowed-ips "${aCIDR// /,}" persistent-keepalive $tsKeepalive 2>$fn; then
+
+			echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${ipServer}"
+
+			for s in $( wg show $dev peers ); do
+
+				grep ":${s:0:10}$" $fnLeased
+
+			done > $fn
+			mv -f $fn $fnLeased
+			echo "${cnClient}:${ipClient}:$(date +%s):${peer:0:10}" >> $fnLeased
+
+		else
+
+			echo "Error $(< $fn) $?"
+
+		fi
+
+	} | openssl smime -encrypt -outform PEM $fnClientCrt
+
+	for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
+
+		wg set $dev peer $s remove
+		udfDebug 3 "${dev}: remove unused peer ${s:0:10}<skipped> .. $?"
+
+	done
+
+	udfDebug 1 "server configuration updated."
+	udfDebug 5 && udfShowPeerInfo >&2
+
+	wg showconf $dev > ${pathIni}/${cnServer}.${dev}.conf
+	chmod 0600 ${pathIni}/${cnServer}.${dev}.conf
+
+}
+#
+udfSetupTunnel() {
+
+	udfThrowOnEmptyVariable dev ipServer port
+
+	udfDebug 3 "Init WireGuard device $dev"
+
+	try-every-line
+
+		ip link del dev $dev 2>/dev/null || true
+		ip link add dev $dev type wireguard
+		ip address add ${ipServer}/24 dev $dev
+		wg set $dev private-key <(wg genkey) listen-port $port
+		ip link set up dev $dev
+
+	catch-every-line
+
+	udfDebug 3 "init new server pub key: $( wg show $dev private-key | wg pubkey | head -c 10 )<skipped>"
+
+	return 0
+
+}
+#
+udfService() {
+
+	udfThrowOnCommandNotFound cut kill ps sort
+	udfThrowOnEmptyVariable cnServer dev fnCtl ipServer pathKey port portAuth
+
+	local cmdNetcat fnServerKey fnTmp ip
+
+	cmdNetcat="nc -k -l -v $portAuth"
+
+	fnServerKey=${pathKey}/${cnServer}.key
+
+	[[ -f $fnServerKey ]] || eval $(udfOnError exitecho NoSuchFileOrDir "$fnServerKey")
+
+	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then
+
+		udfSetupTunnel
+
+	fi
+
+	udfStopProcess $cmdNetcat
+	udfSelfCheck &
+	udfAddPid2Clean $!
+
+	while true; do
+
+		udfDebug 3 "Daemon for WireGuard clients (re)started.."
+		udfMakeTemp fnTmp type=pipe
+		udfWaitRequest < $fnTmp | $cmdNetcat > $fnTmp
+		udfWatchdog $fnCtl 1 || break
+		rm -f $fnTmp
+
+	done
+
+	udfFinally "service down"
+
+}
+#
+#
+#

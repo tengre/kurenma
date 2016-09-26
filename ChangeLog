@@ -1,3 +1,79 @@
+Mon, 26 Sep 2016 12:27:49 +0400
+	New upstream release
+	Version 0.4
+
+ - refactored for unification client and server code:
+   * used single service file kurenmad that contain common code, specific code
+     moved to {client,server}.kurenma.src.
+   * used unified single config file kurenma.ini for client and server with
+     'role' option as selector. Added config example kurenma.ini.example that
+     included  all options for client and server roles
+ - added new file 'kurenmactl' as service management tool:
+   * improved Systemd support
+   * added SystemV init support
+   * used special control file for gracefully service ending
+ - used 'portAuth' option as port for key exchange
+ - udfCheckNetcat replaced by udfStopProcess from bashlyk version 1.86 - the
+   most versatile way to stop the process
+ - updated lists of external commands and important options and variables
+ - used udfLocalVarFromCsv from bashlyk 1.86 for binding options and variables
+ - used udfGetValidIPsOnly from bashlyk 1.86
+
+kurenmad:
+ - throw on empty and not exist/created pathRun or pathIni variables
+ - show role on start service
+ - added function udfWatchdog for waiting with stop command checking, used
+   instead sleep, return iErrorAbortedBySignal on stop signal
+
+server.kurenma.src:
+ - udfMakeFifo removed, used udfMakeTemp .. type=pipe .. from bashlyk
+ - redirection used instead 'cat' command
+ - ipsAllowed option parsed by using udfGetValidCIDR from bashlyk 1.86
+ - refactored, added functions udfShowPeerInfo and udfSetupTunnel
+ - fixed udfSelfCheck - arguments not used, checked external variables fnCtl and
+   portAuth
+
+client.kurenma.src:
+ - bDaemonize option removed, client started as service only
+ - no reexec required for reconnection with server
+ - knock used after availibility checking
+ - improved logging, code splittes to small blocks, added new functions:
+   * udfKnocking - check server availibity
+   * udfGetTunnelSettings - try bind keys with server
+   * udfSetupTunnel - use getted settings for tunnel activating
+   * udfSetDefaultRoute - set default route if needed
+   * udfShowPeerInfo - show created peer info if needed
+ - added new Error state - NotAvailable
+
+kurenmactl:
+ - used nohup and /dev/null redirection for daemonize
+ - return 0 if process already not exists
+ - used flag _bashlyk_log=nouse for disable autologging, feature bashlyk 1.86
+ - improved service control, added control shot for service after 8 sec
+ - portAuth value getted from kurenma.ini for netcat checking
+
+kurenma.ini.example:
+ - bDaemonize option removed
+ - added 'portAuth' option
+
+kurenma.service:
+ - use forking type for unit
+ - used kurenmactl for service start/stop
+
+update-firehol:
+ - used _bashlyk_afoClean instead _bashlyk_afnClean for compatibility with
+   bashlyk version 1.86
+
+setup-knockd:
+ - removed temporary fixes for udfChangeIni from bashlyk version 1.84 by using
+   version 1.86
+
+Makefile.am:
+ - added setup-knockd for install
+ - used enable/disable option of systemctl for service install/uninstall
+ - SystemV init script 'kurenma' renamed to kurenma.disabled if systemd
+   supported
+
 Fri, 02 Sep 2016 00:37:23 +0400
 	New upstream release
 	Version 0.3

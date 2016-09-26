@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 78 2016-09-25 00:24:49+04:00 toor $
+# $Id: kurenmactl 80 2016-09-26 16:54:50+04:00 toor $
 #
-_kurenma_sVersion=0.3
+_kurenma_sVersion=0.4
 #
 _bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 #

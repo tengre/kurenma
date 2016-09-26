@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 78 2016-09-25 00:24:48+04:00 toor $
+## $Id: Makefile.am 80 2016-09-26 16:54:50+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -16,6 +16,7 @@ sysconfdir		= ${ETC}/${PACKAGE}
 sysconf_DATA		= ipslist.ini ${PACKAGE}.ini.example dn.${PACKAGE}.ini
 syslibdir		= /usr/share/${PACKAGE}
 syslib_DATA		= knockd.conf.example openssl.cnf.template client.kurenma.src server.kurenma.src
+PACKAGEVERSION		= $(shell test -f ../ChangeLog && sed -n "3p" ../ChangeLog | sed -e "s/.*Version.//")
 DESTDIR			=
 
 install-data-hook:
@@ -28,3 +29,5 @@ uninstall-hook:
 	$(shell) which systemctl && rm -f ${systemvdir}/${systemv_SCRIPTS}.disabled || true
 	$(shell) which systemctl && systemctl disable ${PACKAGE} && systemctl daemon-reload || true
 
+all:
+	$(shell) sed -i -e "s/_kurenma_sVersion=.*/_kurenma_sVersion=${PACKAGEVERSION}/" kurenmactl

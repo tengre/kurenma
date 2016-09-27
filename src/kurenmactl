@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 80 2016-09-26 16:54:50+04:00 toor $
+# $Id: kurenmactl 82 2016-09-27 12:21:31+04:00 toor $
 #
 _kurenma_sVersion=0.4
 #
@@ -74,14 +74,18 @@ udfMain() {
 			echo stop >> $fnCtl
 			udfStopProcess $cmdNetcat
 
-			sleep 8
+			for s in 1 1 1 1 1 1 1 1; do
 
-			[[ -s ${pathRun}/${cmd}.pid ]] && pid=$( head -n 1 ${pathRun}/${cmd}.pid )
+				sleep 1.1
+				[[ -s ${pathRun}/${cmd}.pid ]] && pid=$( head -n 1 ${pathRun}/${cmd}.pid )
+				udfIsNumber $pid || break
+
+			done
 
 			udfStopProcess $pid $cmd
-            s=$?
+			s=$?
 
-            [[ $s == $( _ iErrorNoSuchProcess ) ]] && s=0
+			[[ $s == $( _ iErrorNoSuchProcess ) ]] && s=0
 
 			return $s
 		;;

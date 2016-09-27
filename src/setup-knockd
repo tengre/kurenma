@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 78 2016-09-25 00:24:49+04:00 toor $
+# $Id: setup-knockd 83 2016-09-27 15:55:59+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -8,7 +8,7 @@ _bashlyk=kurenma . bashlyk
 #
 udfMain() {
 
-	udfThrowOnCommandNotFound grep sed
+	udfThrowOnCommandNotFound cat grep sed
 
 	local crtServer cnServer fmtKnockd iniServer iniKnockd pathIni s
 	fmtKnockd="sequence=%d,%d,%d;seq_timeout=5;command=/usr/bin/update-firehol %%IP%%;tcpflags=syn"
@@ -33,8 +33,15 @@ udfMain() {
 
 	udfDebug 2 && cat $iniKnockd
 
-	## TODO restart knockd
-	# service knockd restart
+	if systemctl >/dev/null 2>&1; then
+
+		systemctl restart knockd.service
+
+	else
+
+		service knockd restart
+
+	fi
 
 }
 #

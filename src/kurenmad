@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 78 2016-09-25 00:24:49+04:00 toor $"
+# $Id: kurenmad 83 2016-09-27 15:55:59+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -100,7 +100,7 @@ udfMain() {
 
 	DEBUGLEVEL=5
 
-	udfThrowOnCommandNotFound dig echo grep ip ipcalc mkdir nc openssl printf sed sipcalc wg xargs
+	udfThrowOnCommandNotFound echo grep ip mkdir nc openssl sed sleep tail wg
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 

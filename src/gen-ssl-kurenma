@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 78 2016-09-25 00:24:48+04:00 toor $
+# $Id: gen-ssl-kurenma 83 2016-09-27 15:55:58+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -8,7 +8,7 @@ _bashlyk=kurenma . bashlyk
 #
 udfMain() {
 
-	udfThrowOnCommandNotFound chmod cp echo mkdir openssl rm sed touch wg
+	udfThrowOnCommandNotFound chmod cp date echo mkdir openssl rm sed tee touch wg
 
 	local conf confDN csv fnTemplate path pathCnf pathCrt pathCsr pathIni pathKey s
 

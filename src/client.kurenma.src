@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: client.kurenma.src 78 2016-09-25 00:24:48+04:00 toor $
+# $Id: client.kurenma.src 83 2016-09-27 15:55:58+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -173,7 +173,7 @@ udfSetDefaultRoute() {
 
 		catch-every-line
 
-		udfDebug 2 "tunnel $dev used as default route ($s):" && route -n
+		udfDebug 2 "tunnel $dev used as default route ($s)"
 
 	else
 
@@ -187,7 +187,7 @@ udfSetDefaultRoute() {
 #
 udfService() {
 
-	udfThrowOnCommandNotFound false knock ping route tee true
+	udfThrowOnCommandNotFound false knock ping tee true
 	udfThrowOnEmptyVariable bDefaultRoute cnClient cnServer dev fnCtl pathIni pathKey port portAuth tsPeerTimeout
 
 	local bStart fmtCon fmtSSL fnClientCrt fnClientKey fnServerCrt s

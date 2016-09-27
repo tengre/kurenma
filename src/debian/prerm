@@ -32,7 +32,7 @@ case "$1" in
 
 		else
 			invoke-rc.d $PACKAGE stop || true
-			update-rc.d -f ${systemv_SCRIPTS} remove
+			update-rc.d -f $PACKAGE remove
 
 		fi
 

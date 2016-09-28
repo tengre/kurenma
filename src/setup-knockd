@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 83 2016-09-27 15:55:59+04:00 toor $
+# $Id: setup-knockd 85 2016-09-28 15:40:42+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -42,6 +42,8 @@ udfMain() {
 		service knockd restart
 
 	fi
+
+	udfFinally "service down"
 
 }
 #

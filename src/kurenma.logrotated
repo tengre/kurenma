@@ -1,0 +1,12 @@
+/var/log/kurenma/*.log {
+	weekly
+	rotate 7
+	postrotate
+	#invoke-rc.d kurenma restart > /dev/null
+	endscript
+	missingok
+	notifempty
+	compress
+	delaycompress
+	copytruncate
+}

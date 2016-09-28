@@ -1,0 +1,9 @@
+#
+# $Id: kurenma.default 85 2016-09-28 14:31:16+04:00 toor $
+#
+# Kurenma application default file
+# sourced by the initscripts
+#
+
+# To enable kurenma at startup set START_KURENMA=YES (init script variable)
+START_KURENMA=NO

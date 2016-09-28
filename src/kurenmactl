@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 83 2016-09-27 15:55:59+04:00 toor $
+# $Id: kurenmactl 85 2016-09-28 14:31:17+04:00 toor $
 #
 _kurenma_sVersion=0.4
 #
@@ -32,6 +32,13 @@ udfUsage() {
 udfMain() {
 
 	DEBUGLEVEL=3
+
+	if [[ $START_KURENMA =~ ^([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|0)$ ]]; then
+
+		udfDebug 1 "service starting disabled, see /etc/default/kurenma.."
+		return 0
+
+	fi
 
 	udfThrowOnCommandNotFound cat echo grep head kurenmad mkdir nohup sleep tr
 

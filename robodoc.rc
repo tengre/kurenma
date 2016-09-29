@@ -1,0 +1,17 @@
+options:
+    --src ./src
+    --doc ./doc/kurenma
+    --html
+    --singledoc
+    --sections
+    --tell
+    --toc
+    --index
+    --charset UTF-8
+    --css ./robodoc.css
+    --syntaxcolors_enable quotes,squotes,line_comments,keywords,non_alpha
+ignore files:
+    .svn
+    *~
+    debian
+    autom4te.cache

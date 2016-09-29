@@ -1,8 +1,8 @@
 ##
-## $Id: Makefile.am 85 2016-09-28 14:30:14+04:00 toor $
+## $Id: Makefile.am 88 2016-09-29 17:18:00+04:00 toor $
 ##
 
-SUBDIRS = src
+SUBDIRS = src doc
 DESTDIR =
 
 all:

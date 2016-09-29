@@ -2,7 +2,7 @@ Source: kurenma
 Section: net
 Priority: optional
 Maintainer: Damir Sh. Yakupov <yds@bk.ru>
-Build-Depends: debhelper (>= 9.0.0), autotools-dev
+Build-Depends: debhelper (>= 9.0.0), autotools-dev, automake, robodoc, xsltproc, docbook-xsl
 Standards-Version: 3.9.5
 
 Package: kurenma

@@ -3,7 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
 <!--
-$Id: kurenmad.1.xml 88 2016-09-29 17:16:51+04:00 toor $
+$Id: kurenmad.1.xml 89 2016-09-30 16:07:12+04:00 toor $
 `xsltproc -''-nonet \
           -''-param man.charmap.use.subset "0" \
           -''-param make.year.ranges "1" \
@@ -56,17 +56,18 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
   <!ENTITY dhsection   "1">
   <!-- TITLE should be something like "User commands" or similar (see
        http://www.tldp.org/HOWTO/Man-Page/q2.html). -->
-  <!ENTITY dhtitle     "kurenma User Manual">
-  <!ENTITY dhpackage   "kurenma">
-  <!ENTITY dhucpackage "KURENMAD">
-  <!ENTITY dhcommand   "kurenmad">
-  <!ENTITY dhservice   "kurenmad">
+  <!ENTITY dhtitle     "General Commands Manual">
+  <!ENTITY dhpackage   "<citerefentry><refentrytitle>kurenma</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhNAME      "KURENMAD">
+  <!ENTITY dhname      "kurenmad">
+  <!ENTITY dhservice   "<citerefentry><refentrytitle>kurenmad</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+
 ]>
 
 <refentry>
   <refentryinfo>
     <title>&dhtitle;</title>
-    <productname>&dhcommand;</productname>
+    <productname>&dhname;</productname>
     <authorgroup>
       <author>
        <firstname>&dhfirstname;</firstname>
@@ -94,59 +95,38 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
     </legalnotice>
   </refentryinfo>
   <refmeta>
-    <refentrytitle>&dhucpackage;</refentrytitle>
+    <refentrytitle>&dhNAME;</refentrytitle>
     <manvolnum>&dhsection;</manvolnum>
   </refmeta>
   <refnamediv>
-    <refname>&dhcommand;</refname>
-    <refpurpose>main service command, for daemonize use kurenmactl</refpurpose>
+    <refname>&dhname;</refname>
+    <refpurpose>main service command of &dhpackage; package</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>&dhcommand;</command>
+      <command>&dhname;</command>
       <!-- Normally the help and version options make the programs stop
            right after outputting the requested information. -->
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1 id="description">
     <title>DESCRIPTION</title>
-    <para><command>&dhcommand;</command>
-     direct run without daemonize
+    <para>
+     Depending on the role, <command>&dhname;</command> acts as a server that receives requests to
+     create WireGuard tunnel or the client requesting the creation of such a
+     tunnel. For authentication using the CA-infrastructure based on OpenSSL.
     </para>
   </refsect1>
   <refsect1 id="files">
     <title>FILES</title>
     <variablelist>
       <varlistentry>
-	<term><filename>/etc/default/&dhpackage;</filename></term>
-        <listitem>
-          <para>The system-wide configuration file to enable or disable
-            starting <application>&dhservice;</application> by using
-	    environment variable START_KURENMA. "NO" value prevents service
-	    starting.
-	  </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
 	<term><filename>/etc/kurenma/kurenma.ini</filename></term>
         <listitem>
           <para>
-           The system-wide configuration file for service
+	   This configuration file defines the parameters of launching the
+	   service, keys and certificates for exchanging WireGuard keys.
 	  </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsect1>
-  <refsect1 id="environment">
-    <title>ENVIRONMENT</title>
-    <variablelist>
-      <varlistentry>
-        <term><envar>START_KURENMA</envar></term>
-        <listitem>
-          <para>
-	   This variable with value "NO" prevents &dhservice; starting as
-	   service by kurenmactl.
-          </para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -161,7 +141,7 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
      </citerefentry>
      &nbsp;
      <citerefentry>
-      <refentrytitle>&dhpackage;.ini</refentrytitle>
+      <refentrytitle>kurenma.ini</refentrytitle>
       <manvolnum>5</manvolnum>
      </citerefentry>
     </para>

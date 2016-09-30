@@ -3,7 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
 <!--
-$Id: update-firehol.1.xml 88 2016-09-29 17:16:52+04:00 toor $
+$Id: update-firehol.1.xml 89 2016-09-30 16:07:13+04:00 toor $
 `xsltproc -''-nonet \
           -''-param man.charmap.use.subset "0" \
           -''-param make.year.ranges "1" \
@@ -56,17 +56,17 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
   <!ENTITY dhsection   "1">
   <!-- TITLE should be something like "User commands" or similar (see
        http://www.tldp.org/HOWTO/Man-Page/q2.html). -->
-  <!ENTITY dhtitle     "kurenma User Manual">
-  <!ENTITY dhpackage   "kurenma">
-  <!ENTITY dhucpackage "UPDATE-FIREHOL">
-  <!ENTITY dhcommand   "update-firehol">
-  <!ENTITY dhservice   "kurenmad">
+  <!ENTITY dhtitle     "General Commands Manual">
+  <!ENTITY dhpackage   "<citerefentry><refentrytitle>kurenma</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhNAME      "UPDATE-FIREHOL">
+  <!ENTITY dhname      "update-firehol">
+  <!ENTITY dhservice   "<citerefentry><refentrytitle>kurenmad</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
 ]>
 
 <refentry>
   <refentryinfo>
     <title>&dhtitle;</title>
-    <productname>&dhcommand;</productname>
+    <productname>&dhname;</productname>
     <authorgroup>
       <author>
        <firstname>&dhfirstname;</firstname>
@@ -94,19 +94,16 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
     </legalnotice>
   </refentryinfo>
   <refmeta>
-    <refentrytitle>&dhucpackage;</refentrytitle>
+    <refentrytitle>&dhNAME;</refentrytitle>
     <manvolnum>&dhsection;</manvolnum>
   </refmeta>
   <refnamediv>
-    <refname>&dhcommand;</refname>
-    <refpurpose>
-     tool for enable client peers on server side via control of
-     firehol service - linux firewall engine
-    </refpurpose>
+    <refname>&dhname;</refname>
+    <refpurpose>part of the &dhpackage; package, utility to configure the third-party application</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>&dhcommand;</command>
+      <command>&dhname;</command>
       <!-- Normally the help and version options make the programs stop
            right after outputting the requested information. -->
       <group choice="opt">
@@ -118,8 +115,8 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
   </refsynopsisdiv>
   <refsect1 id="description">
     <title>DESCRIPTION</title>
-    <para><command>&dhcommand;</command>
-     command added client peer IP-address to firewall white list.
+    <para><command>&dhname;</command>
+     added client peer IP-address to fireHOL white list, used from knockd.
     </para>
   </refsect1>
   <refsect1 id="options">

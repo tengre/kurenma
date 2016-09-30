@@ -3,7 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
 <!--
-$Id: kurenmactl.1.xml 88 2016-09-29 17:16:51+04:00 toor $
+$Id: kurenmactl.1.xml 89 2016-09-30 16:07:12+04:00 toor $
 `xsltproc -''-nonet \
           -''-param man.charmap.use.subset "0" \
           -''-param make.year.ranges "1" \
@@ -56,17 +56,17 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
   <!ENTITY dhsection   "1">
   <!-- TITLE should be something like "User commands" or similar (see
        http://www.tldp.org/HOWTO/Man-Page/q2.html). -->
-  <!ENTITY dhtitle     "kurenmactl User Manual">
-  <!ENTITY dhpackage   "kurenma">
-  <!ENTITY dhucpackage "KURENMACTL">
-  <!ENTITY dhcommand   "kurenmactl">
-  <!ENTITY dhservice   "kurenmad">
+  <!ENTITY dhtitle     "General Commands Manual">
+  <!ENTITY dhpackage   "<citerefentry><refentrytitle>kurenma</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhNAME      "KURENMACTL">
+  <!ENTITY dhname      "kurenmactl">
+  <!ENTITY dhservice   "<citerefentry><refentrytitle>kurenmad</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
 ]>
 
 <refentry>
   <refentryinfo>
     <title>&dhtitle;</title>
-    <productname>&dhcommand;</productname>
+    <productname>&dhname;</productname>
     <authorgroup>
       <author>
        <firstname>&dhfirstname;</firstname>
@@ -94,21 +94,22 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
     </legalnotice>
   </refentryinfo>
   <refmeta>
-    <refentrytitle>&dhucpackage;</refentrytitle>
+    <refentrytitle>&dhNAME;</refentrytitle>
     <manvolnum>&dhsection;</manvolnum>
   </refmeta>
   <refnamediv>
-    <refname>&dhcommand;</refname>
-    <refpurpose>tool for control &dhservice;(1) daemon</refpurpose>
+    <refname>&dhname;</refname>
+    <refpurpose>part of the &dhpackage; package, operating tool</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>&dhcommand;</command>
+      <command>&dhname;</command>
       <!-- Normally the help and version options make the programs stop
            right after outputting the requested information. -->
       <group choice="opt">
         <arg choice="plain">
-         <arg choice="plain"><option>start</option></arg>
+         <arg choice="plain"><option> start</option></arg>
+	 |
          <arg choice="plain"><option>stop</option></arg>
         </arg>
       </group>
@@ -116,14 +117,16 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
   </refsynopsisdiv>
   <refsect1 id="description">
     <title>DESCRIPTION</title>
-    <para><command>&dhcommand;</command>
-     command allowed start and stop &dhservice;(1) as service
+    <para>
+     <command>&dhname;</command>
+     management tool for &dhservice; as a service
     </para>
   </refsect1>
   <refsect1 id="options">
     <title>OPTIONS</title>
     <para>
-    Usually command is launched from SystemV init script or SystemD service unit.
+     command is intended for use in the service management system, such as
+     SystemV or SystemD.
     </para>
     <variablelist>
       <!-- Use the variablelist.term.separator and the
@@ -133,9 +136,9 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
         <term><option>start</option></term>
         <listitem>
          <para>
-          Start &dhservice;(1) in daemon mode (without terminal).
-	  The environment variable "START_KURENMA" with value "NO" (FALSE,0)
-	  prevents running of service
+          Start the &dhservice; in daemon mode (without leading terminal).
+          The environment variable <envar>START_KURENMA</envar> with value "NO"
+	  (case insensitive) prevents launch of service.
          </para>
         </listitem>
       </varlistentry>
@@ -143,7 +146,7 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
         <term><option>stop</option></term>
         <listitem>
          <para>
-          Gracefully stop &dhservice;(1).
+          Gracefully stop the &dhservice;
          </para>
         </listitem>
       </varlistentry>
@@ -153,12 +156,12 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
     <title>FILES</title>
     <variablelist>
       <varlistentry>
-	<term><filename>/etc/default/&dhpackage;</filename></term>
+	<term><filename>/etc/default/kurenma</filename></term>
         <listitem>
-          <para>The system-wide configuration file to enable or disable
-            starting <application>&dhservice;</application> by using
-	    environment variable START_KURENMA. "NO" value prevents service
-	    starting.
+          <para>
+            The configuration file with environment variables for &dhname;.
+	    In particular, you can disable the service by using the variable
+	    <envar>START_KURENMA</envar> with a value of "No" (case insensitive).
 	  </para>
         </listitem>
       </varlistentry>
@@ -171,8 +174,8 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
         <term><envar>START_KURENMA</envar></term>
         <listitem>
           <para>
-	   This variable with value "NO" prevents &dhservice; starting as
-	   service by &dhcommand;.
+	   This environment variable with value "NO" disabled starting of
+	   &dhservice; by &dhname;.
           </para>
         </listitem>
       </varlistentry>
@@ -188,7 +191,7 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
      </citerefentry>
      &nbsp;
      <citerefentry>
-      <refentrytitle>&dhpackage;.ini</refentrytitle>
+      <refentrytitle>kurenma.ini</refentrytitle>
       <manvolnum>5</manvolnum>
      </citerefentry>
     </para>

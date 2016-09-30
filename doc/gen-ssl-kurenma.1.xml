@@ -3,7 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
 <!--
-$Id: gen-ssl-kurenma.1.xml 88 2016-09-29 17:16:51+04:00 toor $
+$Id: gen-ssl-kurenma.1.xml 89 2016-09-30 16:07:12+04:00 toor $
 `xsltproc -''-nonet \
           -''-param man.charmap.use.subset "0" \
           -''-param make.year.ranges "1" \
@@ -56,17 +56,17 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
   <!ENTITY dhsection   "1">
   <!-- TITLE should be something like "User commands" or similar (see
        http://www.tldp.org/HOWTO/Man-Page/q2.html). -->
-  <!ENTITY dhtitle     "kurenma User Manual">
-  <!ENTITY dhpackage   "kurenma">
-  <!ENTITY dhucpackage "GEN-SSL-KURENMA">
-  <!ENTITY dhcommand   "gen-ssl-kurenma">
-  <!ENTITY dhservice   "kurenmad">
+  <!ENTITY dhtitle     "General Commands Manual">
+  <!ENTITY dhpackage   "<citerefentry><refentrytitle>kurenma</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhNAME      "GEN-SSL-KURENMA">
+  <!ENTITY dhname      "gen-ssl-kurenma">
+  <!ENTITY dhservice   "<citerefentry><refentrytitle>kurenmad</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
 ]>
 
 <refentry>
   <refentryinfo>
     <title>&dhtitle;</title>
-    <productname>&dhcommand;</productname>
+    <productname>&dhname;</productname>
     <authorgroup>
       <author>
        <firstname>&dhfirstname;</firstname>
@@ -94,32 +94,32 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
     </legalnotice>
   </refentryinfo>
   <refmeta>
-    <refentrytitle>&dhucpackage;</refentrytitle>
+    <refentrytitle>&dhNAME;</refentrytitle>
     <manvolnum>&dhsection;</manvolnum>
   </refmeta>
   <refnamediv>
-    <refname>&dhcommand;</refname>
-    <refpurpose>tool for generate CA infrastructure and key files for peers</refpurpose>
+    <refname>&dhname;</refname>
+    <refpurpose>part of the &dhpackage; package, operating tool</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>&dhcommand;</command>
+      <command>&dhname;</command>
       <!-- Normally the help and version options make the programs stop
            right after outputting the requested information. -->
       <group choice="opt">
         <arg choice="plain">
-         <arg choice="plain"><option>ca</option></arg>
+         <arg choice="plain"><option> ca</option></arg>
 	 |
-         <arg choice="plain"><option>crt CommonName</option></arg>
+         <arg choice="plain"><option>crt CommonName </option></arg>
         </arg>
       </group>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1 id="description">
     <title>DESCRIPTION</title>
-    <para><command>&dhcommand;</command>
-     generate CA infrastructure or certificate/key pair for client and server
-     peers.
+    <para><command>&dhname;</command>
+     generate CA infrastructure based on OpenSSL or certificate/key pair for
+     client and server peers.
     </para>
   </refsect1>
   <refsect1 id="options">

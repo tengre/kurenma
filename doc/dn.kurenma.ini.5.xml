@@ -6,12 +6,13 @@
   <!ENTITY dhsurname   "Yakupov">
   <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
   <!ENTITY dhemail     "yds@bk.ru">
-  <!ENTITY dhsection   "1">
-  <!ENTITY dhtitle     "General Commands Manual">
-  <!ENTITY dhpackage   "<citerefentry><refentrytitle>kurenma</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
-  <!ENTITY dhNAME      "SETUP-KNOCKD">
-  <!ENTITY dhname      "setup-knockd">
-  <!ENTITY dhservice   "<citerefentry><refentrytitle>kurenmad</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhsection   "5">
+  <!ENTITY dhpackage   "kurenma">
+  <!ENTITY dhtitle     "&dhpackage; configuration file">
+  <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhNAME      "DN.KURENMA.INI">
+  <!ENTITY dhname      "dn.kurenma.ini">
+  <!ENTITY dhlservice  "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
 ]>
 
 <refentry>
@@ -53,23 +54,40 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>&dhname;</command>
+      <group choice="opt">
+        <arg choice="plain">
+         <arg choice="plain"><option> IP-address</option></arg>
+        </arg>
+      </group>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1 id="description">
     <title>DESCRIPTION</title>
     <para><command>&dhname;</command>
-     added valid knock sequiences and command into knockd.conf from certificate
-     of the peer.
+     added client peer IP-address to fireHOL white list, used from knockd.
     </para>
+  </refsect1>
+  <refsect1 id="options">
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+        <term><option> IP-address </option></term>
+        <listitem>
+         <para>
+          valid IPv4 address of client peer
+         </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
   </refsect1>
   <refsect1 id="files">
     <title>FILES</title>
     <variablelist>
       <varlistentry>
-	<term><filename>/etc/knockd.conf;</filename></term>
+	<term><filename>/etc/firehol/firehol.conf</filename></term>
         <listitem>
           <para>
-           The system-wide configuration file for knockd service.
+           Configuration file for firehol(1).
 	  </para>
         </listitem>
       </varlistentry>
@@ -79,12 +97,12 @@
     <title>SEE ALSO</title>
     <para>
      <citerefentry>
-      <refentrytitle>update-firehol</refentrytitle>
+      <refentrytitle>firehol</refentrytitle>
       <manvolnum>1</manvolnum>
      </citerefentry>
      &nbsp;
      <citerefentry>
-      <refentrytitle>knockd.conf</refentrytitle>
+      <refentrytitle>firehol.conf</refentrytitle>
       <manvolnum>5</manvolnum>
      </citerefentry>
     </para>

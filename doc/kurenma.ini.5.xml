@@ -50,36 +50,32 @@
   </refmeta>
   <refnamediv>
     <refname>&dhname;</refname>
-    <refpurpose>is a configuration file of &dhlpackage;</refpurpose>
+    <refpurpose>main configuration file of &dhlpackage; package</refpurpose>
   </refnamediv>
-  <refsynopsisdiv>
-   <para>
-    The <refname>&dhname;</refname> contains runtime configuration information for the &dhpackage;
-    programs. The complete description of the file format and possible
-    parameters held within are here for reference purposes.
-   </para>
-  </refsynopsisdiv>
   <refsect1 id="description">
    <title>DESCRIPTION</title>
     <para>
-     <refname>&dhname;</refname> - main configuration file. It defines the behavior
-     of the service - a client or server, sets the network settings and used OpenSSL keys.
+     <command>&dhname;</command> - contains runtime configuration of &dhlpackage; package.
+     It defines the behavior of the service - a client or server, sets the network settings
+     and using OpenSSL keys.
+    </para>
+    <para>
+     The complete description of the file format and possible parameters held within are here for reference purposes.
     </para>
   </refsect1>
   <refsect1 id="file format">
    <title>FILE FORMAT</title>
    <para>
-    The file consists of sections and parameters. A section begins with the
-    name of the section in square brackets (or top of the file for global unnamed section) and continues until the next
-    section begins. Global unnamed section contain global settings.
-    Sections contain parameters of the form:
+    The file consists of sections and parameters. A section begins with the name of the section
+    in square brackets (or top of the file for global unnamed section) and continues until the next
+    section begins. Unnamed section contain global settings. Sections contain parameters of the form:
    </para>
    <para>
     name = value
    </para>
    <para>
     or for some special sections contain sequence of "raw" lines, each of which is a unnamed parameter.
-    For example, allowed IPv4 networks
+    For example, list of allowed IPv4 networks (CIDR)
    </para>
    <para>
     Section and parameter names are case sensitive.
@@ -89,7 +85,6 @@
     ignored, as are lines containing only whitespace.
    </para>
   </refsect1>
-
   <refsect1 id="section descriptions">
    <title>SECTION DESCRIPTIONS</title>
     <para>
@@ -97,7 +92,6 @@
      which are described under special sections
     </para>
   </refsect1>
-
   <refsect1 id="section global unnamed">
    <title>SECTION GLOBAL UNNAMED</title>
    <para>
@@ -105,96 +99,176 @@
    </para>
    <variablelist>
     <varlistentry>
-     <term><varname>role</varname></term>
+     <term><varname>role</varname>&nbsp;<type>constant STRING</type></term>
       <listitem>
        <para>
-        constant string parameter (<constant>client</constant> or <constant>server</constant>)
-        define the role of &dhlservice; - client or server. Service for client role send requests
-	for tunnel creating to the server and check tunnel state, for server role - listen client
-	requests for tunnel creation only.
+        This parameter can be set to <constant>client</constant> or <constant>server</constant> and
+        define the role of &dhlservice;. Service for client role send requests for tunnel creating
+	to the server and check tunnel state, for server role - listen client requests for tunnel
+	creation only.
        </para>
        <example>role = client</example>
       </listitem>
     </varlistentry>
     <varlistentry>
-     <term><varname>host</varname></term>
+     <term><varname>dev</varname>&nbsp;<type>STRING</type></term>
       <listitem>
        <para>
-        string parameter that define valid hostname or IPv4 address of the server side of &dhlservice;
+        this parameter define WireGuard tunnel device name
+       </para>
+       <para>
+        Default: wg0
+       </para>
+       <example>dev = wireguard0</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>host</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        this parameter define valid hostname or IPv4 address of the server side of &dhlservice;
        </para>
        <example>host = server.domain.name</example>
       </listitem>
     </varlistentry>
     <varlistentry>
-     <term><varname>port</varname></term>
+     <term><varname>port</varname>&nbsp;<type>NUMBER</type></term>
       <listitem>
        <para>
-        number parameter that define valid UDP port (1 ..65535) of the server side of &dhlservice;
+        UDP port number that the WireGuard device of the "server" role will listen on
+       </para>
+       <para>
+	Default: 12912
+       </para>
+       <para>
+	It makes sense only for "server" role because the client receives the port number on a successful
+	key exchange.
        </para>
        <example>port = 12912</example>
       </listitem>
     </varlistentry>
     <varlistentry>
-     <term><varname>portAuth</varname></term>
+     <term><varname>portAuth</varname>&nbsp;<type>NUMBER</type></term>
       <listitem>
        <para>
-        number parameter that define valid TCP port (1 ..65535) of the server side of &dhlservice;
-	default value 42912
+        TCP port number that the daemon of the "server" role will listen on for auth and key exchange
+       </para>
+       <para>
+	Default: 42912
        </para>
        <example>portAuth = 42912</example>
       </listitem>
     </varlistentry>
     <varlistentry>
-     <term><varname>tsKeepalive</varname></term>
+     <term><varname>tsKeepalive</varname>&nbsp;<type>NUMBER</type></term>
       <listitem>
        <para>
-        number parameter (1 .. 65535) of time interval in seconds.
-	default value is 0 (disabled).
-	this option supported Wireguard option "PersistentKeepalive" for keep connection
+        Number parameter (0..65535) of time interval in seconds. This option
+	supported Wireguard option "PersistentKeepalive" for keep connection
 	when peer is behind NAT or a firewall, see &dhwg;
+       </para>
+       <para>
+        Default: 0 (disabled)
        </para>
        <example>tsKeepalive = 25</example>
       </listitem>
     </varlistentry>
     <varlistentry>
-     <term><varname>DEBUGLEVEL</varname></term>
+     <term><varname>tsPeer￼Timeout</varname>&nbsp;<type>Formatted STRING or NUMBER</type></term>
       <listitem>
        <para>
-        integer parameter sets the level of messages:
+        Threshold time of inactivity, that is recognized as a peer disconnect
        </para>
        <para>
-        0 - silent
+	This parameter can be presented as a number (of seconds) or as a
+	presentation time string "number&lt;sec|min|hour|day|week|month|year&gt;"
        </para>
        <para>
-        1 - normal
+        Default: 32minutes
        </para>
-       <para>
-        2 - information
-       </para>
-       <para>
-        3 - debug
-       </para>
-       <example>DEBUGLEVEL = 1</example>
+       <example>tsPeerTimeout = 999s</example>
+       <example>tsPeerTimeout = 8min</example>
+       <example>tsPeerTimeout = 12hours</example>
       </listitem>
-     </varlistentry>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>ipServer</varname>&nbsp;<type>IP address</type></term>
+      <listitem>
+       <para>
+        Tunnel IP address of server peer.
+       </para>
+       <para>
+        It makes sense only for "server" role.
+	The client receives the server tunnel IP-address in the key exchange
+       </para>
+       <para>
+        Default: 192.168.29.1
+       </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>ipClient</varname>&nbsp;<type>constant STRING</type></term>
+      <listitem>
+       <para>
+        Leased mode for client peers. This parameter can be set to <constant>dynamic</constant> or <constant>commonname</constant>
+       </para>
+       <para>
+        It makes sense only for "server" role.
+       </para>
+       <para>
+        <option>dynamic</option> - set for client peer first free IP address after "ipServer" value
+       </para>
+       <para>
+        <option>commonname</option> - set for client peer IP address that resolved from their Common Name (CN).
+	In this case, the DNS service must be properly configured.
+       </para>
+       <para>
+        Default: dynamic
+       </para>
+       <example>ipClient = dynamic</example>
+       <example>ipClient = client.domain.name</example>
+      </listitem>
+    </varlistentry>
     </variablelist>
   </refsect1>
   <refsect1 id="section ipsAllowed">
-   <title>SECTION [ipsAllowed]</title>
+   <title>SECTION ipsAllowed</title>
    <para>
-    [ipsAllowed] sections are given sequence of networks permitted to WireGuard tunnel.
-    <constant>
-     Example:
-    </constant>
+    [ipsAllowed] section are given sequence of networks (CIDR) permitted to WireGuard tunnel.
    </para>
+   <example>
    <para>[ipsAllowed]</para>
    <para>192.168.0.0/24</para>
+   <para>172.17.0.0/16</para>
+   <para>10.0.0.0/8</para>
+   </example>
   </refsect1>
   <refsect1 id="section ssl">
-   <title>SECTION [ssl]</title>
+   <title>SECTION ssl</title>
    <para>
-    [ssl] section should contain the string parameters for client/server peers binding
+    [ssl] section should contain Сommon Names of peers that bind X.509 digital certificates of public key infrastructure (PKI)
    </para>
+  <variablelist>
+   <varlistentry>
+    <term><varname>cnServer</varname>&nbsp;<type>STRING</type></term>
+     <listitem>
+      <para>
+       Common Name (CN) that refers to the signed server certificate
+      </para>
+     </listitem>
+    </varlistentry>
+   <varlistentry>
+    <term><varname>cnClient</varname>&nbsp;<type>STRING</type></term>
+     <listitem>
+      <para>
+       Common Name (CN) that refers to the signed client certificate
+      </para>
+      <para>
+       It makes sense only for "client" role. The server receives the client's CN in the key exchange
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </refsect1>
   <refsect1 id="files">
     <title>FILES</title>

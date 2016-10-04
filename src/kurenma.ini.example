@@ -1,9 +1,10 @@
 #
-# $Id: kurenma.ini.example 74 2016-09-15 12:10:41+04:00 toor $
+# $Id: kurenma.ini.example 91 2016-10-04 17:18:53+04:00 toor $
 #
 	role		= client
 #	role		= server
 
+	dev		= wg0
 	host		= server.domain
 	port		= 12912
 	portAuth	= 42912

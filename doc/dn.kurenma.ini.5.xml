@@ -8,11 +8,12 @@
   <!ENTITY dhemail     "yds@bk.ru">
   <!ENTITY dhsection   "5">
   <!ENTITY dhpackage   "kurenma">
-  <!ENTITY dhtitle     "&dhpackage; configuration file">
+  <!ENTITY dhtitle     "&dhpackage; package configuration file">
   <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
   <!ENTITY dhNAME      "DN.KURENMA.INI">
   <!ENTITY dhname      "dn.kurenma.ini">
-  <!ENTITY dhlservice  "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlwizard   "<citerefentry><refentrytitle>gen-ssl-&dhpackage;</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlconfig   "<citerefentry><refentrytitle>&dhpackage;.ini</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
 ]>
 
 <refentry>
@@ -48,63 +49,126 @@
     <manvolnum>&dhsection;</manvolnum>
   </refmeta>
   <refnamediv>
-    <refname>&dhname;</refname>
-    <refpurpose>part of the &dhpackage; package, utility to configure the third-party application</refpurpose>
+   <refname>&dhname;</refname>
+   <refpurpose>
+    helper configuration file for generate root Certificate Authority (CA) and for create signed certificates for WireGuard peers.
+   </refpurpose>
   </refnamediv>
-  <refsynopsisdiv>
-    <cmdsynopsis>
-      <command>&dhname;</command>
-      <group choice="opt">
-        <arg choice="plain">
-         <arg choice="plain"><option> IP-address</option></arg>
-        </arg>
-      </group>
-    </cmdsynopsis>
-  </refsynopsisdiv>
   <refsect1 id="description">
-    <title>DESCRIPTION</title>
-    <para><command>&dhname;</command>
-     added client peer IP-address to fireHOL white list, used from knockd.
-    </para>
+   <title>DESCRIPTION</title>
+   <para>
+    <command>&dhname;</command> - contains country based naming attributes of Distinguished Name (DN).
+    This configuration file with the template "openssl.cnf.template" used by utility &dhlwizard;
+   </para>
   </refsect1>
-  <refsect1 id="options">
-    <title>OPTIONS</title>
-    <variablelist>
-      <varlistentry>
-        <term><option> IP-address </option></term>
-        <listitem>
-         <para>
-          valid IPv4 address of client peer
-         </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
+  <refsect1 id="file format">
+   <title>FILE FORMAT</title>
+   <para>
+    The file should contain parameters of the form "key&nbsp;=&nbsp;value"
+   </para>
+   <para>
+    Any line beginning with a hash ("#") character is
+    ignored, as are lines containing only whitespace.
+   </para>
+  </refsect1>
+  <refsect1 id="PARAMETERS">
+   <title>PARAMETERS</title>
+   <variablelist>
+    <varlistentry>
+     <term><varname>C</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        Country Abbreviations
+       </para>
+       <para>
+        Default: XX
+       </para>
+       <example>C = GT</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>ST</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        State or province name
+       </para>
+       <para>
+        Default: State
+       </para>
+       <example>ST = Golden Horde</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>L</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        Locality
+       </para>
+       <example>L = Sugnak</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>O</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        Organization name or even organisational name
+       </para>
+       <para>
+	Default: Organizational
+       </para>
+       <example>O = Royal Mint Court</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>OU</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        Usually department or any sub entity of larger entity
+       </para>
+       <para>
+	Default: OrganizationalUnit
+       </para>
+       <example>OU = Coining Department</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>CN</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+	Common Name (CN) of CA center or Wireguard tunnel peers.
+       </para>
+       <para>
+	For CA recommended using real full qualified domain name (FQDN),
+	for peer - FQDN from Wireguard tunnel virtual network.
+       </para>
+       <para>
+        Default: CommonName
+       </para>
+       <example>CN = ca.sygnak.org</example>
+       <example>CN = coining.mint.sygnak.gt</example>
+      </listitem>
+    </varlistentry>
+   </variablelist>
   </refsect1>
   <refsect1 id="files">
     <title>FILES</title>
     <variablelist>
       <varlistentry>
-	<term><filename>/etc/firehol/firehol.conf</filename></term>
-        <listitem>
-          <para>
-           Configuration file for firehol(1).
-	  </para>
-        </listitem>
+	<term><filename>/etc/kurenma/dn.kurenma.ini</filename></term>
+      </varlistentry>
+      <varlistentry>
+	<term><filename>/usr/share/kurenma/openssl.cnf.template</filename></term>
       </varlistentry>
     </variablelist>
   </refsect1>
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
     <para>
-     <citerefentry>
-      <refentrytitle>firehol</refentrytitle>
-      <manvolnum>1</manvolnum>
-     </citerefentry>
+     &dhlpackage;
      &nbsp;
-     <citerefentry>
-      <refentrytitle>firehol.conf</refentrytitle>
-      <manvolnum>5</manvolnum>
-     </citerefentry>
+     &dhlwizard;
+     &nbsp;
+     &dhlconfig;
     </para>
     <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
         <refentrytitle>info</refentrytitle>

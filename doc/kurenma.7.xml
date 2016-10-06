@@ -4,12 +4,11 @@
 
   <!ENTITY dhfirstname "Damir">
   <!ENTITY dhsurname   "Yakupov">
-  <!ENTITY dhusername  "&firstname; Sh. &surname;">
+  <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname;">
   <!ENTITY dhemail     "yds@bk.ru">
   <!ENTITY dhsection   "7">
   <!ENTITY dhpackage   "kurenma">
-  <!ENTITY dhtitle     "&dhpackage; User Manual">
-  <!ENTITY dhtitle     "&dhpackage; package configuration file">
+  <!ENTITY dhtitle     "&dhpackage; overview">
   <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
   <!ENTITY dhNAME      "KURENMA">
   <!ENTITY dhname      "kurenma">
@@ -55,84 +54,52 @@
   </refmeta>
   <refnamediv>
     <refname>&dhpackage;</refname>
-    <refpurpose>set of bash libraries</refpurpose>
+    <refpurpose>set of bash shell scripts</refpurpose>
   </refnamediv>
   <refsect1 id="description">
    <title>DESCRIPTION</title>
    <para>
     <command>&dhpackage;</command>
-    is a package that includes libraries of the tested code ready for a reuse.
+    is a package that includes bash shell scripts
    </para>
-   <variablelist><title>Standart included libraries:</title>
+   <variablelist>
     <varlistentry>
-     <term><filename>libstd.sh</filename></term>
+     <term><filename>kurenmactl</filename></term>
      <listitem>
       <para>
-       functions for handling temporary objects (files, folders), autocleaning
+       ..
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><filename>liberr.sh</filename></term>
+     <term><filename>kurenmad</filename></term>
      <listitem>
       <para>
-       functions for data validations, error handling
+       ..
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><filename>liblog.sh</filename></term>
+     <term><filename>gen-ssl-kurenma</filename></term>
      <listitem>
       <para>
-       debug level, logging routines
+       ..
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><filename>libpid.sh</filename></term>
+     <term><filename>setup-knockd</filename></term>
      <listitem>
       <para>
-       process running  control
+       ..
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><filename>libcnf.sh</filename></term>
+     <term><filename>update-firehol</filename></term>
      <listitem>
       <para>
-       active configuration files control
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><filename>libopt.sh</filename></term>
-     <listitem>
-      <para>
-       command line options manipulations
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><filename>libini.sh</filename></term>
-     <listitem>
-      <para>
-       ini configuration management
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><filename>libmsg.sh</filename></term>
-     <listitem>
-      <para>
-       notification tools
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><filename>libnet.sh</filename></term>
-     <listitem>
-      <para>
-       networking tools
+       ..
       </para>
      </listitem>
     </varlistentry>

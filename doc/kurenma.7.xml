@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+
+  <!ENTITY dhfirstname "Damir">
+  <!ENTITY dhsurname   "Yakupov">
+  <!ENTITY dhusername  "&firstname; Sh. &surname;">
+  <!ENTITY dhemail     "yds@bk.ru">
+  <!ENTITY dhsection   "7">
+  <!ENTITY dhpackage   "kurenma">
+  <!ENTITY dhtitle     "&dhpackage; User Manual">
+  <!ENTITY dhtitle     "&dhpackage; package configuration file">
+  <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhNAME      "KURENMA">
+  <!ENTITY dhname      "kurenma">
+  <!ENTITY dhlwizard   "<citerefentry><refentrytitle>gen-ssl-&dhpackage;</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlservice  "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlconfig   "<citerefentry><refentrytitle>&dhpackage;.ini</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+
+]>
+
+<refentry>
+  <refentryinfo>
+    <title>&dhtitle;</title>
+    <productname>&dhpackage;</productname>
+    <authorgroup>
+      <author>
+       <firstname>&dhfirstname;</firstname>
+        <surname>&dhsurname;</surname>
+        <contrib>Wrote this manpage for the Debian system.</contrib>
+        <address>
+          <email>&dhemail;</email>
+        </address>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2007</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    <legalnotice>
+      <para>This manual page was written for the Debian system
+        (but may be used by others).</para>
+      <para>Permission is granted to copy, distribute and/or modify this
+        document under the terms of the GNU General Public License,
+        Version 2 or (at your option) any later version published by
+        the Free Software Foundation.</para>
+      <para>On Debian systems, the complete text of the GNU General Public
+        License can be found in
+	<filename>/usr/share/common-licenses/GPL</filename>.</para>
+    </legalnotice>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>&dhNAME;</refentrytitle>
+    <manvolnum>&dhsection;</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>&dhpackage;</refname>
+    <refpurpose>set of bash libraries</refpurpose>
+  </refnamediv>
+  <refsect1 id="description">
+   <title>DESCRIPTION</title>
+   <para>
+    <command>&dhpackage;</command>
+    is a package that includes libraries of the tested code ready for a reuse.
+   </para>
+   <variablelist><title>Standart included libraries:</title>
+    <varlistentry>
+     <term><filename>libstd.sh</filename></term>
+     <listitem>
+      <para>
+       functions for handling temporary objects (files, folders), autocleaning
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>liberr.sh</filename></term>
+     <listitem>
+      <para>
+       functions for data validations, error handling
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>liblog.sh</filename></term>
+     <listitem>
+      <para>
+       debug level, logging routines
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libpid.sh</filename></term>
+     <listitem>
+      <para>
+       process running  control
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libcnf.sh</filename></term>
+     <listitem>
+      <para>
+       active configuration files control
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libopt.sh</filename></term>
+     <listitem>
+      <para>
+       command line options manipulations
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libini.sh</filename></term>
+     <listitem>
+      <para>
+       ini configuration management
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libmsg.sh</filename></term>
+     <listitem>
+      <para>
+       notification tools
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libnet.sh</filename></term>
+     <listitem>
+      <para>
+       networking tools
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+  <refsect1 id="see_also">
+    <title>SEE ALSO</title>
+    <!-- In alpabetical order. -->
+    <para>
+     <ulink url="file:///usr/share/doc/&dhpackage;/html/&dhpackage;.html" />
+     - api documentation
+    </para>
+    <para>
+     <citerefentry>
+      <refentrytitle>&dhpackage;</refentrytitle>
+       <manvolnum>1</manvolnum>
+     </citerefentry>
+    </para>
+  </refsect1>
+</refentry>
+

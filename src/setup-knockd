@@ -1,12 +1,16 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 85 2016-09-28 15:40:42+04:00 toor $
+# $Id: setup-knockd 93 2016-10-06 12:12:35+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
 udfMain() {
+
+	udfExitIfAlreadyStarted
+
+	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
 	udfThrowOnCommandNotFound cat grep sed
 

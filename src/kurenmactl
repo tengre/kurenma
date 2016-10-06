@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 85 2016-09-28 14:31:17+04:00 toor $
+# $Id: kurenmactl 93 2016-10-06 12:12:35+04:00 toor $
 #
 _kurenma_sVersion=0.4
 #
@@ -33,6 +33,8 @@ udfMain() {
 
 	DEBUGLEVEL=3
 
+	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+
 	if [[ $START_KURENMA =~ ^([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|0)$ ]]; then
 
 		udfDebug 1 "service starting disabled, see /etc/default/kurenma.."
@@ -41,8 +43,6 @@ udfMain() {
 	fi
 
 	udfThrowOnCommandNotFound cat echo grep head kurenmad mkdir nohup sleep tr
-
-	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
 	local cmd cmdNetcat fnCtl ini pathIni pathRun pid portAuth s
 

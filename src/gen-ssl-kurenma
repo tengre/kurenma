@@ -1,12 +1,16 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 83 2016-09-27 15:55:58+04:00 toor $
+# $Id: gen-ssl-kurenma 93 2016-10-06 12:12:35+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
 udfMain() {
+
+	udfExitIfAlreadyStarted
+
+	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
 	udfThrowOnCommandNotFound chmod cp date echo mkdir openssl rm sed tee touch wg
 

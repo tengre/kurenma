@@ -57,8 +57,7 @@
   <refsect1 id="description">
    <title>DESCRIPTION</title>
    <para>
-    <command>&dhname;</command> - contains country based naming attributes of Distinguished Name (DN).
-    This configuration file with the template "openssl.cnf.template" used by utility &dhlwizard;
+    <command>&dhname;</command> - contains country based naming attributes of Distinguished Name (DN). This configuration file with the template "openssl.cnf.template" used by utility &dhlwizard;
    </para>
   </refsect1>
   <refsect1 id="file format">

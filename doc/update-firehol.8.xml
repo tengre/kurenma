@@ -6,12 +6,19 @@
   <!ENTITY dhsurname   "Yakupov">
   <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
   <!ENTITY dhemail     "yds@bk.ru">
-  <!ENTITY dhsection   "1">
-  <!ENTITY dhtitle     "General Commands Manual">
-  <!ENTITY dhpackage   "<citerefentry><refentrytitle>kurenma</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhsection   "8">
+  <!ENTITY dhpackage   "kurenma">
+  <!ENTITY dhtitle     "&dhpackage; Package Manual">
+  <!ENTITY dhlpackage   "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
   <!ENTITY dhNAME      "UPDATE-FIREHOL">
   <!ENTITY dhname      "update-firehol">
-  <!ENTITY dhservice   "<citerefentry><refentrytitle>kurenmad</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlservice   "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlknockd    "<citerefentry><refentrytitle>knockd</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlfirehol    "<citerefentry><refentrytitle>firehol</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlfireholconf    "<citerefentry><refentrytitle>firehol.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+  <!ENTITY dhlknockdconf    "<citerefentry><refentrytitle>knockd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+  <!ENTITY dhlsetupknockd    "<citerefentry><refentrytitle>setup-knockd</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+
 ]>
 
 <refentry>
@@ -63,7 +70,7 @@
   <refsect1 id="description">
     <title>DESCRIPTION</title>
     <para><command>&dhname;</command>
-     added client peer IP-address to fireHOL white list, used from knockd.
+     adds the IP-address to the white list of the &dhlfirehol; firewall. It's designed to run from the service &dhlknockd; to allow WireGuard client access
     </para>
   </refsect1>
   <refsect1 id="options">
@@ -73,7 +80,7 @@
         <term><option> IP-address </option></term>
         <listitem>
          <para>
-          valid IPv4 address of client peer
+          valid IPv4 address
          </para>
         </listitem>
       </varlistentry>
@@ -86,7 +93,15 @@
 	<term><filename>/etc/firehol/firehol.conf</filename></term>
         <listitem>
           <para>
-           Configuration file for firehol(1).
+           Configuration file for &dhlfirehol;.
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><filename>/etc/knockd.conf</filename></term>
+        <listitem>
+          <para>
+           Configuration file for &dhlknockd;.
 	  </para>
         </listitem>
       </varlistentry>
@@ -95,15 +110,15 @@
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
     <para>
-     <citerefentry>
-      <refentrytitle>firehol</refentrytitle>
-      <manvolnum>1</manvolnum>
-     </citerefentry>
+     &dhlfirehol;
      &nbsp;
-     <citerefentry>
-      <refentrytitle>firehol.conf</refentrytitle>
-      <manvolnum>5</manvolnum>
-     </citerefentry>
+	 &dhlfireholconf;
+     &nbsp;
+	 &dhlknockd;
+     &nbsp;
+	 &dhlknockdconf;
+     &nbsp;
+	 &dhlsetupknockd;
     </para>
     <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
         <refentrytitle>info</refentrytitle>
@@ -111,4 +126,3 @@
       </citerefentry> system.</para>
   </refsect1>
 </refentry>
-

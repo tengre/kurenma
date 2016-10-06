@@ -6,12 +6,12 @@
   <!ENTITY dhsurname   "Yakupov">
   <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
   <!ENTITY dhemail     "yds@bk.ru">
-  <!ENTITY dhsection   "1">
+  <!ENTITY dhsection   "8">
   <!ENTITY dhtitle     "General Commands Manual">
   <!ENTITY dhpackage   "<citerefentry><refentrytitle>kurenma</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
   <!ENTITY dhNAME      "GEN-SSL-KURENMA">
   <!ENTITY dhname      "gen-ssl-kurenma">
-  <!ENTITY dhservice   "<citerefentry><refentrytitle>kurenmad</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhservice   "<citerefentry><refentrytitle>kurenmad</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
 ]>
 
 <refentry>

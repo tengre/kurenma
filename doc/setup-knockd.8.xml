@@ -2,16 +2,22 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
-  <!ENTITY dhfirstname "Damir">
-  <!ENTITY dhsurname   "Yakupov">
-  <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
-  <!ENTITY dhemail     "yds@bk.ru">
-  <!ENTITY dhsection   "8">
-  <!ENTITY dhtitle     "General Commands Manual">
-  <!ENTITY dhpackage   "<citerefentry><refentrytitle>kurenma</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
-  <!ENTITY dhNAME      "SETUP-KNOCKD">
-  <!ENTITY dhname      "setup-knockd">
-  <!ENTITY dhservice   "<citerefentry><refentrytitle>kurenmad</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhfirstname      "Damir">
+  <!ENTITY dhsurname        "Yakupov">
+  <!ENTITY dhusername       "&dhfirstname; Sh. &dhsurname; ">
+  <!ENTITY dhemail          "yds@bk.ru">
+  <!ENTITY dhsection        "8">
+  <!ENTITY dhpackage        "kurenma">
+  <!ENTITY dhtitle          "&dhpackage; tools">
+  <!ENTITY dhNAME           "SETUP-KNOCKD">
+  <!ENTITY dhname           "setup-knockd">
+  <!ENTITY dhlpackage       "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhlservice       "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlknockd        "<citerefentry><refentrytitle>knockd</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlknockdconf    "<citerefentry><refentrytitle>knockd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+  <!ENTITY dhlupdatefirehol "<citerefentry><refentrytitle>update-firehol</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlgensslkurenma "<citerefentry><refentrytitle>gen-ssl-kurenma</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+
 ]>
 
 <refentry>
@@ -48,7 +54,7 @@
   </refmeta>
   <refnamediv>
     <refname>&dhname;</refname>
-    <refpurpose>part of the &dhpackage; package, utility to configure the third-party application</refpurpose>
+    <refpurpose>part of the &dhlpackage; package, tool to configure the third-party application</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
@@ -58,18 +64,25 @@
   <refsect1 id="description">
     <title>DESCRIPTION</title>
     <para><command>&dhname;</command>
-     added valid knock sequiences and command into knockd.conf from certificate
-     of the peer.
+     get knock-sequence of port numbers from the server's X.509-certificate and write the appropriate section of the settings in the &dhlknockdconf; configuration file. Only required for server roles.
     </para>
   </refsect1>
   <refsect1 id="files">
     <title>FILES</title>
     <variablelist>
       <varlistentry>
-	<term><filename>/etc/knockd.conf;</filename></term>
+	<term><filename>/etc/knockd.conf</filename></term>
         <listitem>
           <para>
            The system-wide configuration file for knockd service.
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><filename>/etc/&dhpackage;/&dhpackage;.ini</filename></term>
+        <listitem>
+          <para>
+           The system-wide configuration file for &dhpackage; service.
 	  </para>
         </listitem>
       </varlistentry>
@@ -78,15 +91,11 @@
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
     <para>
-     <citerefentry>
-      <refentrytitle>update-firehol</refentrytitle>
-      <manvolnum>1</manvolnum>
-     </citerefentry>
+     &dhlupdatefirehol;
      &nbsp;
-     <citerefentry>
-      <refentrytitle>knockd.conf</refentrytitle>
-      <manvolnum>5</manvolnum>
-     </citerefentry>
+     &dhlknockd;
+     &nbsp;
+     &dhlgensslkurenma;
     </para>
     <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
         <refentrytitle>info</refentrytitle>

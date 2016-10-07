@@ -2,16 +2,23 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
-  <!ENTITY dhfirstname "Damir">
-  <!ENTITY dhsurname   "Yakupov">
-  <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
-  <!ENTITY dhemail     "yds@bk.ru">
-  <!ENTITY dhsection   "8">
-  <!ENTITY dhtitle     "General Commands Manual">
-  <!ENTITY dhpackage   "<citerefentry><refentrytitle>kurenma</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
-  <!ENTITY dhNAME      "KURENMAD">
-  <!ENTITY dhname      "kurenmad">
-  <!ENTITY dhservice   "<citerefentry><refentrytitle>kurenmad</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhfirstname      "Damir">
+  <!ENTITY dhsurname        "Yakupov">
+  <!ENTITY dhusername       "&dhfirstname; Sh. &dhsurname; ">
+  <!ENTITY dhemail          "yds@bk.ru">
+  <!ENTITY dhsection        "8">
+  <!ENTITY dhpackage        "kurenma">
+  <!ENTITY dhtitle          "&dhpackage; tools">
+  <!ENTITY dhNAME           "KURENMAD">
+  <!ENTITY dhname           "kurenmad">
+  <!ENTITY dhlpackage       "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhlservice       "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlcontrol       "<citerefentry><refentrytitle>&dhpackage;ctl</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlknockd        "<citerefentry><refentrytitle>knockd</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlknockdconf    "<citerefentry><refentrytitle>knockd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+  <!ENTITY dhlupdatefirehol "<citerefentry><refentrytitle>update-firehol</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlgensslkurenma "<citerefentry><refentrytitle>gen-ssl-kurenma</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlconfig        "<citerefentry><refentrytitle>&dhpackage;.ini</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
 
 ]>
 
@@ -49,7 +56,7 @@
   </refmeta>
   <refnamediv>
     <refname>&dhname;</refname>
-    <refpurpose>main service command of &dhpackage; package</refpurpose>
+    <refpurpose>daemon for automatic configuration of the WireGuard peers </refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
@@ -60,15 +67,15 @@
     <title>DESCRIPTION</title>
     <para>
      Depending on the role, <command>&dhname;</command> acts as a server that receives requests to
-     create WireGuard tunnel or the client requesting the creation of such a
-     tunnel. For authentication using the CA-infrastructure based on OpenSSL.
+     create WireGuard tunnel or as a client requesting the creation of such a
+     tunnel. For key exchanging used X.509 certificates.
     </para>
   </refsect1>
   <refsect1 id="files">
     <title>FILES</title>
     <variablelist>
       <varlistentry>
-	<term><filename>/etc/kurenma/kurenma.ini</filename></term>
+	<term><filename>/etc/&dhpackage;/&dhpackage;.ini</filename></term>
         <listitem>
           <para>
 	   This configuration file defines the parameters of launching the
@@ -82,15 +89,10 @@
     <title>SEE ALSO</title>
     <!-- In alpabetical order. -->
     <para>
-     <citerefentry>
-      <refentrytitle>kurenmactl</refentrytitle>
-      <manvolnum>1</manvolnum>
-     </citerefentry>
+     &dhlcontrol;
      &nbsp;
-     <citerefentry>
-      <refentrytitle>kurenma.ini</refentrytitle>
-      <manvolnum>5</manvolnum>
-     </citerefentry>
+     &dhlconfig;
+     &nbsp;
     </para>
     <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
         <refentrytitle>info</refentrytitle>

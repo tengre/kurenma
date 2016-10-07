@@ -2,22 +2,22 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
-  <!ENTITY dhfirstname "Damir">
-  <!ENTITY dhsurname   "Yakupov">
-  <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
-  <!ENTITY dhemail     "yds@bk.ru">
-  <!ENTITY dhsection   "8">
-  <!ENTITY dhpackage   "kurenma">
-  <!ENTITY dhtitle     "&dhpackage; Package Manual">
-  <!ENTITY dhlpackage   "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
-  <!ENTITY dhNAME      "UPDATE-FIREHOL">
-  <!ENTITY dhname      "update-firehol">
-  <!ENTITY dhlservice   "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
-  <!ENTITY dhlknockd    "<citerefentry><refentrytitle>knockd</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
-  <!ENTITY dhlfirehol    "<citerefentry><refentrytitle>firehol</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
-  <!ENTITY dhlfireholconf    "<citerefentry><refentrytitle>firehol.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
-  <!ENTITY dhlknockdconf    "<citerefentry><refentrytitle>knockd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
-  <!ENTITY dhlsetupknockd    "<citerefentry><refentrytitle>setup-knockd</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhfirstname    "Damir">
+  <!ENTITY dhsurname      "Yakupov">
+  <!ENTITY dhusername     "&dhfirstname; Sh. &dhsurname; ">
+  <!ENTITY dhemail        "yds@bk.ru">
+  <!ENTITY dhsection      "8">
+  <!ENTITY dhpackage      "kurenma">
+  <!ENTITY dhtitle        "&dhpackage; tools">
+  <!ENTITY dhlpackage     "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhNAME         "UPDATE-FIREHOL">
+  <!ENTITY dhname         "update-firehol">
+  <!ENTITY dhlservice     "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlknockd      "<citerefentry><refentrytitle>knockd</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlfirehol     "<citerefentry><refentrytitle>firehol</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlfireholconf "<citerefentry><refentrytitle>firehol.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+  <!ENTITY dhlknockdconf  "<citerefentry><refentrytitle>knockd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+  <!ENTITY dhlsetupknockd "<citerefentry><refentrytitle>setup-knockd</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
 
 ]>
 
@@ -55,7 +55,7 @@
   </refmeta>
   <refnamediv>
     <refname>&dhname;</refname>
-    <refpurpose>part of the &dhpackage; package, utility to configure the third-party application</refpurpose>
+    <refpurpose>part of the &dhlpackage; package, tool to configure the third-party application.</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
@@ -70,7 +70,7 @@
   <refsect1 id="description">
     <title>DESCRIPTION</title>
     <para><command>&dhname;</command>
-     adds the IP-address to the white list of the &dhlfirehol; firewall. It's designed to run from the service &dhlknockd; to allow WireGuard client access
+     adds the IP-address to the white list of the &dhlfirehol; firewall. It's designed to run from the service &dhlknockd; to allow WireGuard client access.
     </para>
   </refsect1>
   <refsect1 id="options">

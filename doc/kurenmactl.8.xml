@@ -7,7 +7,7 @@
   <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
   <!ENTITY dhemail     "yds@bk.ru">
   <!ENTITY dhsection   "8">
-  <!ENTITY dhtitle     "General Commands Manual">
+  <!ENTITY dhtitle     "&dhpackage; tools">
   <!ENTITY dhpackage   "<citerefentry><refentrytitle>kurenma</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
   <!ENTITY dhNAME      "KURENMACTL">
   <!ENTITY dhname      "kurenmactl">

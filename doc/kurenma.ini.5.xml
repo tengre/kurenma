@@ -8,7 +8,7 @@
   <!ENTITY dhemail     "yds@bk.ru">
   <!ENTITY dhsection   "5">
   <!ENTITY dhpackage   "kurenma">
-  <!ENTITY dhtitle     "&dhpackage; package configuration file">
+  <!ENTITY dhtitle     "&dhpackage; package configuration">
   <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
   <!ENTITY dhNAME      "KURENMA.INI">
   <!ENTITY dhname      "kurenma.ini">

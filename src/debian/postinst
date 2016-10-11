@@ -42,8 +42,12 @@ while which systemctl >/dev/null 2>&1; do
 
 	deb-systemd-invoke start ${PACKAGE}.service || break
 
-	chmod -x $cmdSystemV || true
-	mv -f $cmdSystemV ${cmdSystemV}.disabled-by-systemd
+	if [ -f $cmdSystemV ]; then
+
+		chmod -x $cmdSystemV || true
+		mv -f $cmdSystemV ${cmdSystemV}.disabled-by-systemd || true
+
+	fi
 
 	break
 

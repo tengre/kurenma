@@ -1,0 +1,134 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+
+  <!ENTITY dhfirstname "Damir">
+  <!ENTITY dhsurname   "Yakupov">
+  <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
+  <!ENTITY dhemail     "yds@bk.ru">
+  <!ENTITY dhsection   "5">
+  <!ENTITY dhpackage   "kurenma">
+  <!ENTITY dhtitle     "&dhpackage; package configuration">
+  <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhNAME      "IPSLIST.INI">
+  <!ENTITY dhname      "ipslist.ini">
+  <!ENTITY dhlupdate   "<citerefentry><refentrytitle>update-firehol</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlfirehol  "<citerefentry><refentrytitle>firehol</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlfireconf "<citerefentry><refentrytitle>firehol.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+
+]>
+
+<refentry>
+  <refentryinfo>
+    <title>&dhtitle;</title>
+    <productname>&dhname;</productname>
+    <authorgroup>
+      <author>
+       <firstname>&dhfirstname;</firstname>
+        <surname>&dhsurname;</surname>
+        <contrib>Wrote this manpage for the Debian system.</contrib>
+        <address>
+          <email>&dhemail;</email>
+        </address>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2016</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    <legalnotice>
+      <para>Permission is granted to copy, distribute and/or modify this
+        document under the terms of the GNU General Public License,
+        Version 2 or any later version published by
+        the Free Software Foundation.</para>
+      <para>On Debian systems, the complete text of the GNU General Public
+        License can be found in
+        <filename>/usr/share/common-licenses/GPL</filename>.</para>
+    </legalnotice>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>&dhNAME;</refentrytitle>
+    <manvolnum>&dhsection;</manvolnum>
+  </refmeta>
+  <refnamediv>
+   <refname>&dhname;</refname>
+   <refpurpose>
+    helper configuration file for generate persistent white and black lists of IP-addresses for &dhlfirehol;.
+   </refpurpose>
+  </refnamediv>
+  <refsect1 id="description">
+   <title>DESCRIPTION</title>
+   <para>
+    <command>&dhname;</command> is an INI file with two sections - lists of IP addresses or domain names:
+   </para>
+   <para>
+    ipv4White - permitted
+   </para>
+   <para>
+    ipv4Black - forbidden
+   </para>
+  </refsect1>
+  <refsect1 id="file format">
+   <title>FILE FORMAT</title>
+   <para>
+    The file consists of sections and parameters. A section begins with the name of the section
+    in square brackets and continues until the next
+    section begins or file ends. Sections contain sequence of "raw" lines, each of which is a unnamed parameter.
+   </para>
+   <para>
+    Section and parameter names are case sensitive.
+   </para>
+   <para>
+    Any line beginning with a hash ("#") character is
+    ignored, as are lines containing only whitespace.
+   </para>
+  </refsect1>
+  <refsect1 id="section ipv4White">
+   <title>SECTION ipv4White</title>
+   <para>
+    [ipv4White] section are given sequence of IP-addresses or host names permitted to WireGuard tunnel.
+   </para>
+   <example>
+    <para>[ipv4White]</para>
+    <para>192.168.0.1</para>
+    <para>client1.domain.name</para>
+   </example>
+  </refsect1>
+  <refsect1 id="section ipv4Black">
+   <title>SECTION ipv4Black</title>
+   <para>
+    [ipv4Black] section are given sequence of IP-addresses or host names forbidden to WireGuard tunnel.
+   </para>
+   <example>
+    <para>[ipv4Black]</para>
+    <para>192.168.0.2</para>
+    <para>client2.domain.name</para>
+   </example>
+  </refsect1>
+  <refsect1 id="files">
+    <title>FILES</title>
+    <variablelist>
+      <varlistentry>
+	<term><filename>/etc/firehol/firehol.conf</filename></term>
+        <para>
+         &dhlfirehol; configuration
+        </para>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="see_also">
+    <title>SEE ALSO</title>
+    <para>
+     &dhlupdate;
+     &nbsp;
+     &dhlfirehol;
+     &nbsp;
+     &dhlfireconf;
+    </para>
+    <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
+        <refentrytitle>info</refentrytitle>
+        <manvolnum>1</manvolnum>
+      </citerefentry> system.</para>
+  </refsect1>
+</refentry>
+

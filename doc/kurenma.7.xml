@@ -2,19 +2,26 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
-  <!ENTITY dhfirstname "Damir">
-  <!ENTITY dhsurname   "Yakupov">
-  <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname;">
-  <!ENTITY dhemail     "yds@bk.ru">
-  <!ENTITY dhsection   "7">
-  <!ENTITY dhpackage   "kurenma">
-  <!ENTITY dhtitle     "&dhpackage; overview">
-  <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
-  <!ENTITY dhNAME      "KURENMA">
-  <!ENTITY dhname      "kurenma">
-  <!ENTITY dhlwizard   "<citerefentry><refentrytitle>gen-ssl-&dhpackage;</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
-  <!ENTITY dhlservice  "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
-  <!ENTITY dhlconfig   "<citerefentry><refentrytitle>&dhpackage;.ini</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+  <!ENTITY dhfirstname      "Damir">
+  <!ENTITY dhsurname        "Yakupov">
+  <!ENTITY dhusername       "&dhfirstname; Sh. &dhsurname;">
+  <!ENTITY dhemail          "yds@bk.ru">
+  <!ENTITY dhsection        "7">
+  <!ENTITY dhpackage        "kurenma">
+  <!ENTITY dhtitle          "&dhpackage; overview">
+  <!ENTITY dhlpackage       "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhNAME           "KURENMA">
+  <!ENTITY dhname           "kurenma">
+  <!ENTITY dhlcontrol       "<citerefentry><refentrytitle>&dhpackage;ctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlservice       "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlconfig        "<citerefentry><refentrytitle>&dhpackage;.ini</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+  <!ENTITY dhlgenssl        "<citerefentry><refentrytitle>gen-ssl-&dhpackage;</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlknockd        "<citerefentry><refentrytitle>knockd</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlfirehol       "<citerefentry><refentrytitle>firehol</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlfireholconf   "<citerefentry><refentrytitle>firehol.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+  <!ENTITY dhlknockdconf    "<citerefentry><refentrytitle>knockd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+  <!ENTITY dhlsetupknockd   "<citerefentry><refentrytitle>setup-knockd</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlupdatefirehol "<citerefentry><refentrytitle>update-firehol</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
 
 ]>
 
@@ -37,8 +44,6 @@
       <holder>&dhusername;</holder>
     </copyright>
     <legalnotice>
-      <para>This manual page was written for the Debian system
-        (but may be used by others).</para>
       <para>Permission is granted to copy, distribute and/or modify this
         document under the terms of the GNU General Public License,
         Version 2 or (at your option) any later version published by
@@ -54,20 +59,20 @@
   </refmeta>
   <refnamediv>
     <refname>&dhpackage;</refname>
-    <refpurpose>set of bash shell scripts</refpurpose>
+    <refpurpose>WireGuard tunnels management tools.</refpurpose>
   </refnamediv>
   <refsect1 id="description">
    <title>DESCRIPTION</title>
    <para>
     <command>&dhpackage;</command>
-    is a package that includes bash shell scripts
+    is a package that includes tools for configuration and control WireGuard tunnels:
    </para>
    <variablelist>
     <varlistentry>
      <term><filename>kurenmactl</filename></term>
      <listitem>
       <para>
-       ..
+       management tool for &dhlservice; daemon
       </para>
      </listitem>
     </varlistentry>
@@ -75,7 +80,7 @@
      <term><filename>kurenmad</filename></term>
      <listitem>
       <para>
-       ..
+       daemon for automatic configuration and control of the WireGuard tunnels.
       </para>
      </listitem>
     </varlistentry>
@@ -83,7 +88,8 @@
      <term><filename>gen-ssl-kurenma</filename></term>
      <listitem>
       <para>
-       ..
+       generate CA infrastructure based on OpenSSL and x.509 certificate/key pair for
+       client and server peers.
       </para>
      </listitem>
     </varlistentry>
@@ -91,7 +97,7 @@
      <term><filename>setup-knockd</filename></term>
      <listitem>
       <para>
-       ..
+       get knock-sequence of port numbers from the server's X.509-certificate and write the appropriate section of the settings in the &dhlknockdconf; configuration file. Only required for server roles.
       </para>
      </listitem>
     </varlistentry>
@@ -99,7 +105,7 @@
      <term><filename>update-firehol</filename></term>
      <listitem>
       <para>
-       ..
+       adds the IP-address to the white list of the &dhlfirehol; firewall. It's designed to run from the service &dhlknockd; to allow WireGuard client access.
       </para>
      </listitem>
     </varlistentry>
@@ -107,16 +113,27 @@
   </refsect1>
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
-    <!-- In alpabetical order. -->
     <para>
-     <ulink url="file:///usr/share/doc/&dhpackage;/html/&dhpackage;.html" />
-     - api documentation
+     <ulink url="file:///usr/share/doc/&dhpackage;/html/&dhpackage;.html"/>
     </para>
     <para>
-     <citerefentry>
-      <refentrytitle>&dhpackage;</refentrytitle>
-       <manvolnum>1</manvolnum>
-     </citerefentry>
+     &dhlcontrol;
+     &nbsp;
+     &dhlservice;
+     &nbsp;
+     &dhlconfig;
+     &nbsp;
+     &dhlgenssl;
+     &nbsp;
+     &dhlupdatefirehol;
+     &nbsp;
+     &dhlsetupknockd;
+     &nbsp;
+     &dhlfirehol;
+     &nbsp;
+     &dhlknockd;
+     &nbsp;
+     &dhlknockdconf;
     </para>
   </refsect1>
 </refentry>

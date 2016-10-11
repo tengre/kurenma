@@ -56,7 +56,7 @@
   </refmeta>
   <refnamediv>
     <refname>&dhname;</refname>
-    <refpurpose>daemon for automatic configuration of the WireGuard peers </refpurpose>
+    <refpurpose>daemon for automatic configuration and control of the WireGuard tunnels.</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>

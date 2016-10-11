@@ -12,7 +12,7 @@
   <!ENTITY dhname      "gen-ssl-kurenma">
   <!ENTITY dhtitle     "&dhpackage; tools">
   <!ENTITY dhlpackage   "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
-  <!ENTITY dhlservice   "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlopenssl   "<citerefentry><refentrytitle>openssl</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
 ]>
 
 <refentry>
@@ -66,7 +66,7 @@
   <refsect1 id="description">
     <title>DESCRIPTION</title>
     <para><command>&dhname;</command>
-     generate CA infrastructure based on OpenSSL or certificate/key pair for
+     generate CA infrastructure based on OpenSSL and x.509 certificate/key pair for
      client and server peers.
     </para>
   </refsect1>
@@ -106,7 +106,7 @@
 	<term><filename>/usr/share/kurenma/openssl.cnf.template</filename></term>
         <listitem>
           <para>
-           template for generating configs from dn.kurenma.ini and arguments
+           template for generating X509 certificate extension configuration by using dn.kurenma.ini and arguments
 	  </para>
         </listitem>
       </varlistentry>
@@ -115,15 +115,9 @@
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
     <para>
-     <citerefentry>
-      <refentrytitle>openssl.cnf.template</refentrytitle>
-      <manvolnum>5</manvolnum>
-     </citerefentry>
+     &dhlpackage;
      &nbsp;
-     <citerefentry>
-      <refentrytitle>dn.kurenma.ini</refentrytitle>
-      <manvolnum>5</manvolnum>
-     </citerefentry>
+     &dhlopenssl;
     </para>
     <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
         <refentrytitle>info</refentrytitle>

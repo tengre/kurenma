@@ -153,10 +153,10 @@
     <title>FILES</title>
     <variablelist>
       <varlistentry>
-	<term><filename>/etc/kurenma/dn.kurenma.ini</filename></term>
-      </varlistentry>
-      <varlistentry>
 	<term><filename>/usr/share/kurenma/openssl.cnf.template</filename></term>
+        <para>
+         template for generating X509 certificate extension configuration by using dn.kurenma.ini and arguments
+        </para>
       </varlistentry>
     </variablelist>
   </refsect1>

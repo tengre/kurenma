@@ -9,10 +9,10 @@
   <!ENTITY dhsection   "5">
   <!ENTITY dhpackage   "kurenma">
   <!ENTITY dhtitle     "&dhpackage; package configuration">
-  <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
   <!ENTITY dhNAME      "KURENMA.INI">
   <!ENTITY dhname      "kurenma.ini">
-  <!ENTITY dhlservice  "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhlservice  "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
   <!ENTITY dhwg        "<citerefentry><refentrytitle>wg</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
 ]>
 
@@ -277,7 +277,7 @@
 	<term><filename>/etc/kurenma/kurenma.ini</filename></term>
         <listitem>
           <para>
-           Configuration file for &dhlservice;
+           Location of configuration file for &dhlservice;
 	  </para>
         </listitem>
       </varlistentry>
@@ -286,15 +286,9 @@
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
     <para>
-     <citerefentry>
-      <refentrytitle>kurenmad</refentrytitle>
-      <manvolnum>1</manvolnum>
-     </citerefentry>
+     &dhlservice;
      &nbsp;
-     <citerefentry>
-      <refentrytitle>kurenma.ini</refentrytitle>
-      <manvolnum>5</manvolnum>
-     </citerefentry>
+     &dhwg;
     </para>
     <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
         <refentrytitle>info</refentrytitle>

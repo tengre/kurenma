@@ -1,40 +1,35 @@
-Tue, 11 Oct 2016 15:37:20 +0400
+Tue, 11 Oct 2016 23:01:57 +0400
 	New upstream release
 	Version 0.5
-
  - added infrastructure to create a debian package:
-   * postrm used for uninstall, prerm - for service stopping,
-     postinst - for install package
    * used debian-systemd-{helper,invoke} instead systemctl
    * direct use of {invoke,update}-rc.d, if necessary
-   * closed some lintian founded bugs
-
- - supported SystemD and SystemV inits
+   * postrm used for uninstall, prerm - for service stopping,
+   * closed lintian founded errors and warns
+ - supported System D and System V inits
  - added/renamed project files:
    * kurenma.default - environment for initscripts
    * kurenma.logrotated - configuration for log rotating
    * kurenma.initd - System V init script instead kurenma
-
  - added doc infrastructure - mans and robodoc files
  - added xml sources of man pages for all commands and configurations
  - added Makefile.am rules for create manpages
  - added robodoc.{rc,css} files for html generation
  - added patch template for robodoc single file header
-
  - update-firehol,setup-knockd - added udfFinally call
  - kurenma.ini.example - added 'dev' parameter
- - kurenmad - fixed local variable define
  - setup-knockd - added service restarting
  - update-firehol - used kurenmactl for starting kurenmad service
  - checked process UID for gen-ssl-kurenma, kurenmactl, setup-knockd
  - kurenma.initd - export START_KURENMA from /etc/default/kurenma
  - updated external command lists for udfThrowOnCommandNotFound
+ - kurenmad - fixed local variable define
  - removed script headers for {client,server}.kurenma.src
  - removed unused {client,server}.kurenma.ini.example
 
  Makefile.am:
- - added rules for create etc/{init.d,default,logrotate.d} hierarchy
-   with target files
+ - added rules for create etc/{init.d,default,logrotate.d} hierarchy with target
+   files
  - added clean-local hook for remove etc/.. hierarchy
 
  kurenmactl:
@@ -51,7 +46,6 @@ Tue, 11 Oct 2016 15:37:20 +0400
 Tue, 27 Sep 2016 12:20:47 +0400
 	New upstream release
 	Version 0.4
-
  - refactored for unification client and server code:
    * as a service used kurenmad file that contains the common code to initialize
      and run regardless of role. The specific code for each of the roles is

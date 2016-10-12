@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 102 2016-10-12 21:37:56+04:00 toor $
+# $Id: client.kurenma.src 103 2016-10-13 00:34:37+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -7,7 +7,7 @@ _bashlyk=kurenma . bashlyk
 #
 udfKnocking() {
 
-	udfThrowOnEmptyVariable fnCtl fnServerCrt host portAuth
+	udfThrowOnEmptyVariable fnServerCrt host portAuth
 
 	local i s
 
@@ -37,7 +37,7 @@ udfKnocking() {
 
 		fi
 
-		if ! udfWatchdog $fnCtl 1; then
+		if ! udfWatchdog 1; then
 
 			echo "x"
 			return $(_ iErrorAbortedBySignal)
@@ -64,7 +64,7 @@ udfKnocking() {
 #
 udfGetTunnelSettings() {
 
-	udfThrowOnEmptyVariable cnClient fnCtl fnClientKey host portAuth
+	udfThrowOnEmptyVariable cnClient fnClientKey host portAuth
 
 	local fnPub fnAns sKey s
 
@@ -79,7 +79,7 @@ udfGetTunnelSettings() {
 
 		udfDebug 2 "ok."
 
-		udfWatchdog $fnCtl 4 || break
+		udfWatchdog 4 || break
 
 		sKey=$( wg genkey )
 
@@ -96,7 +96,7 @@ udfGetTunnelSettings() {
 		eval $( udfOnError2 warn iErrorNotValidArgument "malformed answer from ${host}:${portAuth} $s" )
 
 		s="$(_ iErrorAbortedBySignal ) stop signal received"
-		udfWatchdog $fnCtl 8 || break
+		udfWatchdog 8 || break
 
 	done >&2
 
@@ -187,7 +187,7 @@ udfSetDefaultRoute() {
 udfService() {
 
 	udfThrowOnCommandNotFound false knock ping tee true
-	udfThrowOnEmptyVariable bDefaultRoute cnClient cnServer dev fnCtl pathIni pathKey port portAuth tsPeerTimeout
+	udfThrowOnEmptyVariable bDefaultRoute cnClient cnServer dev pathIni pathKey port portAuth tsPeerTimeout
 
 	local bStart fmtCon fmtSSL fnClientCrt fnClientKey fnServerCrt s
 
@@ -238,7 +238,7 @@ udfService() {
 
 		udfDebug 2 "check connection every $tsPeerTimeout sec.."
 		## TODO force check with async message
-		udfWatchdog $fnCtl $tsPeerTimeout || break
+		udfWatchdog $tsPeerTimeout || break
 
 		for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
 

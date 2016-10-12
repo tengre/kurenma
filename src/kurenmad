@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 102 2016-10-12 21:37:56+04:00 toor $"
+# $Id: kurenmad 103 2016-10-13 00:34:37+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -117,37 +117,17 @@ udfGetTimeInSec() {
 #
 udfWatchdog() {
 
-	udfOn EmptyOrMissingArgument throw "$1"
-	udfIsNumber $2 || eval $( udfOnError2 throw iErrorNonValidArgument "$2" )
+	[[ $_bashlyk_stop  == stop ]] && return $(_ iErrorAbortedBySignal)
 
-	sleep $2 &
+	udfIsNumber $1 || eval $( udfOnError throw iErrorNonValidArgument "$1" )
+
+	sleep $1 &
 	udfAddPid2Clean $!
 	wait $!
-	
-#	local i=0
-#
-#	while true; do
-#
-#		i=$((i+1))
-#
-#		if [[ -s $1 && $( tail -n 1 $1 ) == "stop" ]]; then
-#
-#			i=$(_ iErrorAbortedBySignal)
-#			break
-#
-#		fi
-#
-#		sleep 1
-#
-#		if (( i >= $2 )); then
-#
-#			i=0
-#			break
-#
-#		fi
-#
-#	done
 
+	[[ $_bashlyk_stop  == stop ]] && return $(_ iErrorAbortedBySignal)
+
+	return 0
 }
 #
 udfShowPeerInfo() {
@@ -166,9 +146,11 @@ udfShowPeerInfo() {
 #
 udfSignal() {
 
-    #udfThrowOnEmptyVariable portAuth
-    cmdNetcat="nc -k -l -v $portAuth"
+    local cmdNetcat="nc -k -l -v $portAuth"
     udfStopProcess $cmdNetcat
+    _bashlyk_stop=stop
+    udfFinally "service down"
+    udfOnTrap
 
 }
 #
@@ -181,7 +163,7 @@ udfMain() {
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	local -a aId
-	local fnCtl ini pathCrt pathDat pathIni pathKey pathRun s
+	local ini pathCrt pathDat pathIni pathKey pathRun s
 	local csvSectionMain csvSectionSSL ipsAllowed aReqOptByRole
 
 	csvSectionMain='bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
@@ -197,7 +179,7 @@ udfMain() {
 	pathCrt=${pathIni}/ssl/public
 	pathKey=${pathIni}/ssl/private
 	ini=${pathIni}/kurenma.ini
-	fnCtl=${pathRun}/kurenma.pid
+
 	mkdir -p $pathDat || eval $( udfOnError retecho NotExistNotCreated $pathDat )
 
 	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}" "ipsAllowed:="
@@ -240,13 +222,11 @@ udfMain() {
 
 	. ${_kurenma_pathLib}/${role}.kurenma.src
 
-	echo "start" > $fnCtl
+	trap udfSignal 31
 
-	udfService &
+	udfService
 
-	wait $!
-
-	udfFinally "service down"
+	udfFinally
 
 }
 #

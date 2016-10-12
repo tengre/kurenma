@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 100 2016-10-12 12:42:52+04:00 toor $
+# $Id: kurenmactl 103 2016-10-13 00:34:37+04:00 toor $
 #
 _kurenma_sVersion=0.5
 #
@@ -70,23 +70,14 @@ udfMain() {
 
 	udfThrowOnCommandNotFound cat echo grep head kurenmad mkdir nohup sleep tr
 
-	local cmd cmdNetcat fnCtl ini pathIni pathRun pid portAuth s
+	local cmd ini pathRun pid portAuth s
 
 	cmd=kurenmad
-	pathIni=$( _ pathIni )
 	pathRun=$( _ pathRun )
 
-	udfThrowOnEmptyVariable pathIni pathRun
+	udfThrowOnEmptyVariable pathRun
 
 	mkdir -p $pathRun || eval $( udfOnError throw NotExistNotCreated "$pathRun" )
-
-	ini=${pathIni}/kurenma.ini
-	fnCtl=${pathRun}/kurenma.pid
-
-	udfIni $ini ':portAuth'
-
-	: ${portAuth:=42912}
-	cmdNetcat="nc -k -l -v $portAuth"
 
 	eval set -- $(_ sArg)
 
@@ -104,14 +95,13 @@ udfMain() {
 		 stop)
 			udfDebug 1 "service $cmd stopping.."
 
-			echo stop >> $fnCtl
-			udfStopProcess $cmdNetcat
-
 			for s in 1 1 1 1 1 1 1 1; do
 
-				sleep 1.1
+				pid=''
 				[[ -s ${pathRun}/${cmd}.pid ]] && pid=$( head -n 1 ${pathRun}/${cmd}.pid )
 				udfIsNumber $pid || break
+				kill -31 $pid
+				sleep 1.1
 
 			done
 

@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 84 2016-09-27 23:04:00+04:00 toor $
+# $Id: client.kurenma.src 102 2016-10-12 21:37:56+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -266,7 +266,7 @@ udfService() {
 
 	done
 
-	udfFinally "service down"
+	#udfFinally "service down"
 
 }
 #

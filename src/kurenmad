@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 100 2016-10-12 12:42:52+04:00 toor $"
+# $Id: kurenmad 102 2016-10-12 21:37:56+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -120,31 +120,34 @@ udfWatchdog() {
 	udfOn EmptyOrMissingArgument throw "$1"
 	udfIsNumber $2 || eval $( udfOnError2 throw iErrorNonValidArgument "$2" )
 
-	local i=0
+	sleep $2 &
+	udfAddPid2Clean $!
+	wait $!
+	
+#	local i=0
+#
+#	while true; do
+#
+#		i=$((i+1))
+#
+#		if [[ -s $1 && $( tail -n 1 $1 ) == "stop" ]]; then
+#
+#			i=$(_ iErrorAbortedBySignal)
+#			break
+#
+#		fi
+#
+#		sleep 1
+#
+#		if (( i >= $2 )); then
+#
+#			i=0
+#			break
+#
+#		fi
+#
+#	done
 
-	while true; do
-
-		i=$((i+1))
-
-		if [[ -s $1 && $( tail -n 1 $1 ) == "stop" ]]; then
-
-			i=$(_ iErrorAbortedBySignal)
-			break
-
-		fi
-
-		sleep 1
-
-		if (( i >= $2 )); then
-
-			i=0
-			break
-
-		fi
-
-	done
-
-	return $i
 }
 #
 udfShowPeerInfo() {
@@ -158,6 +161,14 @@ udfShowPeerInfo() {
 	ip addr show $dev | grep inet
 
 	printf -- "\n----\n"
+
+}
+#
+udfSignal() {
+
+    #udfThrowOnEmptyVariable portAuth
+    cmdNetcat="nc -k -l -v $portAuth"
+    udfStopProcess $cmdNetcat
 
 }
 #
@@ -231,7 +242,11 @@ udfMain() {
 
 	echo "start" > $fnCtl
 
-	udfService
+	udfService &
+
+	wait $!
+
+	udfFinally "service down"
 
 }
 #

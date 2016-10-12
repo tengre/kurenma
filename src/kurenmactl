@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 98 2016-10-11 17:16:38+04:00 toor $
+# $Id: kurenmactl 100 2016-10-12 12:42:52+04:00 toor $
 #
 _kurenma_sVersion=0.5
 #
@@ -8,6 +8,33 @@ _bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 #
 #
 #
+#****h* command/kurenmactl
+#
+#  USAGE
+#
+#    kurenmactl [ start | stop ]
+#
+#  DESCRIPTION
+#
+#    kurenmactl - part of the kurenma package, management tool for kurenmad(8)
+#    daemon. Command is intended for use in the service management system, such
+#    as SystemV or SystemD.
+#
+#  OPTIONS
+#
+#    start
+#           Start the kurenmad(8) in daemon mode  (without  leading  terminal).
+#           The  environment  variable  START_KURENMA  with  value  "NO"  (case
+#           insensitive) prevents launch of service.
+#
+#    stop
+#           Gracefully stop the kurenmad(8)
+#
+#  SEE ALSO
+#
+#    kurenmad(8), kurenma.ini(5)
+#
+#******
 udfUsage() {
 
     	local -a aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) )
@@ -28,7 +55,6 @@ udfUsage() {
 	eval $(udfOnError exit)
 
 }
-#******
 udfMain() {
 
 	DEBUGLEVEL=3

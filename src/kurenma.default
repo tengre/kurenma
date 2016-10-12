@@ -1,9 +1,28 @@
 #
-# $Id: kurenma.default 85 2016-09-28 14:31:16+04:00 toor $
+# $Id: kurenma.default 100 2016-10-12 12:42:51+04:00 toor $
 #
-# Kurenma application default file
-# sourced by the initscripts
 #
+#
+#****** configuration/etc/default/kurenma
+#
+#  DESCRIPTION
+#
+#    kurenma application default file with environment variables for kurenmactl.
+#    Sourced by the initscripts, in  particular, you can disable the service by
+#    using the variable START_KURENMA with a value of "No" ("False", "0" - case
+#    insensitive).
+#
+#  SEE ALSO
+#
+#    kurenmactl(8)
+#
+#  EXAMPLE
+#
+#    ## To enable kurenmad(8) at startup set
+#    START_KURENMA=YES
+#
+#  SOURCE
 
-# To enable kurenma at startup set START_KURENMA=YES (init script variable)
 START_KURENMA=NO
+
+#******

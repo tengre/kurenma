@@ -1,4 +1,4 @@
-Tue, 11 Oct 2016 23:01:57 +0400
+Wed, 12 Oct 2016 12:51:45 +0400
 	New upstream release
 	Version 0.5
  - added infrastructure to create a debian package:
@@ -11,11 +11,12 @@ Tue, 11 Oct 2016 23:01:57 +0400
    * kurenma.default - environment for initscripts
    * kurenma.logrotated - configuration for log rotating
    * kurenma.initd - System V init script instead kurenma
- - added doc infrastructure - mans and robodoc files
- - added xml sources of man pages for all commands and configurations
- - added Makefile.am rules for create manpages
- - added robodoc.{rc,css} files for html generation
- - added patch template for robodoc single file header
+ - added doc infrastructure - mans and robodoc files:
+   * added xml sources of man pages for all commands and configurations
+   * added robodoc headers for all commands and configurations
+   * added Makefile.am rules for create manpages
+   * added robodoc.{rc,css} files for html generation
+   * added patch template for robodoc single file header
  - update-firehol,setup-knockd - added udfFinally call
  - kurenma.ini.example - added 'dev' parameter
  - setup-knockd - added service restarting

@@ -1,11 +1,26 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 93 2016-10-06 12:12:35+04:00 toor $
+# $Id: setup-knockd 100 2016-10-12 12:42:52+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
+#****h* command/setup-knockd
+#
+#  DESCRIPTION
+#
+#    part of the kurenma(7) package, tool to configure the third-party
+#    application.
+#    setup-knockd get knock-sequence  of  port  numbers  from  the  server's
+#    X.509-certificate  and write the appropriate section of the settings in
+#    the knockd.conf(5) configuration file. Only required for server roles.
+#
+#  SEE ALSO
+#
+#    update-firehol(8), knockd(1), gen-ssl-kurenma(8)
+#
+#******
 udfMain() {
 
 	udfExitIfAlreadyStarted

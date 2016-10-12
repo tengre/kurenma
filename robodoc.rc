@@ -1,3 +1,6 @@
+#
+# $Id: robodoc.rc 100 2016-10-12 12:38:47+04:00 toor $
+#
 options:
     --src ./src
     --doc ./doc/kurenma
@@ -15,3 +18,4 @@ ignore files:
     *~
     debian
     autom4te.cache
+    etc

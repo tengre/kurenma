@@ -1,4 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!-- $Id: dn.kurenma.ini.5.xml 100 2016-10-12 12:43:58+04:00 toor $ -->
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
@@ -143,8 +144,8 @@
        <para>
         Default: CommonName
        </para>
-       <example>CN = ca.sygnak.org</example>
-       <example>CN = coining.mint.sygnak.gt</example>
+       <example>CN = ca.sugnak.org</example>
+       <example>CN = coining.mint.sugnak.gt</example>
       </listitem>
     </varlistentry>
    </variablelist>

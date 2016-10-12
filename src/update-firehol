@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 85 2016-09-28 15:40:43+04:00 toor $
+# $Id: update-firehol 100 2016-10-12 12:42:52+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -13,6 +13,29 @@ _bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 #
 #
 #
+#****h* command/update-firehol
+#
+#  USAGE
+#
+#    update-firehol [ <IP-address> ]
+#
+#  DESCRIPTION
+#
+#    part of the kurenma(7) package, tool to configure the third-party
+#    application.
+#    update-firehol adds the IP-address to the white list of the  firehol(1)
+#    firewall.  It's  designed  to  run  from the service knockd(1) to allow
+#    WireGuard client access.
+#
+#  OPTIONS
+#
+#    <IP-address> - valid IPv4 address
+#
+#  SEE ALSO
+#
+#    firehol(1), firehol.conf(5), knockd(1), knockd.conf(5), setup-knockd(8)
+#
+#******
 udfMain() {
 
 	udfExitIfAlreadyStarted

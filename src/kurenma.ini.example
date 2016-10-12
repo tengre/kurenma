@@ -1,17 +1,139 @@
 #
-# $Id: kurenma.ini.example 74 2016-09-15 12:10:41+04:00 toor $
+# $Id: kurenma.ini.example 100 2016-10-12 12:42:51+04:00 toor $
 #
+#****h* configuration/kurenma.ini.example
+#
+#  DESCRIPTION
+#
+#    main configuration file of kurenma(7) package. It defines the behavior of
+#    the service - a client or server, sets the network settings and using
+#    OpenSSL keys.
+#
+#  NOTES
+#
+#    The file consists of sections and parameters. A section begins with the
+#    name  of  the section in square brackets (or top of the file for global
+#    unnamed section) and continues until the next section  begins.  Unnamed
+#    section  contain  global  settings.  Sections contain parameters of the
+#    form:
+#
+#    name = value
+#
+#    or for some special sections contain sequence of "raw" lines,  each  of
+#    which  is  a  unnamed  parameter.  For  example,  list  of allowed IPv4
+#    networks (CIDR)
+#
+#    Section and parameter names are case sensitive.
+#
+#    Any line beginning with a hash ("#") character is ignored, as are lines
+#    containing only whitespace.
+#
+#  PARAMETERS
+#
+#    There are three special sections, unnamed global, [ssl] and [ipsAllowed]
+#
+#    GLOBAL UNNAMED SECTION contain global named parameters:
+#
+#    role constant STRING
+#        This parameter can be set to client or server and define  the  role
+#        of  kurenmad(8).  Service  for client role send requests for tunnel
+#        creating to the server and check tunnel state, for  server  role  -
+#        listen client requests for tunnel creation only.
+#
+#    dev STRING
+#        this parameter define WireGuard tunnel device name
+#
+#        Default: wg0
+#
+#    host STRING
+#        this  parameter define valid hostname or IPv4 address of the server
+#        side of kurenmad(8)
+#
+#    port NUMBER
+#        UDP port number that the WireGuard device of the "server" role will
+#        listen on
+#
+#        Default: 12912
+#
+#        It  makes  sense only for "server" role because the client receives
+#        the port number on a successful key exchange.
+#
+#    portAuth NUMBER
+#        TCP port number that the daemon of the "server" role will listen on
+#        for auth and key exchange
+#
+#        Default: 42912
+#
+#    tsKeepalive NUMBER
+#        Number  parameter  (0..65535)  of  time  interval  in seconds. This
+#        option supported Wireguard option  "PersistentKeepalive"  for  keep
+#        connection when peer is behind NAT or a firewall, see wg(1)
+#
+#        Default: 0 (disabled)
+#
+#    tsPeer￼Timeout Formatted STRING or NUMBER
+#        Threshold  time  of  inactivity,  that  is  recognized  as  a  peer
+#        disconnect
+#
+#        This parameter can be presented as a number (of seconds)  or  as  a
+#        presentation time string "number<sec|min|hour|day|week|month|year>"
+#
+#        Default: 32minutes
+#
+#    ipServer IP address
+#        Tunnel IP address of server peer.
+#
+#        It  makes  sense  only  for  "server" role. The client receives the
+#        server tunnel IP-address in the key exchange
+#
+#        Default: 192.168.29.1
+#
+#    ipClient constant STRING
+#        Leased mode for client peers. This parameter can be set to  dynamic
+#        or commonname
+#
+#        It makes sense only for "server" role.
+#
+#        dynamic  -  set  for  client  peer  first  free  IP  address  after
+#        "ipServer" value
+#
+#        commonname - set for client peer  IP  address  that  resolved  from
+#        their  Common  Name  (CN).  In  this  case, the DNS service must be
+#        properly configured.
+#
+#        Default: dynamic
+#
+#    SECTION [ipsAllowed] are given sequence of networks (CIDR) permitted to
+#        WireGuard tunnel.
+#
+#    SECTION [ssl] should contain Сommon Names of peers that bind X.509
+#        digital certificates of public key infrastructure (PKI)
+#
+#    cnServer STRING
+#        Common Name (CN) that refers to the signed server certificate
+#
+#    cnClient STRING
+#        Common Name (CN) that refers to the signed client certificate
+#        It makes sense only for "client"  role.  The  server  receives  the
+#        client's CN in the key exchange
+#
+#  SEE ALSO
+#
+#    kurenmad(8), wg(1)
+#
+#  SOURCE
+
 	role		= client
 #	role		= server
 
+	dev		= wg0
 	host		= server.domain
 	port		= 12912
 	portAuth	= 42912
 
 	tsKeepalive	= 25
 
-	tsPeer￼Timeout   = 8min
-#	tsPeer￼Timeout   = 12hours
+	tsPeerTimeout   = 8min
 
 	bDefaultRoute	= false
 
@@ -30,5 +152,4 @@
 
 	192.168.29.0/24
 
-
-
+#******

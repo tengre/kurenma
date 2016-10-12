@@ -1,6 +1,5 @@
-#!/bin/bash
 #
-# $Id: server.kurenma.src 79 2016-09-25 00:42:23+04:00 toor $"
+# $Id: server.kurenma.src 84 2016-09-27 23:04:01+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -99,7 +98,7 @@ udfHandleRequest() {
 	udfThrowOnEmptyOrMissingArgument "$@"
 	udfThrowOnEmptyVariable fnServerKey ipClient ipServer dev pathCrt pathDat pathIni tsKeepalive tsPeerTimeout
 
-	local a aCIDR cnClient fn fnClientCrt fnLeased peer s
+	local a aCIDR cnClient fn fnClientCrt fnLeased ip peer s
 
 	udfMakeTemp fn
 
@@ -284,7 +283,7 @@ udfService() {
 	udfThrowOnCommandNotFound cut kill ps sort
 	udfThrowOnEmptyVariable cnServer dev fnCtl ipServer pathKey port portAuth
 
-	local cmdNetcat fnServerKey fnTmp ip
+	local cmdNetcat fnServerKey fnTmp
 
 	cmdNetcat="nc -k -l -v $portAuth"
 

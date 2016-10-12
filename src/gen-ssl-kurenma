@@ -1,14 +1,42 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 78 2016-09-25 00:24:48+04:00 toor $
+# $Id: gen-ssl-kurenma 100 2016-10-12 12:42:51+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
+#****h* command/gen-ssl-kurenma
+#
+#  USAGE
+#
+#    gen-ssl-kurenma [ ca | crt <CommonName> ]
+#
+#  DESCRIPTION
+#
+#    gen-ssl-kurenma generate CA infrastructure based on OpenSSL and x.509
+#    certificate/key pair for client and server peers.
+#
+#  OPTIONS
+#
+#    ca
+#           generate CA infrastructure in /etc/kurenma/ssl
+#
+#    crt <CommonName>
+#           generate certificate and private key for peer with CommonName
+#
+#  SEE ALSO
+#
+#    kurenma(7), openssl(1)
+#
+#******
 udfMain() {
 
-	udfThrowOnCommandNotFound chmod cp echo mkdir openssl rm sed touch wg
+	udfExitIfAlreadyStarted
+
+	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+
+	udfThrowOnCommandNotFound chmod cp date echo mkdir openssl rm sed tee touch wg
 
 	local conf confDN csv fnTemplate path pathCnf pathCrt pathCsr pathIni pathKey s
 

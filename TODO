@@ -8,5 +8,6 @@ update-firehol:
 for bashlyk:
 +#00006 - udfChangeIni - loss % contain substring
 +#00007 - udfCheckStarted - check pid as number
-
+kurenmactl -> kurenmad:
+-#00008 - use signals for control
 

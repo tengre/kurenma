@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 78 2016-09-25 00:24:49+04:00 toor $
+# $Id: update-firehol 100 2016-10-12 12:42:52+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -13,13 +13,36 @@ _bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 #
 #
 #
+#****h* command/update-firehol
+#
+#  USAGE
+#
+#    update-firehol [ <IP-address> ]
+#
+#  DESCRIPTION
+#
+#    part of the kurenma(7) package, tool to configure the third-party
+#    application.
+#    update-firehol adds the IP-address to the white list of the  firehol(1)
+#    firewall.  It's  designed  to  run  from the service knockd(1) to allow
+#    WireGuard client access.
+#
+#  OPTIONS
+#
+#    <IP-address> - valid IPv4 address
+#
+#  SEE ALSO
+#
+#    firehol(1), firehol.conf(5), knockd(1), knockd.conf(5), setup-knockd(8)
+#
+#******
 udfMain() {
 
 	udfExitIfAlreadyStarted
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-	udfThrowOnCommandNotFound cp dig diff firehol flock host grep ipcalc mv sipcalc sed sort systemctl uniq wg xargs
+	udfThrowOnCommandNotFound cp date diff echo firehol flock grep kurenmactl mkdir mv rm sed sort touch uniq wg xargs
 
 	local cnf csv fn fnKnock fnLock ini ipv4Black ipv4Client ipv4White pathDat pathIni s sDig
 
@@ -127,11 +150,7 @@ udfMain() {
 
 		if echo commit | firehol try; then
 
-			if [[ -n "$*" ]]; then
-
-			    systemctl start kurenma.service
-
-			fi
+			[[ -n "$*" ]] && kurenmactl start
 
 			echo " OK."
 
@@ -143,7 +162,8 @@ udfMain() {
 
 	fi
 
-	udfUptime "."
+	udfFinally "service down"
+
 }
 #
 #

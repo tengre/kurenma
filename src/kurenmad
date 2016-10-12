@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 78 2016-09-25 00:24:49+04:00 toor $"
+# $Id: kurenmad 100 2016-10-12 12:42:52+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -12,6 +12,71 @@ _kurenma_pathLib=/usr/share/kurenma
 #
 #
 #
+#****h* kurenma/.
+#
+#  DESCRIPTION
+#
+#    kurenma  is a package that includes tools for configuration and control
+#    WireGuard tunnels.
+#
+#  COMMANDS
+#
+#    kurenmactl
+#        management tool for kurenmad(8) daemon
+#
+#    kurenmad
+#        daemon for automatic configuration and control of the WireGuard tunnels
+#
+#    gen-ssl-kurenma
+#        generate   CA   infrastructure   based   on   OpenSSL   and   x.509
+#        certificate/key pair for client and server peers
+#
+#    setup-knockd
+#        get   knock-sequence   of   port   numbers   from   the    server's
+#        X.509-certificate and write the appropriate section of the settings
+#        in the knockd.conf(5) configuration file. Only required for  server
+#        roles
+#
+#    update-firehol
+#        adds  the  IP-address to the white list of the firehol(1) firewall.
+#        It's designed to run from the service knockd(1) to allow  WireGuard
+#        client access
+#
+#  SEE ALSO
+#       kurenmactl(8), kurenmad(8), kurenma.ini(5), gen-ssl-kurenma(8),
+#       update-firehol(8), setup-knockd(8), firehol(1), knockd(1), knockd.conf(5)
+#******
+#****h* kurenma/command
+#  DESCRIPTION
+#
+#    This section described commands of package
+#
+#******
+#****h* kurenma/configuration
+#  DESCRIPTION
+#
+#    This section described configurations of package
+#
+#******
+#****h* command/kurenmad
+#
+#  USAGE
+#
+#    kurenmad
+#
+#  DESCRIPTION
+#
+#    kurenmad - daemon for automatic configuration and control of the WireGuard
+#    tunnels.
+#    Depending on the role, kurenmad acts as a server that receives requests
+#    to  create  WireGuard  tunnel or as a client requesting the creation of
+#    such a tunnel. For key exchanging used X.509 certificates.
+#
+#  SEE ALSO
+#
+#    kurenma(7), kurenmactl(8), kurenma.ini(5)
+#
+#******
 udfGetTimeInSec() {
 
 	if [[ "$1" == "-v" ]]; then
@@ -100,7 +165,7 @@ udfMain() {
 
 	DEBUGLEVEL=5
 
-	udfThrowOnCommandNotFound dig echo grep ip ipcalc mkdir nc openssl printf sed sipcalc wg xargs
+	udfThrowOnCommandNotFound echo grep ip mkdir nc openssl sed sleep tail wg
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 

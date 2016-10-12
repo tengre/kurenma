@@ -1,0 +1,145 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- $Id: kurenmactl.8.xml 100 2016-10-12 12:43:59+04:00 toor $ -->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+
+  <!ENTITY dhfirstname "Damir">
+  <!ENTITY dhsurname   "Yakupov">
+  <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
+  <!ENTITY dhemail     "yds@bk.ru">
+  <!ENTITY dhsection   "8">
+  <!ENTITY dhpackage   "kurenma">
+  <!ENTITY dhtitle     "&dhpackage; tools">
+  <!ENTITY dhNAME      "KURENMACTL">
+  <!ENTITY dhname      "kurenmactl">
+  <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhlservice  "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlconfig   "<citerefentry><refentrytitle>&dhpackage;.ini</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+
+]>
+
+<refentry>
+  <refentryinfo>
+    <title>&dhtitle;</title>
+    <productname>&dhname;</productname>
+    <authorgroup>
+      <author>
+       <firstname>&dhfirstname;</firstname>
+        <surname>&dhsurname;</surname>
+        <contrib>Wrote this manpage for the Debian system.</contrib>
+        <address>
+          <email>&dhemail;</email>
+        </address>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2016</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    <legalnotice>
+      <para>Permission is granted to copy, distribute and/or modify this
+        document under the terms of the GNU General Public License,
+        Version 2 or any later version published by
+        the Free Software Foundation.</para>
+      <para>On Debian systems, the complete text of the GNU General Public
+        License can be found in
+        <filename>/usr/share/common-licenses/GPL</filename>.</para>
+    </legalnotice>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>&dhNAME;</refentrytitle>
+    <manvolnum>&dhsection;</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>&dhname;</refname>
+    <refpurpose>part of the &dhpackage; package, operating tool</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>&dhname;</command>
+      <group choice="opt">
+        <arg choice="plain">
+         <arg choice="plain"><option> start</option></arg>
+	 |
+         <arg choice="plain"><option>stop</option></arg>
+        </arg>
+      </group>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1 id="description">
+    <title>DESCRIPTION</title>
+    <para>
+     <command>&dhname;</command>
+     management tool for &dhlservice; daemon
+    </para>
+  </refsect1>
+  <refsect1 id="options">
+    <title>OPTIONS</title>
+    <para>
+     command is intended for use in the service management system, such as
+     SystemV or SystemD.
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><option>start</option></term>
+        <listitem>
+         <para>
+          Start the &dhlservice; in daemon mode (without leading terminal).
+          The environment variable <envar>START_KURENMA</envar> with value "NO"
+	  (case insensitive) prevents launch of service.
+         </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>stop</option></term>
+        <listitem>
+         <para>
+          Gracefully stop the &dhlservice;
+         </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="files">
+    <title>FILES</title>
+    <variablelist>
+      <varlistentry>
+	<term><filename>/etc/default/kurenma</filename></term>
+        <listitem>
+          <para>
+            The configuration file with environment variables for &dhname;.
+	    In particular, you can disable the service by using the variable
+	    <envar>START_KURENMA</envar> with a value of "No" (case insensitive).
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="environment">
+    <title>ENVIRONMENT</title>
+    <variablelist>
+      <varlistentry>
+        <term><envar>START_KURENMA</envar></term>
+        <listitem>
+          <para>
+	   This environment variable with value "NO" disabled starting of
+	   &dhlservice; by &dhname;.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="see_also">
+    <title>SEE ALSO</title>
+    <para>
+     &dhlservice;
+     &nbsp;
+     &dhlconfig;
+    </para>
+    <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
+        <refentrytitle>info</refentrytitle>
+        <manvolnum>1</manvolnum>
+      </citerefentry> system.</para>
+  </refsect1>
+</refentry>
+

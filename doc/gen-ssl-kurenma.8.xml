@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- $Id: gen-ssl-kurenma.8.xml 100 2016-10-12 12:43:58+04:00 toor $ -->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+
+  <!ENTITY dhfirstname "Damir">
+  <!ENTITY dhsurname   "Yakupov">
+  <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
+  <!ENTITY dhemail     "yds@bk.ru">
+  <!ENTITY dhsection   "8">
+  <!ENTITY dhpackage   "kurenma">
+  <!ENTITY dhNAME      "GEN-SSL-KURENMA">
+  <!ENTITY dhname      "gen-ssl-kurenma">
+  <!ENTITY dhtitle     "&dhpackage; tools">
+  <!ENTITY dhlpackage   "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhlopenssl   "<citerefentry><refentrytitle>openssl</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+]>
+
+<refentry>
+  <refentryinfo>
+    <title>&dhtitle;</title>
+    <productname>&dhname;</productname>
+    <authorgroup>
+      <author>
+       <firstname>&dhfirstname;</firstname>
+        <surname>&dhsurname;</surname>
+        <contrib>Wrote this manpage for the Debian system.</contrib>
+        <address>
+          <email>&dhemail;</email>
+        </address>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2016</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    <legalnotice>
+      <para>Permission is granted to copy, distribute and/or modify this
+        document under the terms of the GNU General Public License,
+        Version 2 or any later version published by
+        the Free Software Foundation.</para>
+      <para>On Debian systems, the complete text of the GNU General Public
+        License can be found in
+        <filename>/usr/share/common-licenses/GPL</filename>.</para>
+    </legalnotice>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>&dhNAME;</refentrytitle>
+    <manvolnum>&dhsection;</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>&dhname;</refname>
+    <refpurpose>part of the &dhpackage; package, operating tool</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>&dhname;</command>
+      <group choice="opt">
+        <arg choice="plain">
+         <arg choice="plain"><option> ca</option></arg>
+	 |
+         <arg choice="plain"><option>crt CommonName</option></arg>
+        </arg>
+      </group>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1 id="description">
+    <title>DESCRIPTION</title>
+    <para><command>&dhname;</command>
+     generate CA infrastructure based on OpenSSL and x.509 certificate/key pair for
+     client and server peers.
+    </para>
+  </refsect1>
+  <refsect1 id="options">
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+        <term><option>ca</option></term>
+        <listitem>
+         <para>
+          generate CA infrastructure in /etc/kurenma/ssl
+         </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>crt CommonName</option></term>
+        <listitem>
+         <para>
+          generate certificate and private key for peer with CommonName
+         </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="files">
+    <title>FILES</title>
+    <variablelist>
+      <varlistentry>
+	<term><filename>/etc/kurenma/dn.kurenma.ini</filename></term>
+        <listitem>
+          <para>
+           helper configuration for define Distinguished Name settings
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><filename>/usr/share/kurenma/openssl.cnf.template</filename></term>
+        <listitem>
+          <para>
+           template for generating X509 certificate extension configuration by using dn.kurenma.ini and arguments
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="see_also">
+    <title>SEE ALSO</title>
+    <para>
+     &dhlpackage;
+     &nbsp;
+     &dhlopenssl;
+    </para>
+    <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
+        <refentrytitle>info</refentrytitle>
+        <manvolnum>1</manvolnum>
+      </citerefentry> system.</para>
+  </refsect1>
+</refentry>

@@ -1,0 +1,179 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- $Id: dn.kurenma.ini.5.xml 100 2016-10-12 12:43:58+04:00 toor $ -->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+
+  <!ENTITY dhfirstname "Damir">
+  <!ENTITY dhsurname   "Yakupov">
+  <!ENTITY dhusername  "&dhfirstname; Sh. &dhsurname; ">
+  <!ENTITY dhemail     "yds@bk.ru">
+  <!ENTITY dhsection   "5">
+  <!ENTITY dhpackage   "kurenma">
+  <!ENTITY dhtitle     "&dhpackage; package configuration">
+  <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
+  <!ENTITY dhNAME      "DN.KURENMA.INI">
+  <!ENTITY dhname      "dn.kurenma.ini">
+  <!ENTITY dhlwizard   "<citerefentry><refentrytitle>gen-ssl-&dhpackage;</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlconfig   "<citerefentry><refentrytitle>&dhpackage;.ini</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
+]>
+
+<refentry>
+  <refentryinfo>
+    <title>&dhtitle;</title>
+    <productname>&dhname;</productname>
+    <authorgroup>
+      <author>
+       <firstname>&dhfirstname;</firstname>
+        <surname>&dhsurname;</surname>
+        <contrib>Wrote this manpage for the Debian system.</contrib>
+        <address>
+          <email>&dhemail;</email>
+        </address>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2016</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    <legalnotice>
+      <para>Permission is granted to copy, distribute and/or modify this
+        document under the terms of the GNU General Public License,
+        Version 2 or any later version published by
+        the Free Software Foundation.</para>
+      <para>On Debian systems, the complete text of the GNU General Public
+        License can be found in
+        <filename>/usr/share/common-licenses/GPL</filename>.</para>
+    </legalnotice>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>&dhNAME;</refentrytitle>
+    <manvolnum>&dhsection;</manvolnum>
+  </refmeta>
+  <refnamediv>
+   <refname>&dhname;</refname>
+   <refpurpose>
+    helper configuration file for generate root Certificate Authority (CA) and for create signed certificates for WireGuard peers.
+   </refpurpose>
+  </refnamediv>
+  <refsect1 id="description">
+   <title>DESCRIPTION</title>
+   <para>
+    <command>&dhname;</command> - contains country based naming attributes of Distinguished Name (DN). This configuration file with the template "openssl.cnf.template" used by utility &dhlwizard;
+   </para>
+  </refsect1>
+  <refsect1 id="file format">
+   <title>FILE FORMAT</title>
+   <para>
+    The file should contain parameters of the form "key&nbsp;=&nbsp;value"
+   </para>
+   <para>
+    Any line beginning with a hash ("#") character is
+    ignored, as are lines containing only whitespace.
+   </para>
+  </refsect1>
+  <refsect1 id="PARAMETERS">
+   <title>PARAMETERS</title>
+   <variablelist>
+    <varlistentry>
+     <term><varname>C</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        Country Abbreviations
+       </para>
+       <para>
+        Default: XX
+       </para>
+       <example>C = GT</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>ST</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        State or province name
+       </para>
+       <para>
+        Default: State
+       </para>
+       <example>ST = Golden Horde</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>L</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        Locality
+       </para>
+       <example>L = Sugnak</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>O</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        Organization name or even organisational name
+       </para>
+       <para>
+	Default: Organizational
+       </para>
+       <example>O = Royal Mint Court</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>OU</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+        Usually department or any sub entity of larger entity
+       </para>
+       <para>
+	Default: OrganizationalUnit
+       </para>
+       <example>OU = Coining Department</example>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>CN</varname>&nbsp;<type>STRING</type></term>
+      <listitem>
+       <para>
+	Common Name (CN) of CA center or Wireguard tunnel peers.
+       </para>
+       <para>
+	For CA recommended using real full qualified domain name (FQDN),
+	for peer - FQDN from Wireguard tunnel virtual network.
+       </para>
+       <para>
+        Default: CommonName
+       </para>
+       <example>CN = ca.sugnak.org</example>
+       <example>CN = coining.mint.sugnak.gt</example>
+      </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+  <refsect1 id="files">
+    <title>FILES</title>
+    <variablelist>
+      <varlistentry>
+	<term><filename>/usr/share/kurenma/openssl.cnf.template</filename></term>
+        <para>
+         template for generating X509 certificate extension configuration by using dn.kurenma.ini and arguments
+        </para>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id="see_also">
+    <title>SEE ALSO</title>
+    <para>
+     &dhlpackage;
+     &nbsp;
+     &dhlwizard;
+     &nbsp;
+     &dhlconfig;
+    </para>
+    <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
+        <refentrytitle>info</refentrytitle>
+        <manvolnum>1</manvolnum>
+      </citerefentry> system.</para>
+  </refsect1>
+</refentry>
+

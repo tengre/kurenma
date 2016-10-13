@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 85 2016-09-28 15:42:45+04:00 toor $
+## $Id: Makefile.am 104 2016-10-13 09:45:43+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -50,3 +50,4 @@ clean-local:
 
 all:
 	$(shell) sed -i -e "s/_kurenma_sVersion=.*/_kurenma_sVersion=${PACKAGEVERSION}/" kurenmactl
+	$(shell) sed -i -e "s/_kurenma_sVersion=.*/_kurenma_sVersion=${PACKAGEVERSION}/" kurenmad

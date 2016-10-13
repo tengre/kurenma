@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 103 2016-10-13 00:34:37+04:00 toor $"
+# $Id: server.kurenma.src 104 2016-10-13 09:57:09+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -21,11 +21,11 @@ udfSelfCheck() {
 		## TODO check peers expiring
 		## TODO implement auto sleep mode
 
-		udfWatchdog 15 || break
+		udfWaitSignal 15 || break
 
 		iB=$( sed -rn "/.* Connection from .* port .* .* accepted .*/{=}" $fn | tail -n 1 )
 
-		udfWatchdog 15 || break
+		udfWaitSignal 15 || break
 
 		iA=$( sed -rn "/.* (Listening on .* .*|Connection closed, listening again.)/{=}" $fn | tail -n 1 )
 
@@ -44,7 +44,7 @@ udfSelfCheck() {
 		else
 
 			(( iA == -1 )) && iC=0 || iC=$iA
-			udfWatchdog 15 || break
+			udfWaitSignal 15 || break
 
 		fi
 
@@ -306,7 +306,7 @@ udfService() {
 		udfDebug 3 "Daemon for WireGuard clients (re)started.."
 		udfMakeTemp fnTmp type=pipe
 		udfWaitRequest < $fnTmp | $cmdNetcat > $fnTmp
-		udfWatchdog 1 || break
+		udfWaitSignal 1 || break
 		rm -f $fnTmp
 
 	done

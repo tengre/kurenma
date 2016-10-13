@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 103 2016-10-13 00:34:37+04:00 toor $
+# $Id: client.kurenma.src 104 2016-10-13 09:57:08+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -37,7 +37,7 @@ udfKnocking() {
 
 		fi
 
-		if ! udfWatchdog 1; then
+		if ! udfWaitSignal 1; then
 
 			echo "x"
 			return $(_ iErrorAbortedBySignal)
@@ -79,7 +79,7 @@ udfGetTunnelSettings() {
 
 		udfDebug 2 "ok."
 
-		udfWatchdog 4 || break
+		udfWaitSignal 4 || break
 
 		sKey=$( wg genkey )
 
@@ -96,7 +96,7 @@ udfGetTunnelSettings() {
 		eval $( udfOnError2 warn iErrorNotValidArgument "malformed answer from ${host}:${portAuth} $s" )
 
 		s="$(_ iErrorAbortedBySignal ) stop signal received"
-		udfWatchdog 8 || break
+		udfWaitSignal 8 || break
 
 	done >&2
 
@@ -238,7 +238,7 @@ udfService() {
 
 		udfDebug 2 "check connection every $tsPeerTimeout sec.."
 		## TODO force check with async message
-		udfWatchdog $tsPeerTimeout || break
+		udfWaitSignal $tsPeerTimeout || break
 
 		for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
 

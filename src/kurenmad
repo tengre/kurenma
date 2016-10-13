@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 103 2016-10-13 00:34:37+04:00 toor $"
+# $Id: kurenmad 104 2016-10-13 09:57:08+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -8,7 +8,9 @@ _bashlyk=kurenma . bashlyk
 #
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
+_kurenma_sVersion=0.5
 _kurenma_pathLib=/usr/share/kurenma
+_kurenma_sSignal=none
 #
 #
 #
@@ -115,17 +117,27 @@ udfGetTimeInSec() {
 
 }
 #
-udfWatchdog() {
+udfWaitSignal() {
 
-	[[ $_bashlyk_stop  == stop ]] && return $(_ iErrorAbortedBySignal)
+	if [[ $_kurenma_sSignal == "stop" ]]; then
 
-	udfIsNumber $1 || eval $( udfOnError throw iErrorNonValidArgument "$1" )
+		udfDebug 4 "Stop signal received before waiting"
+		return $(_ iErrorAbortedBySignal)
+
+	fi
+
+	udfIsNumber $1 || eval $( udfOnError return NonValidArgument "$1" )
 
 	sleep $1 &
 	udfAddPid2Clean $!
 	wait $!
 
-	[[ $_bashlyk_stop  == stop ]] && return $(_ iErrorAbortedBySignal)
+	if [[ $_kurenma_sSignal == "stop" ]]; then
+
+		udfDebug 4 "Stop signal received after waiting"
+		return $(_ iErrorAbortedBySignal)
+
+	fi
 
 	return 0
 }
@@ -146,10 +158,12 @@ udfShowPeerInfo() {
 #
 udfSignal() {
 
-    local cmdNetcat="nc -k -l -v $portAuth"
-    udfStopProcess $cmdNetcat
-    _bashlyk_stop=stop
-    udfFinally "service down"
+    [[ -n "$portAuth" ]] && udfStopProcess "nc -k -l -v $portAuth"
+
+    _kurenma_sSignal='stop'
+
+    udfFinally "service down by signal,"
+
     udfOnTrap
 
 }
@@ -203,7 +217,7 @@ udfMain() {
 
 	esac
 
-	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, rev${aId[2]}"
+	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, v${_kurenma_sVersion} rev${aId[2]}"
 	udfDebug 1 "start $( _ s0 ) as ${role}${s}"
 
 	: ${dev:=wg0}

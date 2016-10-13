@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 104 2016-10-13 09:57:08+04:00 toor $"
+# $Id: kurenmad 105 2016-10-13 12:42:49+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -158,13 +158,13 @@ udfShowPeerInfo() {
 #
 udfSignal() {
 
-    [[ -n "$portAuth" ]] && udfStopProcess "nc -k -l -v $portAuth"
+	[[ -n "$portAuth" ]] && udfStopProcess "nc -k -l -v $portAuth"
 
-    _kurenma_sSignal='stop'
+	_kurenma_sSignal='stop'
 
-    udfFinally "service down by signal,"
+	udfFinally "service down initiated by signal,"
 
-    udfOnTrap
+	udfOnTrap
 
 }
 #
@@ -240,8 +240,7 @@ udfMain() {
 
 	udfService
 
-	udfFinally
-
+	udfFinally "service down,"
 }
 #
 #

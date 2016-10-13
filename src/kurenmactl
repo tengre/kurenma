@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 104 2016-10-13 09:47:25+04:00 toor $
+# $Id: kurenmactl 105 2016-10-13 11:49:07+04:00 toor $
 #
 _kurenma_sVersion=0.5
 #
@@ -70,7 +70,7 @@ udfMain() {
 
 	udfThrowOnCommandNotFound cat echo grep head kurenmad mkdir nohup sleep tr
 
-	local cmd ini pathRun pid portAuth s
+	local cmd fnPid ini pathRun pid portAuth s
 
 	cmd=kurenmad
 	pathRun=$( _ pathRun )
@@ -93,19 +93,25 @@ udfMain() {
 		;;
 
 		 stop)
-			udfDebug 1 "service $cmd stopping.."
+			fnPid="${pathRun}/${cmd}.pid"
 
-			for s in 1 2 3 4 5 6 7 8; do
+                        udfDebug 1 && echo -n "service $cmd stopping.."
 
-				[[ -s ${pathRun}/${cmd}.pid ]] && pid=$( head -n 1 ${pathRun}/${cmd}.pid ) || pid=''
+                        [[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
 
-				udfIsNumber $pid || break
+                        udfIsNumber $pid && kill -31 $pid
 
-				kill -31 $pid
+                        for s in 1 2 3 4 5 6 7 8; do
 
-				sleep 1.1
+                                [[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
 
-			done
+                                udfIsNumber $pid || break
+
+                                sleep 0.75 && udfDebug 1 && echo -n "."
+
+                        done
+
+                        echo ""
 
 			udfStopProcess $pid $cmd
 			s=$?

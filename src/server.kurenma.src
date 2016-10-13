@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 104 2016-10-13 09:57:09+04:00 toor $"
+# $Id: server.kurenma.src 105 2016-10-13 11:49:07+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -304,9 +304,17 @@ udfService() {
 	while true; do
 
 		udfDebug 3 "Daemon for WireGuard clients (re)started.."
+
 		udfMakeTemp fnTmp type=pipe
-		udfWaitRequest < $fnTmp | $cmdNetcat > $fnTmp
-		udfWaitSignal 1 || break
+
+		udfWaitRequest < $fnTmp | $cmdNetcat > $fnTmp &
+
+		udfAddPid2Clean $!
+
+		wait $!
+
+		udfWaitSignal 0.1 || break
+
 		rm -f $fnTmp
 
 	done

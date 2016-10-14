@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 105 2016-10-13 11:49:07+04:00 toor $
+# $Id: kurenmactl 106 2016-10-14 13:56:05+04:00 toor $
 #
 _kurenma_sVersion=0.5
 #
@@ -59,7 +59,7 @@ udfMain() {
 
 	DEBUGLEVEL=3
 
-	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	if [[ $START_KURENMA =~ ^([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|0)$ ]]; then
 

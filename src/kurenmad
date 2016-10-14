@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 105 2016-10-13 12:42:49+04:00 toor $"
+# $Id: kurenmad 106 2016-10-14 13:56:05+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -83,13 +83,14 @@ udfGetTimeInSec() {
 
 	if [[ "$1" == "-v" ]]; then
 
-		udfIsValidVariable "$2" || eval $( udfOnError2 iErrorNotValidArgument "$2 - variable name required" )
+		udfIsValidVariable "$2" || eval $( udfOnError InvalidVariable "$2" )
 
-		[[ "$3" == "-v" ]] && eval $( udfOnError2 iErrorNotValidArgument "$3 - number with time suffix expected" )
+		[[ "$3" == "-v" ]] && eval $( udfOnError InvalidArgument "$3 - number with time suffix expected" )
 
 		eval 'export $2="$( udfGetTimeInSec $3 )"'
+
 		[[ -n ${!2} ]] || eval 'export $2="$( udfGetTimeInSec $4 )"'
-		[[ -n ${!2} ]] || eval $( udfOnError2 iErrorEmptyResult "$2" )
+		[[ -n ${!2} ]] || eval $( udfOnError EmptyResult "$2" )
 
 		return $?
 
@@ -97,7 +98,7 @@ udfGetTimeInSec() {
 
 	local i=${1%%[[:alpha:]]*}
 
-	udfIsNumber $i || eval $( udfOnError2 iErrorNotValidArgument "$i - number expected" )
+	udfIsNumber $i || eval $( udfOnError InvalidArgument "$i - number expected" )
 
 	case ${1##*[[:digit:]]} in
 
@@ -109,7 +110,7 @@ udfGetTimeInSec() {
 		       months|month|mon) echo $(( i*3600*24*30 ));;
 		           years|year|y) echo $(( i*3600*24*365 ));;
 	                              *) echo ""
-                                       eval $( udfOnError2 iErrorNotValidArgument "$1 - number with time suffix expected" )
+                                       eval $( udfOnError InvalidArgument "$1 - number with time suffix expected" )
 
 	esac
 
@@ -126,7 +127,7 @@ udfWaitSignal() {
 
 	fi
 
-	udfIsNumber $1 || eval $( udfOnError return NonValidArgument "$1" )
+	[[ $1 =~ ^[0-9]+(\.[0-9]+)?$ ]] || eval $( udfOnError return InvalidArgument "$1" )
 
 	sleep $1 &
 	udfAddPid2Clean $!
@@ -212,7 +213,7 @@ udfMain() {
 	;;
 
 	     *)
-		eval $( udfOnError throw NotValidArgument "$role - permissible 'client' or 'server'" )
+		eval $( udfOnError throw InvalidArgument "$role - permissible 'client' or 'server'" )
 	;;
 
 	esac
@@ -228,8 +229,15 @@ udfMain() {
 
 	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "32min"
 
+	if (( tsPeerTimeout < 30 )); then
+
+		eval $( udfOnError warn InvalidArgument "$tsPeerTimeout is too low, it increased to 30" )
+		tsPeerTimeout=30
+
+	fi
+
 	udfDebug 3 "configuration:" && udfShowVariable cnServer dev ipsAllowed portAuth role tsKeepalive tsPeerTimeout $aReqOptByRole
-	udfThrowOnEmptyVariable cnServer dev pathCrt pathDat pathIni pathKey pathRun portAuth role tsPeerTimeout $aRequiredByRole
+	udfThrowOnEmptyVariable cnServer dev pathCrt pathDat pathIni pathKey pathRun portAuth role tsPeerTimeout $aReqOptByRole
 
 	[[ -d $_kurenma_pathLib ]] || eval $( udfOnError throw NoSuchFileOrDir "$_kurenma_pathLib" )
 	[[ -s ${_kurenma_pathLib}/${role}.kurenma.src ]] || eval $( udfOnError throw NoSuchFileOrDir "${role}.kurenma.src" )

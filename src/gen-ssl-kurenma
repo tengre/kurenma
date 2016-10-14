@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 100 2016-10-12 12:42:51+04:00 toor $
+# $Id: gen-ssl-kurenma 106 2016-10-14 13:56:05+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -34,7 +34,7 @@ udfMain() {
 
 	udfExitIfAlreadyStarted
 
-	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	udfThrowOnCommandNotFound chmod cp date echo mkdir openssl rm sed tee touch wg
 
@@ -65,7 +65,7 @@ udfMain() {
 
 	for s in "$confDN" "$fnTemplate"; do
 
-		[[ -f $s ]] || eval $( udfOnError throw iErrorNoSuchFileOrDir "$s" )
+		[[ -f $s ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
 
 	done
 
@@ -77,7 +77,7 @@ udfMain() {
 
 		if [[ -s ${pathKey}/cakey.pem && -s ${pathCrt}/cacert.pem ]]; then
 
-			eval $( udfOnError exitecho iErrorUnexpected "Already exist ${pathKey}/cakey.pem and/or ${pathCrt}/cacert.pem" )
+			eval $( udfOnError exitecho Unexpected "Already exist ${pathKey}/cakey.pem and/or ${pathCrt}/cacert.pem" )
 
 		fi
 
@@ -97,17 +97,17 @@ udfMain() {
 
 	 crt)
 
-		[[ -n "$2" ]] || eval $( udfOnError exitecho iErrorEmptyOrMissingArgument "argument required.. see usage" )
+		[[ -n "$2" ]] || eval $( udfOnError exitecho EmptyOrMissingArgument "argument required.. see usage" )
 
 		if [[ -s ${pathKey}/${2}.key && -s ${pathCrt}/${2}.crt ]]; then
 
-			eval $( udfOnError exitecho iErrorUnexpected "Already exist ${pathKey}/${2}.key and/or ${pathCrt}/${2}.crt" )
+			eval $( udfOnError exitecho Unexpected "Already exist ${pathKey}/${2}.key and/or ${pathCrt}/${2}.crt" )
 
 		fi
 
 		for s in "$path" "$pathKey" "$pathCrt" "$pathCsr" "$pathCnf"; do
 
-			[[ -d "$s" ]] || eval $( udfOnError throw iErrorNoSuchFileOrDir "$s" )
+			[[ -d "$s" ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
 
 		done
 
@@ -128,7 +128,7 @@ udfMain() {
 
 	esac
 
-	cp $fnTemplate $conf || eval $( udfOnError throw iErrorNoSuchFileOrDir $conf )
+	cp $fnTemplate $conf || eval $( udfOnError throw NoSuchFileOrDir $conf )
 
 	for s in ${csv//[;,]/ }; do
 

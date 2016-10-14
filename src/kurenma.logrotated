@@ -2,7 +2,8 @@
 	weekly
 	rotate 7
 	postrotate
-	#invoke-rc.d kurenma restart > /dev/null
+	kurenmaсtl stop  >/dev/null
+	kurenmaсtl start >/dev/null
 	endscript
 	missingok
 	notifempty

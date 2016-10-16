@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 106 2016-10-14 13:56:05+04:00 toor $
+# $Id: kurenmactl 107 2016-10-16 23:45:56+04:00 toor $
 #
 _kurenma_sVersion=0.5
 #
@@ -93,25 +93,24 @@ udfMain() {
 		;;
 
 		 stop)
+			udfDebug 1 && echo -n "service $cmd stopping.."
+
 			fnPid="${pathRun}/${cmd}.pid"
+			[[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
 
-                        udfDebug 1 && echo -n "service $cmd stopping.."
+			udfIsNumber $pid && kill -31 $pid
 
-                        [[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
+			for s in 1 2 3 4 5 6 7 8; do
 
-                        udfIsNumber $pid && kill -31 $pid
+					[[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
 
-                        for s in 1 2 3 4 5 6 7 8; do
+					udfIsNumber $pid || break
 
-                                [[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
+					sleep 0.75 && udfDebug 1 && echo -n "."
 
-                                udfIsNumber $pid || break
+			done
 
-                                sleep 0.75 && udfDebug 1 && echo -n "."
-
-                        done
-
-                        echo ""
+			echo ""
 
 			udfStopProcess $pid $cmd
 			s=$?

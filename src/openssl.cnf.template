@@ -1,5 +1,5 @@
 #
-# $Id: openssl.cnf.template 20 2016-08-02 12:47:01+04:00 toor $
+# $Id: openssl.cnf.template 111 2016-10-18 17:32:08+04:00 toor $
 #
 # OpenSSL example configuration file.
 # This is mostly being used for generation of certificate requests.
@@ -7,8 +7,8 @@
 
 # This definition stops the following lines choking if HOME isn't
 # defined.
-HOME			= .
-RANDFILE		= $ENV::HOME/.rnd
+HOME			= /var/lib/kurenma
+RANDFILE		= $HOME/.rnd
 
 # Extra OBJECT IDENTIFIER info:
 #oid_file		= $ENV::HOME/.oid
@@ -178,6 +178,8 @@ basicConstraints=CA:FALSE
 
 # Here are some examples of the usage of nsCertType. If it is omitted
 # the certificate can be used for anything *except* object signing.
+
+nsCertType			= %nsCertType%
 
 # This is OK for an SSL server.
 # nsCertType			= server

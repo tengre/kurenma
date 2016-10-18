@@ -1,8 +1,46 @@
+Tue, 18 Oct 2016 11:12:06 +0400
+	New upstream release
+	Version 0.6
+ - reduced cpu usage by stopping of daemon with signal
+ - simplified and unified the output some error messages
+ - kurenma.logrotated - enabled restart of daemon
+ - improved installation/removal of debian package
+
+ kurenmactl:
+ - improved stopping of daemon
+ - kurenma.ini configuration not required
+ - stopping of netcat (nc) not required
+
+ kurenmad:
+ - added global variable $_kurenma_sSignal as status of signal
+ - udfWatchdog renamed to udfWaitSignal with changes:
+   * used one argument - wait time, allowed decimal fractions
+   * reduced cpu usage by using background process of sleep with wait
+   * background process is added to the stop list
+   * returned iErrorAbortedBySignal if $_kurenma_sSignal equal "stop"
+   * used a log messages of level 4
+ - netcat pipe in role of server is run in a background with wait
+ - added function udfSignal for trapping signal No.31 with actions:
+   * stopping of netcat (nc) in role of server
+   * set variable $_kurenma_sSignal to value of "stop"
+   * stopping of child processes with udfOnTrap
+ - updated udfSelfCheck:
+   * the number of calls udfWaitSignal reduced to one with random waiting
+     (~20-189 sec)
+ - fixed udfHandleRequest:
+   * removed unused local variable, added not defined
+   * improved messages
+   * allocation of IP-addresses to the client is presented more clearly
+ - tsPeerTimeout can't be less than 30 seconds
+
+ debian/{postinst,prerm}, Makefile.am:
+ - check the directory "/run/systemd/system" for use the SystemD management
+
 Wed, 12 Oct 2016 12:51:45 +0400
 	New upstream release
 	Version 0.5
  - added infrastructure to create a debian package:
-   * used debian-systemd-{helper,invoke} instead systemctl
+   * used deb-systemd-{helper,invoke} instead systemctl
    * direct use of {invoke,update}-rc.d, if necessary
    * postrm used for uninstall, prerm - for service stopping,
    * closed lintian founded errors and warns

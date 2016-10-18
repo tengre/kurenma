@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 85 2016-09-28 15:42:45+04:00 toor $
+## $Id: Makefile.am 110 2016-10-18 11:26:19+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -36,17 +36,18 @@ $(logconf_DATA) : ${PACKAGE}.logrotated
 	$(shell) cp -fv $< $@
 
 install-data-hook:
-	$(shell) which systemctl || update-rc.d ${systemv_SCRIPTS} defaults || true
-	$(shell) which systemctl && chmod -x ${systemvdir}/${systemv_SCRIPTS} && mv -v ${systemvdir}/${systemv_SCRIPTS} ${systemvdir}/${systemv_SCRIPTS}.disabled-by-systemd || true
-	$(shell) which systemctl && systemctl enable ${PACKAGE} && systemctl daemon-reload || true
+	$(shell) test -d /run/systemd/system || update-rc.d ${systemv_SCRIPTS} defaults || true
+	$(shell) test -d /run/systemd/system && chmod -x ${systemvdir}/${systemv_SCRIPTS} && mv -v ${systemvdir}/${systemv_SCRIPTS} ${systemvdir}/${systemv_SCRIPTS}.disabled-by-systemd || true
+	$(shell) test -d /run/systemd/system && systemctl enable ${PACKAGE} && systemctl daemon-reload || true
 
 uninstall-hook:
-	$(shell) which systemctl || update-rc.d -f ${systemv_SCRIPTS} remove || true
-	$(shell) which systemctl && rm -f ${systemvdir}/${systemv_SCRIPTS}.disabled-by-systemd || true
-	$(shell) which systemctl && systemctl disable ${PACKAGE} && systemctl daemon-reload || true
+	$(shell) test -d /run/systemd/system || update-rc.d -f ${systemv_SCRIPTS} remove || true
+	$(shell) test -d /run/systemd/system && rm -f ${systemvdir}/${systemv_SCRIPTS}.disabled-by-systemd || true
+	$(shell) test -d /run/systemd/system && systemctl disable ${PACKAGE} && systemctl daemon-reload || true
 
 clean-local:
 	-rm -rf .${ETC}
 
 all:
 	$(shell) sed -i -e "s/_kurenma_sVersion=.*/_kurenma_sVersion=${PACKAGEVERSION}/" kurenmactl
+	$(shell) sed -i -e "s/_kurenma_sVersion=.*/_kurenma_sVersion=${PACKAGEVERSION}/" kurenmad

@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 100 2016-10-12 12:42:52+04:00 toor $
+# $Id: kurenmactl 110 2016-10-18 11:26:19+04:00 toor $
 #
-_kurenma_sVersion=0.5
+_kurenma_sVersion=0.6
 #
 _bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 #
@@ -59,7 +59,7 @@ udfMain() {
 
 	DEBUGLEVEL=3
 
-	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	if [[ $START_KURENMA =~ ^([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|0)$ ]]; then
 
@@ -70,23 +70,14 @@ udfMain() {
 
 	udfThrowOnCommandNotFound cat echo grep head kurenmad mkdir nohup sleep tr
 
-	local cmd cmdNetcat fnCtl ini pathIni pathRun pid portAuth s
+	local cmd fnPid ini pathRun pid portAuth s
 
 	cmd=kurenmad
-	pathIni=$( _ pathIni )
 	pathRun=$( _ pathRun )
 
-	udfThrowOnEmptyVariable pathIni pathRun
+	udfThrowOnEmptyVariable pathRun
 
 	mkdir -p $pathRun || eval $( udfOnError throw NotExistNotCreated "$pathRun" )
-
-	ini=${pathIni}/kurenma.ini
-	fnCtl=${pathRun}/kurenma.pid
-
-	udfIni $ini ':portAuth'
-
-	: ${portAuth:=42912}
-	cmdNetcat="nc -k -l -v $portAuth"
 
 	eval set -- $(_ sArg)
 
@@ -102,18 +93,24 @@ udfMain() {
 		;;
 
 		 stop)
-			udfDebug 1 "service $cmd stopping.."
+			udfDebug 1 && echo -n "service $cmd stopping.."
 
-			echo stop >> $fnCtl
-			udfStopProcess $cmdNetcat
+			fnPid="${pathRun}/${cmd}.pid"
+			[[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
 
-			for s in 1 1 1 1 1 1 1 1; do
+			udfIsNumber $pid && kill -31 $pid
 
-				sleep 1.1
-				[[ -s ${pathRun}/${cmd}.pid ]] && pid=$( head -n 1 ${pathRun}/${cmd}.pid )
-				udfIsNumber $pid || break
+			for s in 1 2 3 4 5 6 7 8; do
+
+					[[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
+
+					udfIsNumber $pid || break
+
+					sleep 0.75 && udfDebug 1 && echo -n "."
 
 			done
+
+			echo ""
 
 			udfStopProcess $pid $cmd
 			s=$?

@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 84 2016-09-27 23:04:00+04:00 toor $
+# $Id: client.kurenma.src 106 2016-10-14 13:56:05+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -7,7 +7,7 @@ _bashlyk=kurenma . bashlyk
 #
 udfKnocking() {
 
-	udfThrowOnEmptyVariable fnCtl fnServerCrt host portAuth
+	udfThrowOnEmptyVariable fnServerCrt host portAuth
 
 	local i s
 
@@ -15,11 +15,11 @@ udfKnocking() {
 
 	s=$( grep keyid $fnServerCrt | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
 
-	[[ -n "$s" ]] || eval $( udfOnError2 throw "EmptyResult" "$fnServerCrt - not valid format" )
+	[[ -n "$s" ]] || eval $( udfOnError throw EmptyResult "$fnServerCrt - not valid format" )
 
 	udfDebug 5 "server crt keyid head: $s"
 
-	s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError2 throw "NotValidArgument" "$fnServerCrt - hexadecimal data expected" )
+	s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError throw InvalidArgument "$fnServerCrt - hexadecimal data expected" )
 
 	udfDebug 5 "knock  ports sequence: $s"
 
@@ -37,7 +37,7 @@ udfKnocking() {
 
 		fi
 
-		if ! udfWatchdog $fnCtl 1; then
+		if ! udfWaitSignal 1; then
 
 			echo "x"
 			return $(_ iErrorAbortedBySignal)
@@ -51,7 +51,7 @@ udfKnocking() {
 		if (( $i <= 0 )); then
 
 			echo "fail after 256 attempts.. try again"
-			eval $( udfOnError2 warn NotAvailable "${host}:${portAuth}" )
+			eval $( udfOnError warn NotAvailable "${host}:${portAuth}" )
 			i=256
 
 		fi
@@ -64,7 +64,7 @@ udfKnocking() {
 #
 udfGetTunnelSettings() {
 
-	udfThrowOnEmptyVariable cnClient fnCtl fnClientKey host portAuth
+	udfThrowOnEmptyVariable cnClient fnClientKey host portAuth
 
 	local fnPub fnAns sKey s
 
@@ -79,7 +79,7 @@ udfGetTunnelSettings() {
 
 		udfDebug 2 "ok."
 
-		udfWatchdog $fnCtl 4 || break
+		udfWaitSignal 4 || break
 
 		sKey=$( wg genkey )
 
@@ -93,10 +93,10 @@ udfGetTunnelSettings() {
 
 		[[ -z "$s" ]] && s="$(< $fnAns)"
 
-		eval $( udfOnError2 warn iErrorNotValidArgument "malformed answer from ${host}:${portAuth} $s" )
+		eval $( udfOnError warn InvalidArgument "malformed answer from ${host}:${portAuth} $s" )
 
 		s="$(_ iErrorAbortedBySignal ) stop signal received"
-		udfWatchdog $fnCtl 8 || break
+		udfWaitSignal 8 || break
 
 	done >&2
 
@@ -114,7 +114,7 @@ udfSetupTunnel() {
 	local ipClient ipServer peer port sKey
 
 	[[ $1 == $( _ iErrorAbortedBySignal  ) ]] && return $( _ iErrorAbortedBySignal  )
-	[[ $1 != "OK"   ]] && return $( _ iErrorNonValidArgument )
+	[[ $1 != "OK"   ]] && return $( _ iErrorInvalidArgument )
 
 	shift
 
@@ -176,7 +176,7 @@ udfSetDefaultRoute() {
 
 	else
 
-		eval $( udfOnError throw iErrorEmptyOrMissingArgument "default route fail" )
+		eval $( udfOnError throw EmptyOrMissingArgument "default route fail" )
 
 	fi
 
@@ -187,7 +187,7 @@ udfSetDefaultRoute() {
 udfService() {
 
 	udfThrowOnCommandNotFound false knock ping tee true
-	udfThrowOnEmptyVariable bDefaultRoute cnClient cnServer dev fnCtl pathIni pathKey port portAuth tsPeerTimeout
+	udfThrowOnEmptyVariable bDefaultRoute cnClient cnServer dev pathIni pathKey port portAuth tsPeerTimeout
 
 	local bStart fmtCon fmtSSL fnClientCrt fnClientKey fnServerCrt s
 
@@ -199,7 +199,7 @@ udfService() {
 
 	s=$( grep Subject: $fnClientCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )
 
-	[[ $s != $cnClient ]] && eval $( udfOnError throw NotValidArgument "invalid cert file $fnClientCrt" )
+	[[ $s != $cnClient ]] && eval $( udfOnError throw InvalidArgument "invalid cert file $fnClientCrt" )
 
 	for s in "$fnClientCrt" "$fnClientKey" "$fnServerCrt"; do
 
@@ -221,7 +221,7 @@ udfService() {
 
 			udfSetupTunnel $( udfGetTunnelSettings ) || {
 
-				eval $( udfOnError2 warn $? "setup tunnel settings" )
+				eval $( udfOnError warn $? "setup tunnel settings" )
 				break
 			}
 
@@ -238,7 +238,7 @@ udfService() {
 
 		udfDebug 2 "check connection every $tsPeerTimeout sec.."
 		## TODO force check with async message
-		udfWatchdog $fnCtl $tsPeerTimeout || break
+		udfWaitSignal $tsPeerTimeout || break
 
 		for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
 
@@ -258,15 +258,13 @@ udfService() {
 
 			else
 
-				eval $( udfOnError2 warn iErrorNotValidArgument "${s##*:}" )
+				eval $( udfOnError warn InvalidArgument "${s##*:}" )
 
 			fi
 
 		done
 
 	done
-
-	udfFinally "service down"
 
 }
 #

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 100 2016-10-12 12:42:52+04:00 toor $
+# $Id: update-firehol 106 2016-10-14 13:56:06+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -54,7 +54,7 @@ udfMain() {
 
 	eval set -- $( _ sArg )
 
-	s=$( udfGetValidIPsOnly $1 ) || eval $( udfOnError exitecho NonValidArgument "IP or hostname required" )
+	s=$( udfGetValidIPsOnly $1 ) || eval $( udfOnError exitecho InvalidArgument "IP or hostname required" )
 
 	if [[ -z "$_kurenma_flock" ]]; then
 
@@ -79,7 +79,7 @@ udfMain() {
 
 	for s in $pathDat $patIni; do
 
-		[[ -n "$s" && -d "$s" ]] || eval $( udfOnError iErrorNoSuchFileOrDir "$s" )
+		[[ -n "$s" && -d "$s" ]] || eval $( udfOnError NoSuchFileOrDir "$s" )
 
 	done
 
@@ -141,7 +141,7 @@ udfMain() {
 		echo "restore old configuration:"
 		mv -v ${cnf:0:-3}bak $cnf
 
-		eval $( udfOnError throw iErrorNotValidArgument "$* and/or $ini" )
+		eval $( udfOnError throw InvalidArgument "$* and/or $ini" )
 
 	else
 

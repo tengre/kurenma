@@ -11,3 +11,11 @@ for bashlyk:
 kurenmactl -> kurenmad:
 -#00008 - use signals for control
 
+kurenmad:
+-#00009 - use server side connection
+
+server:
+openssl s_server -cert server.crt -key server.key -CAfile cacert.pem -accept 443 -CApath newcerts/ -Verify 2
+
+client:
+openssl s_client -connect localhost:443 -CAfile cacert.pem -cert client.crt -key client.key -state

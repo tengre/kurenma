@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 100 2016-10-12 12:42:52+04:00 toor $"
+# $Id: kurenmad 110 2016-10-18 11:26:20+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -8,7 +8,9 @@ _bashlyk=kurenma . bashlyk
 #
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
+_kurenma_sVersion=0.6
 _kurenma_pathLib=/usr/share/kurenma
+_kurenma_sSignal=none
 #
 #
 #
@@ -81,13 +83,14 @@ udfGetTimeInSec() {
 
 	if [[ "$1" == "-v" ]]; then
 
-		udfIsValidVariable "$2" || eval $( udfOnError2 iErrorNotValidArgument "$2 - variable name required" )
+		udfIsValidVariable "$2" || eval $( udfOnError InvalidVariable "$2" )
 
-		[[ "$3" == "-v" ]] && eval $( udfOnError2 iErrorNotValidArgument "$3 - number with time suffix expected" )
+		[[ "$3" == "-v" ]] && eval $( udfOnError InvalidArgument "$3 - number with time suffix expected" )
 
 		eval 'export $2="$( udfGetTimeInSec $3 )"'
+
 		[[ -n ${!2} ]] || eval 'export $2="$( udfGetTimeInSec $4 )"'
-		[[ -n ${!2} ]] || eval $( udfOnError2 iErrorEmptyResult "$2" )
+		[[ -n ${!2} ]] || eval $( udfOnError EmptyResult "$2" )
 
 		return $?
 
@@ -95,7 +98,7 @@ udfGetTimeInSec() {
 
 	local i=${1%%[[:alpha:]]*}
 
-	udfIsNumber $i || eval $( udfOnError2 iErrorNotValidArgument "$i - number expected" )
+	udfIsNumber $i || eval $( udfOnError InvalidArgument "$i - number expected" )
 
 	case ${1##*[[:digit:]]} in
 
@@ -107,7 +110,7 @@ udfGetTimeInSec() {
 		       months|month|mon) echo $(( i*3600*24*30 ));;
 		           years|year|y) echo $(( i*3600*24*365 ));;
 	                              *) echo ""
-                                       eval $( udfOnError2 iErrorNotValidArgument "$1 - number with time suffix expected" )
+                                       eval $( udfOnError InvalidArgument "$1 - number with time suffix expected" )
 
 	esac
 
@@ -115,36 +118,29 @@ udfGetTimeInSec() {
 
 }
 #
-udfWatchdog() {
+udfWaitSignal() {
 
-	udfOn EmptyOrMissingArgument throw "$1"
-	udfIsNumber $2 || eval $( udfOnError2 throw iErrorNonValidArgument "$2" )
+	if [[ $_kurenma_sSignal == "stop" ]]; then
 
-	local i=0
+		udfDebug 4 "Stop signal received before waiting"
+		return $(_ iErrorAbortedBySignal)
 
-	while true; do
+	fi
 
-		i=$((i+1))
+	[[ $1 =~ ^[0-9]+(\.[0-9]+)?$ ]] || eval $( udfOnError return InvalidArgument "$1" )
 
-		if [[ -s $1 && $( tail -n 1 $1 ) == "stop" ]]; then
+	sleep $1 &
+	udfAddPid2Clean $!
+	wait $!
 
-			i=$(_ iErrorAbortedBySignal)
-			break
+	if [[ $_kurenma_sSignal == "stop" ]]; then
 
-		fi
+		udfDebug 4 "Stop signal received after waiting"
+		return $(_ iErrorAbortedBySignal)
 
-		sleep 1
+	fi
 
-		if (( i >= $2 )); then
-
-			i=0
-			break
-
-		fi
-
-	done
-
-	return $i
+	return 0
 }
 #
 udfShowPeerInfo() {
@@ -161,6 +157,18 @@ udfShowPeerInfo() {
 
 }
 #
+udfSignal() {
+
+	[[ -n "$portAuth" ]] && udfStopProcess "nc -k -l -v $portAuth"
+
+	_kurenma_sSignal='stop'
+
+	udfFinally "service down initiated by signal,"
+
+	udfOnTrap
+
+}
+#
 udfMain() {
 
 	DEBUGLEVEL=5
@@ -170,7 +178,7 @@ udfMain() {
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	local -a aId
-	local fnCtl ini pathCrt pathDat pathIni pathKey pathRun s
+	local ini pathCrt pathDat pathIni pathKey pathRun s
 	local csvSectionMain csvSectionSSL ipsAllowed aReqOptByRole
 
 	csvSectionMain='bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
@@ -186,7 +194,7 @@ udfMain() {
 	pathCrt=${pathIni}/ssl/public
 	pathKey=${pathIni}/ssl/private
 	ini=${pathIni}/kurenma.ini
-	fnCtl=${pathRun}/kurenma.pid
+
 	mkdir -p $pathDat || eval $( udfOnError retecho NotExistNotCreated $pathDat )
 
 	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}" "ipsAllowed:="
@@ -205,12 +213,12 @@ udfMain() {
 	;;
 
 	     *)
-		eval $( udfOnError throw NotValidArgument "$role - permissible 'client' or 'server'" )
+		eval $( udfOnError throw InvalidArgument "$role - permissible 'client' or 'server'" )
 	;;
 
 	esac
 
-	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, rev${aId[2]}"
+	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, v${_kurenma_sVersion} rev${aId[2]}"
 	udfDebug 1 "start $( _ s0 ) as ${role}${s}"
 
 	: ${dev:=wg0}
@@ -221,18 +229,26 @@ udfMain() {
 
 	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "32min"
 
+	if (( tsPeerTimeout < 30 )); then
+
+		eval $( udfOnError warn InvalidArgument "$tsPeerTimeout is too low, it increased to 30" )
+		tsPeerTimeout=30
+
+	fi
+
 	udfDebug 3 "configuration:" && udfShowVariable cnServer dev ipsAllowed portAuth role tsKeepalive tsPeerTimeout $aReqOptByRole
-	udfThrowOnEmptyVariable cnServer dev pathCrt pathDat pathIni pathKey pathRun portAuth role tsPeerTimeout $aRequiredByRole
+	udfThrowOnEmptyVariable cnServer dev pathCrt pathDat pathIni pathKey pathRun portAuth role tsPeerTimeout $aReqOptByRole
 
 	[[ -d $_kurenma_pathLib ]] || eval $( udfOnError throw NoSuchFileOrDir "$_kurenma_pathLib" )
 	[[ -s ${_kurenma_pathLib}/${role}.kurenma.src ]] || eval $( udfOnError throw NoSuchFileOrDir "${role}.kurenma.src" )
 
 	. ${_kurenma_pathLib}/${role}.kurenma.src
 
-	echo "start" > $fnCtl
+	trap udfSignal 31
 
 	udfService
 
+	udfFinally "service down,"
 }
 #
 #

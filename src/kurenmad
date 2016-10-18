@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 106 2016-10-14 13:56:05+04:00 toor $"
+# $Id: kurenmad 110 2016-10-18 11:26:20+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -8,7 +8,7 @@ _bashlyk=kurenma . bashlyk
 #
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
-_kurenma_sVersion=0.5
+_kurenma_sVersion=0.6
 _kurenma_pathLib=/usr/share/kurenma
 _kurenma_sSignal=none
 #

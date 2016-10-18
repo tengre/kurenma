@@ -38,7 +38,7 @@ esac
 
 deb-systemd-helper enable ${PACKAGE}.service
 
-while which systemctl >/dev/null 2>&1; do
+while [ -d /run/systemd/system ]; do
 
 	deb-systemd-invoke start ${PACKAGE}.service || break
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 110 2016-10-18 11:26:20+04:00 toor $"
+# $Id: kurenmad 113 2016-10-20 23:55:23+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -178,7 +178,7 @@ udfMain() {
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	local -a aId
-	local ini pathCrt pathDat pathIni pathKey pathRun s
+	local ini pathCA pathCrt pathDat pathIni pathKey pathRun s
 	local csvSectionMain csvSectionSSL ipsAllowed aReqOptByRole
 
 	csvSectionMain='bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
@@ -191,6 +191,7 @@ udfMain() {
 	pathIni=$( _ pathIni )
 	pathRun=$( _ pathRun )
 
+	pathCA=${pathIni}/ssl/certs
 	pathCrt=${pathIni}/ssl/public
 	pathKey=${pathIni}/ssl/private
 	ini=${pathIni}/kurenma.ini

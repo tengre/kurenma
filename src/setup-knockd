@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 106 2016-10-14 13:56:05+04:00 toor $
+# $Id: setup-knockd 114 2016-10-21 16:12:24+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -27,23 +27,20 @@ udfMain() {
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
-	udfThrowOnCommandNotFound cat grep sed
+	udfThrowOnCommandNotFound cat grep openssl sed
 
-	local crtServer cnServer fmtKnockd iniServer iniKnockd pathIni s
+	local fmtKnockd fnCA iniKnockd pathIni s
 	fmtKnockd="sequence=%d,%d,%d;seq_timeout=5;command=/usr/bin/update-firehol %%IP%%;tcpflags=syn"
 
 	pathIni=$( _ pathIni )
-	iniServer=${pathIni}/kurenma.ini
 	iniKnockd="/etc/knockd.conf"
 	#
-	udfIni $iniServer "ssl:cnServer"
-	udfThrowOnEmptyVariable cnServer
+	fnCA=${pathIni}/ssl/public/cacert.pem
 
-	crtServer=${pathIni}/ssl/public/${cnServer}.crt
+	[[ -s $fnCA ]] || eval $( udfOnError throw NoSuchFileOrDir $fnCA )
 
-	[[ -s $crtServer ]] || eval $( udfOnError throw NoSuchFileOrDir $crtServer )
-
-	s=$(grep keyid $crtServer | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/")
+	#s=$(grep keyid $fnCA | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/")
+	s=$( openssl x509 -sha1 -in $fnCA -noout -fingerprint | sed -r -e "s/^SHA1 Fingerprint=(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
 	udfDebug 2 "keyid head: $s"
 	s=$( printf -- "$fmtKnockd" $s )
 	udfDebug 2 "  sequence: $s"
@@ -70,5 +67,3 @@ udfMain() {
 #
 udfMain
 #
-
-

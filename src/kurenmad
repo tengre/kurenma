@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 113 2016-10-20 23:55:23+04:00 toor $"
+# $Id: kurenmad 114 2016-10-21 16:12:24+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -9,7 +9,8 @@ _bashlyk=kurenma . bashlyk
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
 _kurenma_sVersion=0.6
-_kurenma_pathLib=/usr/share/kurenma
+#_kurenma_pathLib=/usr/share/kurenma
+_kurenma_pathLib=/home/toor/src/kurenma/src
 _kurenma_sSignal=none
 #
 #
@@ -160,11 +161,12 @@ udfShowPeerInfo() {
 udfSignal() {
 
 	[[ -n "$portAuth" ]] && udfStopProcess "nc -k -l -v $portAuth"
+	[[ -n "$_kurenma_control_channel" && -p "$_kurenma_control_channel" ]] && echo "signalStop" > $_kurenma_control_channel
 
 	_kurenma_sSignal='stop'
 
 	udfFinally "service down initiated by signal,"
-
+	sleep 1.6
 	udfOnTrap
 
 }

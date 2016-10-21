@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: ssl-server-openssl.sh 113 2016-10-20 23:55:23+04:00 toor $"
+# $Id: ssl-server-openssl.sh 114 2016-10-21 16:12:24+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -62,29 +62,46 @@ udmLimitConnectionTime() {
 #
 udfWaitRequest() {
 
-	local bRevoked=0 cn i s tsStart=0 tsWait=60
+	local bRevoked=0 cn i s tsStart=0 tsWait=60 rc
 
 	while true; do
 
-		if ! read -t $tsWait s; then
+		read -t $tsWait s
+		rc=$?
 
-			(( tsStart == 0 )) && udfDebug 3 "."
+		#udfDebug 3 "rc=$rc : $s"
+
+		if   (( rc > 128 )); then
+
+			(( tsStart == 0 )) && udfDebug 3 "wait ${tsWait}sec"
 			(( bRevoked > 0 )) && udmRevoked
+
+		elif (( rc > 0 )); then
+
+			udfDebug 3 "input closed"
+			break
 
 		elif [[ $s =~ ^signalStop$ ]]; then
 
-			udmCloseConnection
+			udfDebug 3 "SSL server down"
+
+			sleep 0.2
 			echo Q
+			sleep 0.2
+			break
 
 		elif [[ $s =~ ^verify.*revoked.* ]]; then
 
+			udfDebug 3 "warn: $cn revoked certificate"
 			bRevoked=1
 			tsWait=2
 
 		elif [[ $s =~ depth=0.*CN.* ]]; then
 
-			cn="${s##*, CN = }"
-			cn=${cn%,*}
+			s="${s##*, CN = }"
+			s="${s%,*}"
+
+			[[ "$s" == "$cn" ]] && continue || cn=$s
 
 			udfDebug 3 "client $cn connection start"
 
@@ -93,9 +110,19 @@ udfWaitRequest() {
 
 		elif [[ $s =~ client-data.* ]]; then
 
-			udfDebug 3 "client data:${s##*client-data}"
-			udfHandleRequest $cn ${s##*client-data}
-			udmCloseConnection
+			if (( bRevoked > 0 )); then
+
+				udfDebug 3 "client data ignored"
+
+			else
+
+				udfDebug 3 "client data:${s##*client-data}"
+				udfHandleRequest $cn ${s##*client-data}
+				sleep 1.1
+				udmCloseConnection
+
+			fi
+
 
 		elif [[ $s =~ ^(depth|verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]]; then
 
@@ -103,7 +130,7 @@ udfWaitRequest() {
 
 		fi
 
-		udmLimitConnectionTime 48
+		udmLimitConnectionTime 32
 
 	done
 
@@ -180,6 +207,10 @@ udfHandleRequest() {
 			ip="${ipServer%.*}.$i";
 
 			if [[ $s =~ ${ip}/32 ]]; then
+
+				continue
+
+			else
 
 				ipClient=$( udfGetValidIPsOnly $ip )
 				break
@@ -266,7 +297,7 @@ udfService() {
 	udfThrowOnCommandNotFound cut kill ps sort
 	udfThrowOnEmptyVariable cnServer dev ipServer pathCA pathCrt pathKey port portAuth
 
-	local fn fnDH fnKey fnCrt path
+	local cmdSSL fn fnDH fnKey fnCrt
 
 	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then
 
@@ -274,15 +305,30 @@ udfService() {
 
 	fi
 
-	udfThrowOnEmptyOrMissingArgument $@
-
 	fnDH=${pathCrt}/dh2048.pem
 	fnCrt=${pathCrt}/${cnServer}.crt
 	fnKey=${pathKey}/${cnServer}.key
+	cmdSSL="openssl s_server -cert $fnCrt -key $fnKey -accept $portAuth -CApath $pathCA -Verify 2 -crl_check_all -dhparam $fnDH"
+	udfStopProcess "$cmdSSL"
 
-	udfMakeTemp fn type=pipe
+	while true; do
 
-	udfWaitRequest < $fn | openssl s_server -cert $fnCrt -key $fnKey -accept $portAuth -CApath $pathCA -Verify 2 -crl_check_all -dhparam $fnDH > $fn 2>&1
+		udfDebug 3 "Daemon for WireGuard clients (re)started.."
+
+		udfMakeTemp fn type=pipe
+
+		export _kurenma_control_channel=$fn
+		udfWaitRequest < $fn | $cmdSSL > $fn 2>&1 &
+		udfAddPid2Clean $!
+		wait $!
+		rm -f $fn
+
+		udfWaitSignal 0.2 || break
+
+
+	done
+
+	udfStopProcess "$cmdSSL"
 
 }
 #

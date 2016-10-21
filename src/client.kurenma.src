@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 106 2016-10-14 13:56:05+04:00 toor $
+# $Id: client.kurenma.src 114 2016-10-21 16:12:23+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -7,19 +7,20 @@ _bashlyk=kurenma . bashlyk
 #
 udfKnocking() {
 
-	udfThrowOnEmptyVariable fnServerCrt host portAuth
+	udfThrowOnEmptyVariable fnCA host portAuth
 
 	local i s
 
 	i=256
 
-	s=$( grep keyid $fnServerCrt | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
+	#s=$( grep keyid $fnCA | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
+	s=$( openssl x509 -sha1 -in $fnCA -noout -fingerprint | sed -r -e "s/^SHA1 Fingerprint=(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
 
-	[[ -n "$s" ]] || eval $( udfOnError throw EmptyResult "$fnServerCrt - not valid format" )
+	[[ -n "$s" ]] || eval $( udfOnError throw EmptyResult "$fnCA - not valid format" )
 
-	udfDebug 5 "server crt keyid head: $s"
+	udfDebug 5 "CA cert fingerprint header: $s"
 
-	s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError throw InvalidArgument "$fnServerCrt - hexadecimal data expected" )
+	s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError throw InvalidArgument "$fnCA - hexadecimal data expected" )
 
 	udfDebug 5 "knock  ports sequence: $s"
 
@@ -64,7 +65,7 @@ udfKnocking() {
 #
 udfGetTunnelSettings() {
 
-	udfThrowOnEmptyVariable cnClient fnClientKey host portAuth
+	udfThrowOnEmptyVariable cmdSSL cnClient fnKey host portAuth
 
 	local fnPub fnAns sKey s
 
@@ -83,7 +84,7 @@ udfGetTunnelSettings() {
 
 		sKey=$( wg genkey )
 
-		s="$( echo $sKey | wg pubkey | tee $fnPub | udfEcho - $cnClient | openssl smime -encrypt -aes256 -outform PEM $fnServerCrt | nc -w 24 -i 4 $host $portAuth | tee $fnAns | openssl smime -decrypt -inform PEM -inkey $fnClientKey | tr -d '\r' )"
+		s="$( echo $sKey | wg pubkey | tee $fnPub | $cmdSSL | tr -d '\r' | tee $fnAns | grep '^OK:' )"
 
 		udfDebug 3 && \
 		printf -- "\nclient WireGuard keys:\nprivate - %s\npublic  - %s\n" \
@@ -187,21 +188,23 @@ udfSetDefaultRoute() {
 udfService() {
 
 	udfThrowOnCommandNotFound false knock ping tee true
-	udfThrowOnEmptyVariable bDefaultRoute cnClient cnServer dev pathIni pathKey port portAuth tsPeerTimeout
+	udfThrowOnEmptyVariable bDefaultRoute cnClient dev host pathIni pathKey port portAuth tsPeerTimeout
 
-	local bStart fmtCon fmtSSL fnClientCrt fnClientKey fnServerCrt s
+	local bStart cmdSSL fmtCon fmtSSL fnCrt fnKey fnCA s
 
-	fmtSSL="SSL auth info:\nClient Common Name - %s\nServer Common Name - %s\n"
+	fmtSSL="SSL auth info:\nClient Common Name - %s\n"
 	fmtCon="Connection properties from %s:\nremote port: %d\nserver  key: %s\ntunnel  IPs: leased/remote - %s/%s\n"
-	fnServerCrt=${pathCrt}/${cnServer}.crt
-	fnClientCrt=${pathCrt}/${cnClient}.crt
-	fnClientKey=${pathKey}/${cnClient}.key
 
-	s=$( grep Subject: $fnClientCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )
+	fnCA==${pathCrt}/cacert.pem
+	fnCrt=${pathCrt}/${cnClient}.crt
+	fnKey=${pathKey}/${cnClient}.key
+	cmdSSL="openssl s_client -connect ${host}:${portAuth} -CAfile $fnCA -cert $fnCrt -key $fnKey -verify 1 -quiet"
 
-	[[ $s != $cnClient ]] && eval $( udfOnError throw InvalidArgument "invalid cert file $fnClientCrt" )
+	s=$( grep Subject: $fnCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )
 
-	for s in "$fnClientCrt" "$fnClientKey" "$fnServerCrt"; do
+	[[ $s != $cnClient ]] && eval $( udfOnError throw InvalidArgument "invalid cert file $fnCrt" )
+
+	for s in "$fnCrt" "$fnKey" "$fnCA"; do
 
 		[[ -f $s ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
 
@@ -209,7 +212,7 @@ udfService() {
 
 	[[ $bDefaultRoute =~ ^(false|true)$ ]] || bDefaultRoute=false
 
-	udfDebug 3 && printf -- "$fmtSSL" "$cnClient" "$cnServer"
+	udfDebug 3 && printf -- "$fmtSSL" "$cnClient"
 
 	bStart=true
 

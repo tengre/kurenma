@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 114 2016-10-21 16:12:23+04:00 toor $
+# $Id: client.kurenma.src 115 2016-10-23 23:08:02+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -13,7 +13,6 @@ udfKnocking() {
 
 	i=256
 
-	#s=$( grep keyid $fnCA | sed -r -e "s/^.*keyid:(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
 	s=$( openssl x509 -sha1 -in $fnCA -noout -fingerprint | sed -r -e "s/^SHA1 Fingerprint=(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
 
 	[[ -n "$s" ]] || eval $( udfOnError throw EmptyResult "$fnCA - not valid format" )
@@ -22,7 +21,7 @@ udfKnocking() {
 
 	s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError throw InvalidArgument "$fnCA - hexadecimal data expected" )
 
-	udfDebug 5 "knock  ports sequence: $s"
+	udfDebug 5 "knock ports sequence: $s"
 
 	udfDebug 2 "check server $host availibity:"
 
@@ -226,6 +225,7 @@ udfService() {
 
 				eval $( udfOnError warn $? "setup tunnel settings" )
 				break
+
 			}
 
 			$bDefaultRoute && udfSetDefaultRoute
@@ -240,7 +240,6 @@ udfService() {
 		fi
 
 		udfDebug 2 "check connection every $tsPeerTimeout sec.."
-		## TODO force check with async message
 		udfWaitSignal $tsPeerTimeout || break
 
 		for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do

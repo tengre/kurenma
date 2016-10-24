@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 116 2016-10-24 17:20:48+04:00 toor $"
+# $Id: kurenmad 117 2016-10-24 23:37:28+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -208,7 +208,7 @@ udfStopProcessX() {
 
 	done
 
-	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( ps -C "$*" -o pid= | xargs ) )
+	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( ps -C "$1" -o pid,args= | grep "$*" | cut -f 1 -d' ' | xargs ) )
 	udfOn EmptyOrMissingArgument "${a[*]}" || return $( _ iErrorNoSuchProcess )
 
 	for (( i=0; i<${#a[*]}; i++ )) ; do
@@ -239,10 +239,8 @@ udfStopProcessX() {
 
 			if [[ $rc == 0 ]]; then
 
-				kill -${s} $pid
-				rc=$?
-				a[i]=""
-				sleep 0.2
+				kill -${s} $pid && a[i]="" || rc=$?
+				sleep 0.1
 
 			fi
 

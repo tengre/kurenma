@@ -1,11 +1,13 @@
 #!/bin/bash
 #
-# $Id: kurenmad 114 2016-10-21 16:12:24+04:00 toor $"
+# $Id: kurenmad 116 2016-10-24 17:20:48+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
+_bashlyk_iErrorNotChildProcess=181
+_bashlyk_hError[$_bashlyk_iErrorNotChildProcess]="not child process"
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
 _kurenma_sVersion=0.6
@@ -131,7 +133,6 @@ udfWaitSignal() {
 	[[ $1 =~ ^[0-9]+(\.[0-9]+)?$ ]] || eval $( udfOnError return InvalidArgument "$1" )
 
 	sleep $1 &
-	udfAddPid2Clean $!
 	wait $!
 
 	if [[ $_kurenma_sSignal == "stop" ]]; then
@@ -161,13 +162,96 @@ udfShowPeerInfo() {
 udfSignal() {
 
 	[[ -n "$portAuth" ]] && udfStopProcess "nc -k -l -v $portAuth"
+
 	[[ -n "$_kurenma_control_channel" && -p "$_kurenma_control_channel" ]] && echo "signalStop" > $_kurenma_control_channel
+
+	udfStopProcessX childs sleep
 
 	_kurenma_sSignal='stop'
 
 	udfFinally "service down initiated by signal,"
-	sleep 1.6
+
+	sleep 1.2
+
 	udfOnTrap
+
+}
+#
+udfStopProcessX() {
+
+	udfOn EmptyOrMissingArgument "$@" || return $?
+
+	local bChild i pid rc s sMode=args
+	local -a a
+
+	for s in $*; do
+
+		case "$s" in
+
+			pid=*)
+				i="${s#*=}"
+				a=( ${i//,/ } )
+				shift
+			;;
+
+			childs)
+				bChild=1
+				shift
+			;;
+
+			noargs)
+				sMode=comm
+				shift
+			;;
+
+		esac
+
+	done
+
+	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( ps -C "$*" -o pid= | xargs ) )
+	udfOn EmptyOrMissingArgument "${a[*]}" || return $( _ iErrorNoSuchProcess )
+
+	for (( i=0; i<${#a[*]}; i++ )) ; do
+
+		rc=$( _ iErrorInvalidArgument )
+
+		pid=${a[i]}
+
+		udfIsNumber $pid || continue
+
+		if (( pid == $$ )); then
+
+			rc=$( _ iErrorCurrentProcess )
+			continue
+
+		fi
+
+		for s in 15 9; do
+
+			if [[ -n "$bChild" && -z "$( ps --ppid $$ -o pid= | xargs | grep -w $pid )" ]]; then
+
+				rc=$( _ iErrorNotChildProcess )
+				continue
+
+			fi
+
+			[[ "$( ps -p $pid -o ${sMode}= )" =~ ${*}$ ]] && rc=0 || rc=$( _ iErrorNoSuchProcess )
+
+			if [[ $rc == 0 ]]; then
+
+				kill -${s} $pid
+				rc=$?
+				a[i]=""
+				sleep 0.2
+
+			fi
+
+		done
+
+	done
+
+	s="${a[*]}"
+	[[ -z "${s// /}" ]] && return 0 || return $rc
 
 }
 #

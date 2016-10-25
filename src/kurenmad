@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 117 2016-10-24 23:37:28+04:00 toor $"
+# $Id: kurenmad 118 2016-10-25 16:59:29+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -82,45 +82,6 @@ _kurenma_sSignal=none
 #    kurenma(7), kurenmactl(8), kurenma.ini(5)
 #
 #******
-udfGetTimeInSec() {
-
-	if [[ "$1" == "-v" ]]; then
-
-		udfIsValidVariable "$2" || eval $( udfOnError InvalidVariable "$2" )
-
-		[[ "$3" == "-v" ]] && eval $( udfOnError InvalidArgument "$3 - number with time suffix expected" )
-
-		eval 'export $2="$( udfGetTimeInSec $3 )"'
-
-		[[ -n ${!2} ]] || eval 'export $2="$( udfGetTimeInSec $4 )"'
-		[[ -n ${!2} ]] || eval $( udfOnError EmptyResult "$2" )
-
-		return $?
-
-	fi
-
-	local i=${1%%[[:alpha:]]*}
-
-	udfIsNumber $i || eval $( udfOnError InvalidArgument "$i - number expected" )
-
-	case ${1##*[[:digit:]]} in
-
-		seconds|second|sec|s|'') echo $i;;
-		   minutes|minute|min|m) echo $(( i*60 ));;
-		        hours|hour|hr|h) echo $(( i*3600 ));;
-		             days|day|d) echo $(( i*3600*24 ));;
-		           weeks|week|w) echo $(( i*3600*24*7 ));;
-		       months|month|mon) echo $(( i*3600*24*30 ));;
-		           years|year|y) echo $(( i*3600*24*365 ));;
-	                              *) echo ""
-                                       eval $( udfOnError InvalidArgument "$1 - number with time suffix expected" )
-
-	esac
-
-    return $?
-
-}
-#
 udfWaitSignal() {
 
 	if [[ $_kurenma_sSignal == "stop" ]]; then
@@ -161,95 +122,18 @@ udfShowPeerInfo() {
 #
 udfSignal() {
 
-	[[ -n "$portAuth" ]] && udfStopProcess "nc -k -l -v $portAuth"
-
 	[[ -n "$_kurenma_control_channel" && -p "$_kurenma_control_channel" ]] && echo "signalStop" > $_kurenma_control_channel
-
-	udfStopProcessX childs sleep
 
 	_kurenma_sSignal='stop'
 
+	udfStopProcess childs sleep
+
 	udfFinally "service down initiated by signal,"
 
-	sleep 1.2
+	sleep 1.8
 
+	udfDebug 0 "forced clean checkpoint"
 	udfOnTrap
-
-}
-#
-udfStopProcessX() {
-
-	udfOn EmptyOrMissingArgument "$@" || return $?
-
-	local bChild i pid rc s sMode=args
-	local -a a
-
-	for s in $*; do
-
-		case "$s" in
-
-			pid=*)
-				i="${s#*=}"
-				a=( ${i//,/ } )
-				shift
-			;;
-
-			childs)
-				bChild=1
-				shift
-			;;
-
-			noargs)
-				sMode=comm
-				shift
-			;;
-
-		esac
-
-	done
-
-	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( ps -C "$1" -o pid,args= | grep "$*" | cut -f 1 -d' ' | xargs ) )
-	udfOn EmptyOrMissingArgument "${a[*]}" || return $( _ iErrorNoSuchProcess )
-
-	for (( i=0; i<${#a[*]}; i++ )) ; do
-
-		rc=$( _ iErrorInvalidArgument )
-
-		pid=${a[i]}
-
-		udfIsNumber $pid || continue
-
-		if (( pid == $$ )); then
-
-			rc=$( _ iErrorCurrentProcess )
-			continue
-
-		fi
-
-		for s in 15 9; do
-
-			if [[ -n "$bChild" && -z "$( ps --ppid $$ -o pid= | xargs | grep -w $pid )" ]]; then
-
-				rc=$( _ iErrorNotChildProcess )
-				continue
-
-			fi
-
-			[[ "$( ps -p $pid -o ${sMode}= )" =~ ${*}$ ]] && rc=0 || rc=$( _ iErrorNoSuchProcess )
-
-			if [[ $rc == 0 ]]; then
-
-				kill -${s} $pid && a[i]="" || rc=$?
-				sleep 0.1
-
-			fi
-
-		done
-
-	done
-
-	s="${a[*]}"
-	[[ -z "${s// /}" ]] && return 0 || return $rc
 
 }
 #

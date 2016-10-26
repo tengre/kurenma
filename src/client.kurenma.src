@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 120 2016-10-26 17:25:22+04:00 toor $
+# $Id: client.kurenma.src 121 2016-10-26 23:18:03+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -187,7 +187,7 @@ udfSetDefaultRoute() {
 udfService() {
 
 	udfThrowOnCommandNotFound false knock ping tee true
-	udfThrowOnEmptyVariable bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni pathKey port portAuth tsPeerTimeout
+	udfThrowOnEmptyVariable bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni port portAuth tsPeerTimeout
 
 	local bStart cmdSSL fmtCon fmtSSL s
 
@@ -196,13 +196,15 @@ udfService() {
 
 	cmdSSL="openssl s_client -connect ${host}:${portAuth} -CAfile $fnCA -cert $fnCrt -key $fnKey -verify 1 -quiet"
 
-	s=$( grep Subject: $fnCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )
-
-	[[ $s != $cn ]] && eval $( udfOnError throw InvalidArgument "invalid cert file $fnCrt" )
-
 	for s in "$fnCrt" "$fnKey" "$fnCA"; do
 
-		[[ -f $s ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
+		[[ -f $s ]] || eval $( udfOnError exitecho NoSuchFileOrDir "$s" )
+		
+		if ! grep -P '^-----(BEGIN|END)' $s >/dev/null 2>&1; then
+
+			eval $( udfOnError exitecho InvalidArgument "$s - bad format" )
+
+		fi
 
 	done
 

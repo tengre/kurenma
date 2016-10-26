@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 100 2016-10-12 12:42:51+04:00 toor $
+# $Id: kurenma.ini.example 119 2016-10-26 14:31:16+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -109,13 +109,8 @@
 #    SECTION [ssl] should contain Сommon Names of peers that bind X.509
 #        digital certificates of public key infrastructure (PKI)
 #
-#    cnServer STRING
-#        Common Name (CN) that refers to the signed server certificate
-#
-#    cnClient STRING
-#        Common Name (CN) that refers to the signed client certificate
-#        It makes sense only for "client"  role.  The  server  receives  the
-#        client's CN in the key exchange
+#    cn STRING
+#        Common Name (CN) that refers to the signed peer certificate
 #
 #  SEE ALSO
 #
@@ -145,8 +140,9 @@
 
 [ssl]
 
-	cnClient	= client.common.name
-	cnServer	= server.common.name
+	cn		= peer.common.name
+#	ca		= cacert.pem
+#	dh		= dh2048.pem
 
 [ipsAllowed]
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 118 2016-10-25 16:59:29+04:00 toor $"
+# $Id: kurenmad 119 2016-10-26 14:31:16+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -146,11 +146,11 @@ udfMain() {
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	local -a aId
-	local ini pathCA pathCrt pathDat pathIni pathKey pathRun s
+	local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
 	local csvSectionMain csvSectionSSL ipsAllowed aReqOptByRole
 
 	csvSectionMain='bDefaultRoute;dev;host;ipServer;ipClient;port;portAuth;role;tsKeepalive;tsPeerTimeout'
-	csvSectionSSL='cnClient;cnServer'
+	csvSectionSSL='ca;cn;dh'
 	eval $( udfLocalVarFromCSV $csvSectionMain $csvSectionSSL )
 
 	udfExitIfAlreadyStarted
@@ -171,7 +171,7 @@ udfMain() {
 	case $role in
 
 	client)
-		aReqOptByRole="cnClient host"
+		aReqOptByRole="host"
 	;;
 
 	server)
@@ -205,8 +205,12 @@ udfMain() {
 
 	fi
 
-	udfDebug 3 "configuration:" && udfShowVariable cnServer dev ipsAllowed portAuth role tsKeepalive tsPeerTimeout $aReqOptByRole
-	udfThrowOnEmptyVariable cnServer dev pathCrt pathDat pathIni pathKey pathRun portAuth role tsPeerTimeout $aReqOptByRole
+	udfDebug 3 "configuration:" && udfShowVariable cn dev ipsAllowed portAuth role tsKeepalive tsPeerTimeout $aReqOptByRole
+	udfThrowOnEmptyVariable cn dev pathCrt pathDat pathIni pathKey pathRun portAuth role tsPeerTimeout $aReqOptByRole
+
+	fnCA=${pathCrt}/cacert.pem
+	fnCrt=${pathCrt}/${cn}.crt
+	fnKey=${pathKey}/${cn}.key
 
 	[[ -d $_kurenma_pathLib ]] || eval $( udfOnError throw NoSuchFileOrDir "$_kurenma_pathLib" )
 	[[ -s ${_kurenma_pathLib}/${role}.kurenma.src ]] || eval $( udfOnError throw NoSuchFileOrDir "${role}.kurenma.src" )

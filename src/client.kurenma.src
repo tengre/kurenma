@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 115 2016-10-23 23:08:02+04:00 toor $
+# $Id: client.kurenma.src 119 2016-10-26 14:31:15+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -64,7 +64,7 @@ udfKnocking() {
 #
 udfGetTunnelSettings() {
 
-	udfThrowOnEmptyVariable cmdSSL cnClient fnKey host portAuth
+	udfThrowOnEmptyVariable cmdSSL cn fnKey host portAuth
 
 	local fnPub fnAns sKey s
 
@@ -187,21 +187,18 @@ udfSetDefaultRoute() {
 udfService() {
 
 	udfThrowOnCommandNotFound false knock ping tee true
-	udfThrowOnEmptyVariable bDefaultRoute cnClient dev host pathIni pathKey port portAuth tsPeerTimeout
+	udfThrowOnEmptyVariable bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni pathKey port portAuth tsPeerTimeout
 
-	local bStart cmdSSL fmtCon fmtSSL fnCrt fnKey fnCA s
+	local bStart cmdSSL fmtCon fmtSSL s
 
 	fmtSSL="SSL auth info:\nClient Common Name - %s\n"
 	fmtCon="Connection properties from %s:\nremote port: %d\nserver  key: %s\ntunnel  IPs: leased/remote - %s/%s\n"
 
-	fnCA==${pathCrt}/cacert.pem
-	fnCrt=${pathCrt}/${cnClient}.crt
-	fnKey=${pathKey}/${cnClient}.key
 	cmdSSL="openssl s_client -connect ${host}:${portAuth} -CAfile $fnCA -cert $fnCrt -key $fnKey -verify 1 -quiet"
 
 	s=$( grep Subject: $fnCrt | sed -re "s/.*CN=(.*)\/email.*/\1/" )
 
-	[[ $s != $cnClient ]] && eval $( udfOnError throw InvalidArgument "invalid cert file $fnCrt" )
+	[[ $s != $cn ]] && eval $( udfOnError throw InvalidArgument "invalid cert file $fnCrt" )
 
 	for s in "$fnCrt" "$fnKey" "$fnCA"; do
 
@@ -211,7 +208,7 @@ udfService() {
 
 	[[ $bDefaultRoute =~ ^(false|true)$ ]] || bDefaultRoute=false
 
-	udfDebug 3 && printf -- "$fmtSSL" "$cnClient"
+	udfDebug 3 && printf -- "$fmtSSL" "$cn"
 
 	bStart=true
 
@@ -232,8 +229,8 @@ udfService() {
 			udfDebug 1 && printf -- "\nclient configuration done.\n"
 			udfDebug 5 && udfShowPeerInfo
 
-			wg showconf $dev > ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
-			chmod 0600 ${pathIni}/${cnClient}_${cnServer}.${dev}.conf
+			wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
+			chmod 0600 ${pathIni}/${cn}.${dev}.conf
 
 			ping -q -W 1 -с 3 $ipServer >/dev/null 2>&1
 

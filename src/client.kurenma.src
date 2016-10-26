@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 119 2016-10-26 14:31:15+04:00 toor $
+# $Id: client.kurenma.src 120 2016-10-26 17:25:22+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -66,11 +66,10 @@ udfGetTunnelSettings() {
 
 	udfThrowOnEmptyVariable cmdSSL cn fnKey host portAuth
 
-	local fnPub fnAns sKey s
+	local fnAns sKey sPub s
 
 	s="$(_ iErrorAbortedBySignal) stop signal received"
 
-	udfMakeTemp fnPub
 	udfMakeTemp fnAns
 
 	while true; do
@@ -82,12 +81,13 @@ udfGetTunnelSettings() {
 		udfWaitSignal 4 || break
 
 		sKey=$( wg genkey )
+		sPub=$( echo $sKey | wg pubkey )
 
-		s="$( echo $sKey | wg pubkey | tee $fnPub | $cmdSSL | tr -d '\r' | tee $fnAns | grep '^OK:' )"
+		s="$( echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns | grep '^OK:' )"
 
 		udfDebug 3 && \
 		printf -- "\nclient WireGuard keys:\nprivate - %s\npublic  - %s\n" \
-			"${sKey:0:10}<skipped>" "$(head -c 10 $fnPub)<skipped>"
+			"${sKey:0:10}<skipped>" "${sPub:0:10}<skipped>"
 
 		[[ $s =~ ^OK: ]] && break
 
@@ -100,7 +100,7 @@ udfGetTunnelSettings() {
 
 	done >&2
 
-	rm -f $fnAns $fnPub
+	rm -f $fnAns
 
 	echo "${s//:/ } $sKey"
 

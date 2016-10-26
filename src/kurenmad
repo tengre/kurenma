@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 119 2016-10-26 14:31:16+04:00 toor $"
+# $Id: kurenmad 120 2016-10-26 17:25:22+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -10,9 +10,8 @@ _bashlyk_iErrorNotChildProcess=181
 _bashlyk_hError[$_bashlyk_iErrorNotChildProcess]="not child process"
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
-_kurenma_sVersion=0.6
-#_kurenma_pathLib=/usr/share/kurenma
-_kurenma_pathLib=/home/toor/src/kurenma/src
+_kurenma_sVersion=0.7
+_kurenma_pathLib=/usr/share/kurenma
 _kurenma_sSignal=none
 #
 #
@@ -131,9 +130,7 @@ udfSignal() {
 	udfFinally "service down initiated by signal,"
 
 	sleep 1.8
-
-	udfDebug 0 "forced clean checkpoint"
-	udfOnTrap
+	#udfOnTrap
 
 }
 #

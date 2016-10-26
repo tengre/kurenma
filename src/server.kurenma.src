@@ -1,6 +1,5 @@
-#!/bin/bash
 #
-# $Id: server.kurenma.src 119 2016-10-26 14:31:16+04:00 toor $"
+# $Id: server.kurenma.src 120 2016-10-26 17:25:23+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -196,11 +195,18 @@ udfHandleRequest() {
 
 	fi
 
+	if [[ $ipServer == $ipClient ]]; then
+
+		eval $( udfOnError warn InvalidArgument "the IP address $ipClient is already in use, skipped" )
+		unset ipClient
+
+	fi
+
 	if [[ -z "$ipClient" ]]; then
 
 		s="$( wg show $dev allowed-ips )"
 
-		for ((i=${ipServer##*.}; i<=254; i++)); do
+		for ((i=$(( ${ipServer##*.} + 1 )); i<=254; i++)); do
 
 			ip="${ipServer%.*}.$i";
 
@@ -288,7 +294,7 @@ udfSetupTunnel() {
 #
 udfService() {
 
-	DEBUGLEVEL=3
+	DEBUGLEVEL=5
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
@@ -305,7 +311,7 @@ udfService() {
 
 	fnDH=${pathCrt}/dh2048.pem
 	cmdSSL="openssl s_server -cert $fnCrt -key $fnKey -accept $portAuth -CApath $pathCA -Verify 2 -crl_check_all -dhparam $fnDH"
-	
+
 	udfStopProcess "$cmdSSL"
 
 	while true; do
@@ -323,8 +329,6 @@ udfService() {
 		udfWaitSignal 0.2 || break
 
 	done
-
-	udfStopProcess "$cmdSSL"
 
 }
 #

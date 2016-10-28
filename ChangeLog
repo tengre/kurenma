@@ -1,6 +1,9 @@
-Wed, 26 Oct 2016 15:06:21 +0400
+Fri, 28 Oct 2016 15:47:27 +0400
 	New upstream release
 	Version 0.7
+
+ Shift to a client-server mode of the openssl
+
 
 Tue, 18 Oct 2016 11:12:06 +0400
 	New upstream release

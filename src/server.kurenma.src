@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 121 2016-10-26 23:18:03+04:00 toor $"
+# $Id: server.kurenma.src 122 2016-10-28 15:50:37+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -112,13 +112,14 @@ udfWaitRequest() {
 
 			else
 
-				udfDebug 3 "client data:${s##*client-data}"
-				udfHandleRequest $cn ${s##*client-data}
+				s=${s##*client-data}
+				udfDebug 3 "client data: ${s:1:10}<skipped>"
+				udfHandleRequest $cn ${s:1:45}
+
 				sleep 1.1
 				udmCloseConnection
 
 			fi
-
 
 		elif [[ $s =~ ^(depth|verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]]; then
 
@@ -311,7 +312,7 @@ udfService() {
 	fnDH=${pathCrt}/dh2048.pem
 	cmdSSL="openssl s_server -cert $fnCrt -key $fnKey -accept $portAuth -CApath $pathCA -Verify 2 -crl_check_all -dhparam $fnDH"
 
-	udfStopProcess "$cmdSSL"
+	udfStopProcess $cmdSSL
 
 	while true; do
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 120 2016-10-26 17:25:23+04:00 toor $
+# $Id: kurenmactl 122 2016-10-28 13:54:56+04:00 toor $
 #
 _kurenma_sVersion=0.7
 #
@@ -112,7 +112,7 @@ udfMain() {
 
 			echo ""
 
-			udfStopProcess $pid $cmd
+			udfStopProcess pid=$pid $cmd
 			s=$?
 
 			[[ $s == $( _ iErrorNoSuchProcess ) ]] && s=0

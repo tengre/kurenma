@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 119 2016-10-26 14:31:16+04:00 toor $
+# $Id: kurenma.ini.example 123 2016-10-29 13:02:36+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -80,26 +80,26 @@
 #
 #        Default: 32minutes
 #
-#    ipServer IP address
-#        Tunnel IP address of server peer.
+#    server CIDR (ip/mask)
+#        Tunnel IP address and network mask of the server peer.
 #
 #        It  makes  sense  only  for  "server" role. The client receives the
 #        server tunnel IP-address in the key exchange
 #
-#        Default: 192.168.29.1
+#        Default: 192.168.29.1/24
 #
-#    ipClient constant STRING
+#    pool constant STRING
 #        Leased mode for client peers. This parameter can be set to  dynamic
 #        or commonname
 #
 #        It makes sense only for "server" role.
 #
-#        dynamic  -  set  for  client  peer  first  free  IP  address  after
-#        "ipServer" value
+#        dynamic  -  set  for  client  peer  first  free  IP  address  from
+#        server network
 #
 #        commonname - set for client peer  IP  address  that  resolved  from
 #        their  Common  Name  (CN).  In  this  case, the DNS service must be
-#        properly configured.
+#        properly configured to server network
 #
 #        Default: dynamic
 #
@@ -132,10 +132,10 @@
 
 	bDefaultRoute	= false
 
-	ipServer	= 192.168.29.1
+	server			= 192.168.29.1/24
 
-	ipClient	= dynamic
-#	ipClient	= commonname
+#	pool			= dynamic
+#	pool			= commonname
 
 
 [ssl]

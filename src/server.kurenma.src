@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 122 2016-10-28 15:50:37+04:00 toor $"
+# $Id: server.kurenma.src 123 2016-10-29 13:02:36+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -136,9 +136,9 @@ udfWaitRequest() {
 udfHandleRequest() {
 
 	udfThrowOnEmptyOrMissingArgument "$1" "$2"
-	udfThrowOnEmptyVariable ipClient ipServer dev pathDat pathIni tsKeepalive tsPeerTimeout
+	udfThrowOnEmptyVariable dev pathDat pathIni pool tsKeepalive tsPeerTimeout server
 
-	local aCIDR cnClient fn fnLeased i ip peer s
+	local aCIDR cnClient fn fnLeased i ip ipClient peer s
 
 	cnClient=$1
 	peer=$2
@@ -179,14 +179,15 @@ udfHandleRequest() {
 
 	done
 
-	if [[ "$ipClient" == "commonname" ]]; then
+	if [[ "$pool" == "commonname" ]]; then
 
+		## TODO IP must be in the server network - checking required
 		ipClient=$( udfGetValidIPsOnly $cnClient )
 		udfDebug 5 "Leased IP by Common Name to $cnClient - $ipClient"
 
 	fi
 
-	if [[ -z "$ipClient" || $ipClient == "dynamic" ]]; then
+	if [[ -z "$ipClient" || $pool == "dynamic" ]]; then
 
 		[[ -f $fnLeased ]] || touch $fnLeased
 
@@ -195,7 +196,7 @@ udfHandleRequest() {
 
 	fi
 
-	if [[ $ipServer == $ipClient ]]; then
+	if [[ ${server%/*} == $ipClient ]]; then
 
 		eval $( udfOnError warn InvalidArgument "the IP address $ipClient is already in use, skipped" )
 		unset ipClient
@@ -204,11 +205,12 @@ udfHandleRequest() {
 
 	if [[ -z "$ipClient" ]]; then
 
+		ipClient=$(( ${server%/*} ))
 		s="$( wg show $dev allowed-ips )"
+		## TODO ip range for pool
+		for ((i=$(( ${ipClient##*.} + 1 )); i<=254; i++)); do
 
-		for ((i=$(( ${ipServer##*.} + 1 )); i<=254; i++)); do
-
-			ip="${ipServer%.*}.$i";
+			ip="${ipClient%.*}.$i";
 
 			if [[ $s =~ ${ip}/32 ]]; then
 
@@ -225,10 +227,10 @@ udfHandleRequest() {
 
 	fi
 
-	if [[ -z "$ipClient" ]]; then
+	if [[ -z "$ipClient" || ${server%/*} == $ipClient ]]; then
 
 		echo "not allocated IP to the client"
-		eval $( udfOnError retecho EmptyOrMissingArgument "not allocated IP to the client" )
+		eval $( udfOnError retecho InvalidArgument "not allocated IP to the client" )
 
 	fi
 
@@ -239,7 +241,7 @@ udfHandleRequest() {
 	udfMakeTemp fn
 	if wg set $dev peer "$peer" allowed-ips "${aCIDR// /,}" persistent-keepalive $tsKeepalive 2>$fn; then
 
-		echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${ipServer}"
+		echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${server%/*}"
 
 		for s in $( wg show $dev peers ); do
 
@@ -272,7 +274,7 @@ udfHandleRequest() {
 #
 udfSetupTunnel() {
 
-	udfThrowOnEmptyVariable dev ipServer port
+	udfThrowOnEmptyVariable dev server port
 
 	udfDebug 3 "Init WireGuard device $dev"
 
@@ -280,7 +282,7 @@ udfSetupTunnel() {
 
 		ip link del dev $dev 2>/dev/null || true
 		ip link add dev $dev type wireguard
-		ip address add ${ipServer}/24 dev $dev
+		ip address add $server dev $dev
 		wg set $dev private-key <(wg genkey) listen-port $port
 		ip link set up dev $dev
 
@@ -299,11 +301,11 @@ udfService() {
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	udfThrowOnCommandNotFound cut kill ps sort
-	udfThrowOnEmptyVariable cn dev ipServer fnCrt fnKey pathCA pathCrt pathKey port portAuth
+	udfThrowOnEmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey port portAuth server
 
 	local cmdSSL fn fnDH
 
-	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then
+	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep ${server%/*} )" ]]; then
 
 		udfSetupTunnel
 

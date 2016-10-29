@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 123 2016-10-29 13:02:36+04:00 toor $"
+# $Id: server.kurenma.src 124 2016-10-30 01:02:43+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -61,7 +61,7 @@ udmLimitConnectionTime() {
 #
 udfWaitRequest() {
 
-	local bRevoked=0 cn i s tsStart=0 tsWait=60 rc
+	local bRevoked=0 cn rc s tsStart=0 tsWait=60
 
 	while true; do
 
@@ -70,8 +70,14 @@ udfWaitRequest() {
 
 		if   (( rc > 128 )); then
 
-			(( tsStart == 0 )) && udfDebug 3 "wait ${tsWait}sec"
 			(( bRevoked > 0 )) && udmRevoked
+
+			if (( tsStart == 0 )); then
+
+				udfDebug 3 "wait ${tsWait}sec"
+				tsWait=$(( tsWait + 10 ))
+
+			fi
 
 		elif (( rc > 0 )); then
 
@@ -121,9 +127,9 @@ udfWaitRequest() {
 
 			fi
 
-		elif [[ $s =~ ^(depth|verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]]; then
+		elif [[ $s =~ ^(verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]]; then
 
-			udfDebug 3 "log $s"
+			udfDebug 3 "SSL: $s"
 
 		fi
 

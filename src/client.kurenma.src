@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 121 2016-10-26 23:18:03+04:00 toor $
+# $Id: client.kurenma.src 126 2016-10-31 00:06:42+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -66,7 +66,9 @@ udfGetTunnelSettings() {
 
 	udfThrowOnEmptyVariable cmdSSL cn fnKey host portAuth
 
-	local fnAns sKey sPub s
+	local fmt fnAns sKey sPub s
+
+	fmt="\nclient WireGuard keys:\nprivate - %s<skipped>\npublic  - %s<skipped>\n"
 
 	s="$(_ iErrorAbortedBySignal) stop signal received"
 
@@ -85,9 +87,7 @@ udfGetTunnelSettings() {
 
 		s="$( echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns | grep '^OK:' )"
 
-		udfDebug 3 && \
-		printf -- "\nclient WireGuard keys:\nprivate - %s\npublic  - %s\n" \
-			"${sKey:0:10}<skipped>" "${sPub:0:10}<skipped>"
+		udfDebug 3 && printf -- $fmt "${sKey:0:10}" "${sPub:0:10}"
 
 		[[ $s =~ ^OK: ]] && break
 
@@ -199,7 +199,7 @@ udfService() {
 	for s in "$fnCrt" "$fnKey" "$fnCA"; do
 
 		[[ -f $s ]] || eval $( udfOnError exitecho NoSuchFileOrDir "$s" )
-		
+
 		if ! grep -P '^-----(BEGIN|END)' $s >/dev/null 2>&1; then
 
 			eval $( udfOnError exitecho InvalidArgument "$s - bad format" )

@@ -1,8 +1,59 @@
-Fri, 28 Oct 2016 15:47:27 +0400
+Sun, 30 Oct 2016 13:22:00 +0400
 	New upstream release
 	Version 0.7
+ - used SSL/TLS (s_client, s_server) interaction instead of SMIME for the
+   initial key exchange
+ - certificates for clients and servers are now different
+ - added support for revoked certificates (-crl_check_all)
+ - used trusted CA certificate for knock sequence generating from SHA1
+   Fingerprint
+ - changed some main configuration parameters:
+   'ipServer' -> 'server' (CIDR ip/mask now)
+   'ipClient' -> 'pool' ( 'dynamic' or 'commonname' )
+ - udf{StopProcess,GetTimeInSec} removed and used from bashlyk version 1.87
+ - updated tests and manuals
 
- Shift to a client-server mode of the openssl
+kurenmad:
+ - udfSignal changes:
+   * send "stopsignal" to pipe of openssl
+   * kill all child 'sleep' command by udfStopProcess (bashlyk 1.87)
+   * set _kurenma_sSignal='stop' earlier than stopped sleep
+ - udfWaitRequest changes:
+   * used return code of bash builtin command "read":
+     ** >128 - timeout
+     ** >0   - closed input
+   * added support of s_server 'Q' command (shutdown) on event "stopsignal"
+   * improved CN and data handling
+
+server.kurenma.src:
+ - openssl - used s_server instead smime
+ - input wait each time increased by 10 seconds in the event of downtime
+ - used tag 'SSL' for the openssl output logging
+ - fixed dynamic leased IP range
+
+client.kurenma.src:
+ - openssl - used s_client instead smime
+ - used trusted CA certificate for knock sequence getting from SHA1 Fingerprint
+ - improved SSL files checking
+
+kurenma.ini.example:
+ - option 'ipServer' renamed to 'server' and now is the CIDR
+ - option 'ipClient' renamed to 'pool'
+ - section ssl:
+   * parameter cn{Client,Server} replaced by 'cn'
+   * added parameters 'ca', 'dh'
+
+gen-ssl-kurenma:
+ - 'crt' option replaced by 'server' and 'client' for separate generation of
+   certificates by using the parameter "nsCertType"
+ - for role 'server' generated Diffie Hellman parameters
+
+setup-knockd:
+ - used trusted CA certificate for knock sequence generating from SHA1
+   Fingerprint
+
+kurenmactl:
+ - udfStopProcess is runned if PID of service exist
 
 
 Tue, 18 Oct 2016 11:12:06 +0400
@@ -42,6 +93,7 @@ Tue, 18 Oct 2016 11:12:06 +0400
 
  debian/{postinst,prerm}, Makefile.am:
  - check the directory "/run/systemd/system" for use the SystemD management
+
 
 Wed, 12 Oct 2016 12:51:45 +0400
 	New upstream release
@@ -88,6 +140,7 @@ Wed, 12 Oct 2016 12:51:45 +0400
  - added to Build-Depends automake, robodoc, xsltproc, docbook-xsl packages
  - added dependence from logrotate bashlyk, wireguard-tools, openssl, firehol,
    knockd, iproute2, iputils-ping, diffutils packages
+
 
 Tue, 27 Sep 2016 12:20:47 +0400
 	New upstream release
@@ -155,6 +208,7 @@ Makefile.am:
  - used enable/disable option of systemctl for service install/uninstall
  - SystemV init script 'kurenma' renamed to 'kurenma.disabled' if systemd
    supported
+
 
 Fri, 02 Sep 2016 00:37:23 +0400
 	New upstream release
@@ -230,6 +284,7 @@ Fri, 02 Sep 2016 00:37:23 +0400
  - client/server ini renamed as example
  - added kurenma.service for installation
 
+
 Wed, 03 Aug 2016 10:50:04 +0400
 	New upstream release
 	Version 0.2
@@ -263,6 +318,7 @@ Wed, 03 Aug 2016 10:50:04 +0400
  - added function udfGetValidIPsOnly for IP validating
  - added support for wireguard option 'persistent-keepalive' by using ini config
    option 'keepalive'
+
 
 Sun, 10 Jul 2016 17:47:51 +0400
 	Initial release

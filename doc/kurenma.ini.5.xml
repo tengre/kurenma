@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- $Id: kurenma.ini.5.xml 100 2016-10-12 12:43:59+04:00 toor $ -->
+<!-- $Id: kurenma.ini.5.xml 125 2016-10-30 13:23:51+04:00 toor $ -->
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
@@ -193,22 +193,22 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-     <term><varname>ipServer</varname>&nbsp;<type>IP address</type></term>
+     <term><varname>server</varname>&nbsp;<type>CIDR</type></term>
       <listitem>
        <para>
-        Tunnel IP address of server peer.
+        Tunnel IP address and network mask of server peer.
        </para>
        <para>
         It makes sense only for "server" role.
 	The client receives the server tunnel IP-address in the key exchange
        </para>
        <para>
-        Default: 192.168.29.1
+        Default: 192.168.29.1/24
        </para>
       </listitem>
     </varlistentry>
     <varlistentry>
-     <term><varname>ipClient</varname>&nbsp;<type>constant STRING</type></term>
+     <term><varname>pool</varname>&nbsp;<type>constant STRING</type></term>
       <listitem>
        <para>
         Leased mode for client peers. This parameter can be set to <constant>dynamic</constant> or <constant>commonname</constant>
@@ -217,17 +217,18 @@
         It makes sense only for "server" role.
        </para>
        <para>
-        <option>dynamic</option> - set for client peer first free IP address after "ipServer" value
+        <option>dynamic</option> - set for client peer first free IP address from server
+		network
        </para>
        <para>
         <option>commonname</option> - set for client peer IP address that resolved from their Common Name (CN).
-	In this case, the DNS service must be properly configured.
+	In this case, the DNS service must be properly configured to the server tunnel network.
        </para>
        <para>
         Default: dynamic
        </para>
-       <example>ipClient = dynamic</example>
-       <example>ipClient = client.domain.name</example>
+       <example>pool = dynamic</example>
+       <example>pool = commonname</example>
       </listitem>
     </varlistentry>
     </variablelist>
@@ -251,21 +252,18 @@
    </para>
   <variablelist>
    <varlistentry>
-    <term><varname>cnServer</varname>&nbsp;<type>STRING</type></term>
+    <term><varname>cn</varname>&nbsp;<type>STRING</type></term>
      <listitem>
       <para>
-       Common Name (CN) that refers to the signed server certificate
+       Common Name (CN) that refers to the signed peer certificate (client or server)
       </para>
      </listitem>
     </varlistentry>
    <varlistentry>
-    <term><varname>cnClient</varname>&nbsp;<type>STRING</type></term>
+    <term><varname>ca</varname>&nbsp;<type>STRING</type></term>
      <listitem>
       <para>
-       Common Name (CN) that refers to the signed client certificate
-      </para>
-      <para>
-       It makes sense only for "client" role. The server receives the client's CN in the key exchange
+       CA public certificate file
       </para>
      </listitem>
     </varlistentry>

@@ -1,4 +1,4 @@
-Sun, 30 Oct 2016 13:22:00 +0400
+Mon, 07 Nov 2016 15:56:10 +0400
 	New upstream release
 	Version 0.7
  - used SSL/TLS (s_client, s_server) interaction instead of SMIME for the

@@ -1,5 +1,6 @@
+#!/bin/bash
 #
-# $Id: server.kurenma.src 124 2016-10-30 01:02:43+04:00 toor $"
+# $Id: ssl-server-openssl.sh 114 2016-10-21 16:12:24+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -61,23 +62,19 @@ udmLimitConnectionTime() {
 #
 udfWaitRequest() {
 
-	local bRevoked=0 cn rc s tsStart=0 tsWait=60
+	local bRevoked=0 cn i s tsStart=0 tsWait=60 rc
 
 	while true; do
 
 		read -t $tsWait s
 		rc=$?
 
+		#udfDebug 3 "rc=$rc : $s"
+
 		if   (( rc > 128 )); then
 
+			(( tsStart == 0 )) && udfDebug 3 "wait ${tsWait}sec"
 			(( bRevoked > 0 )) && udmRevoked
-
-			if (( tsStart == 0 )); then
-
-				udfDebug 3 "wait ${tsWait}sec"
-				tsWait=$(( tsWait + 10 ))
-
-			fi
 
 		elif (( rc > 0 )); then
 
@@ -88,6 +85,7 @@ udfWaitRequest() {
 
 			udfDebug 3 "SSL server down"
 
+			sleep 0.2
 			echo Q
 			sleep 0.2
 			break
@@ -118,18 +116,17 @@ udfWaitRequest() {
 
 			else
 
-				s=${s##*client-data}
-				udfDebug 3 "client data: ${s:1:10}<skipped>"
-				udfHandleRequest $cn ${s:1:45}
-
+				udfDebug 3 "client data:${s##*client-data}"
+				udfHandleRequest $cn ${s##*client-data}
 				sleep 1.1
 				udmCloseConnection
 
 			fi
 
-		elif [[ $s =~ ^(verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]]; then
 
-			udfDebug 3 "SSL: $s"
+		elif [[ $s =~ ^(depth|verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]]; then
+
+			udfDebug 3 "log $s"
 
 		fi
 
@@ -142,14 +139,14 @@ udfWaitRequest() {
 udfHandleRequest() {
 
 	udfThrowOnEmptyOrMissingArgument "$1" "$2"
-	udfThrowOnEmptyVariable dev pathDat pathIni pool tsKeepalive tsPeerTimeout server
+	udfThrowOnEmptyVariable ipClient ipServer dev pathDat pathIni tsKeepalive tsPeerTimeout
 
-	local aCIDR cnClient fn fnLeased i ip ipClient peer s
+	local aCIDR cnClient fn fnLeased i ip peer s
 
 	cnClient=$1
 	peer=$2
 
-	fnLeased=${pathDat}/${cn}.${dev}.leased
+	fnLeased=${pathDat}/${cnServer}.${dev}.leased
 
 	udfDebug 3 && \
 		printf -- "\nremote peer info:\n\tClient Common Name\t- %s\n\tPublic key for %s\t- %s\n" \
@@ -185,15 +182,14 @@ udfHandleRequest() {
 
 	done
 
-	if [[ "$pool" == "commonname" ]]; then
+	if [[ "$ipClient" == "commonname" ]]; then
 
-		## TODO IP must be in the server network - checking required
 		ipClient=$( udfGetValidIPsOnly $cnClient )
 		udfDebug 5 "Leased IP by Common Name to $cnClient - $ipClient"
 
 	fi
 
-	if [[ -z "$ipClient" || $pool == "dynamic" ]]; then
+	if [[ -z "$ipClient" || $ipClient == "dynamic" ]]; then
 
 		[[ -f $fnLeased ]] || touch $fnLeased
 
@@ -202,21 +198,13 @@ udfHandleRequest() {
 
 	fi
 
-	if [[ ${server%/*} == $ipClient ]]; then
-
-		eval $( udfOnError warn InvalidArgument "the IP address $ipClient is already in use, skipped" )
-		unset ipClient
-
-	fi
-
 	if [[ -z "$ipClient" ]]; then
 
-		ipClient=$(( ${server%/*} ))
 		s="$( wg show $dev allowed-ips )"
-		## TODO ip range for pool
-		for ((i=$(( ${ipClient##*.} + 1 )); i<=254; i++)); do
 
-			ip="${ipClient%.*}.$i";
+		for ((i=${ipServer##*.}; i<=254; i++)); do
+
+			ip="${ipServer%.*}.$i";
 
 			if [[ $s =~ ${ip}/32 ]]; then
 
@@ -233,10 +221,10 @@ udfHandleRequest() {
 
 	fi
 
-	if [[ -z "$ipClient" || ${server%/*} == $ipClient ]]; then
+	if [[ -z "$ipClient" ]]; then
 
 		echo "not allocated IP to the client"
-		eval $( udfOnError retecho InvalidArgument "not allocated IP to the client" )
+		eval $( udfOnError retecho EmptyOrMissingArgument "not allocated IP to the client" )
 
 	fi
 
@@ -247,7 +235,7 @@ udfHandleRequest() {
 	udfMakeTemp fn
 	if wg set $dev peer "$peer" allowed-ips "${aCIDR// /,}" persistent-keepalive $tsKeepalive 2>$fn; then
 
-		echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${server%/*}"
+		echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${ipServer}"
 
 		for s in $( wg show $dev peers ); do
 
@@ -273,14 +261,14 @@ udfHandleRequest() {
 	udfDebug 1 "server configuration updated."
 	udfDebug 5 && udfShowPeerInfo >&2
 
-	wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
-	chmod 0600 ${pathIni}/${cn}.${dev}.conf
+	wg showconf $dev > ${pathIni}/${cnServer}.${dev}.conf
+	chmod 0600 ${pathIni}/${cnServer}.${dev}.conf
 
 }
 #
 udfSetupTunnel() {
 
-	udfThrowOnEmptyVariable dev server port
+	udfThrowOnEmptyVariable dev ipServer port
 
 	udfDebug 3 "Init WireGuard device $dev"
 
@@ -288,7 +276,7 @@ udfSetupTunnel() {
 
 		ip link del dev $dev 2>/dev/null || true
 		ip link add dev $dev type wireguard
-		ip address add $server dev $dev
+		ip address add ${ipServer}/24 dev $dev
 		wg set $dev private-key <(wg genkey) listen-port $port
 		ip link set up dev $dev
 
@@ -302,25 +290,26 @@ udfSetupTunnel() {
 #
 udfService() {
 
-	DEBUGLEVEL=5
+	DEBUGLEVEL=3
 
 	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
 	udfThrowOnCommandNotFound cut kill ps sort
-	udfThrowOnEmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey port portAuth server
+	udfThrowOnEmptyVariable cnServer dev ipServer pathCA pathCrt pathKey port portAuth
 
-	local cmdSSL fn fnDH
+	local cmdSSL fn fnDH fnKey fnCrt
 
-	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep ${server%/*} )" ]]; then
+	if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep $ipServer )" ]]; then
 
 		udfSetupTunnel
 
 	fi
 
 	fnDH=${pathCrt}/dh2048.pem
+	fnCrt=${pathCrt}/${cnServer}.crt
+	fnKey=${pathKey}/${cnServer}.key
 	cmdSSL="openssl s_server -cert $fnCrt -key $fnKey -accept $portAuth -CApath $pathCA -Verify 2 -crl_check_all -dhparam $fnDH"
-
-	udfStopProcess $cmdSSL
+	udfStopProcess "$cmdSSL"
 
 	while true; do
 
@@ -336,7 +325,10 @@ udfService() {
 
 		udfWaitSignal 0.2 || break
 
+
 	done
+
+	udfStopProcess "$cmdSSL"
 
 }
 #

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 106 2016-10-14 13:56:05+04:00 toor $
+# $Id: gen-ssl-kurenma 111 2016-10-18 17:32:07+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -10,7 +10,7 @@ _bashlyk=kurenma . bashlyk
 #
 #  USAGE
 #
-#    gen-ssl-kurenma [ ca | crt <CommonName> ]
+#    gen-ssl-kurenma ca | client|server <CommonName>
 #
 #  DESCRIPTION
 #
@@ -22,8 +22,11 @@ _bashlyk=kurenma . bashlyk
 #    ca
 #           generate CA infrastructure in /etc/kurenma/ssl
 #
-#    crt <CommonName>
-#           generate certificate and private key for peer with CommonName
+#    client <CommonName>
+#           generate certificate and private key for the client with CommonName
+#
+#    server <CommonName>
+#           generate certificate and private key for the server with CommonName
 #
 #  SEE ALSO
 #
@@ -84,7 +87,8 @@ udfMain() {
 	 	mkdir -p ${path}/{public,private,configs,certs,newcerts,crl,csr}
 		chmod 0710 $pathKey
 
-		echo $(date "+%s") > ${path}/serial
+		date "+%s" > ${path}/serial
+		date "+%s" > ${path}/crlnumber
 
 		rm -f ${path}/index.txt
 		touch ${path}/index.txt
@@ -95,7 +99,7 @@ udfMain() {
 
 		;;
 
-	 crt)
+	 client|server)
 
 		[[ -n "$2" ]] || eval $( udfOnError exitecho EmptyOrMissingArgument "argument required.. see usage" )
 
@@ -123,7 +127,7 @@ udfMain() {
 	 *)
 
 		echo "Error: unknown option.. ${*}"
-		echo "usage: ${0##*/} ca | { crt <CommonName> }"
+		echo "usage: ${0##*/} ca | { client|server <CommonName> }"
 		exit 1
 
 	esac
@@ -140,13 +144,14 @@ udfMain() {
 
 	 ca)
 		openssl req -nodes -new -x509 -keyout ${pathKey}/cakey.pem -out ${pathCrt}/cacert.pem -days 3650 -config $conf -verbose
-		#openssl dhparam -out ${pathCrt}/dh2048.pem 2048
-
-		wg genkey | tee ${pathKey}/private.wg.key | wg pubkey > ${pathCrt}/public.wg.key
 
 		;;
 
-	 crt)
+	 client|server)
+
+		sed -i -r -e "s/%nsCertType%/${1}/ig" $conf
+
+		[[ "$1" == "server" ]] && openssl dhparam -out ${pathCrt}/dh2048.pem 2048
 
 		openssl req -new -nodes -keyout ${pathKey}/${2}.key -out ${pathCsr}/${2}.csr -config $conf -verbose
 		openssl ca  -in ${pathCsr}/${2}.csr -out ${pathCrt}/${2}.crt -config $conf -verbose

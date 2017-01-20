@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 124 2016-10-30 01:02:43+04:00 toor $"
+# $Id: server.kurenma.src 129 2017-01-20 15:08:39+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -188,8 +188,12 @@ udfHandleRequest() {
 	if [[ "$pool" == "commonname" ]]; then
 
 		## TODO IP must be in the server network - checking required
-		ipClient=$( udfGetValidIPsOnly $cnClient )
-		udfDebug 5 "Leased IP by Common Name to $cnClient - $ipClient"
+		s="Leased IP by Common Name to $cnClient"
+		if ipClient=$( udfGetValidIPsOnly $cnClient ); then
+			udfDebug 5 "$s - $ipClient"
+		else
+			udfDebug 5 "$s - not resolved.."
+		fi
 
 	fi
 
@@ -199,6 +203,8 @@ udfHandleRequest() {
 
 		ipClient=$( grep -P "^${cnClient}:\S+$" $fnLeased | tail -n 1 | cut -f 2 -d':' | xargs )
 		ipClient=$( udfGetValidIPsOnly $ipClient )
+		s="Leased early used IP to $cnClient"
+		udfDebug 5 "$s - $ipClient"
 
 	fi
 
@@ -225,6 +231,8 @@ udfHandleRequest() {
 			else
 
 				ipClient=$( udfGetValidIPsOnly $ip )
+				s="Leased dynamic IP to $cnClient"
+				udfDebug 5 "$s - $ipClient"
 				break
 
 			fi

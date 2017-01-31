@@ -1,15 +1,11 @@
 #!/bin/bash
 #
-# $Id: kurenmad 129 2016-12-19 17:18:38+04:00 toor $"
+# $Id: kurenmad 130 2017-01-31 16:51:53+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
-_bashlyk_iErrorNotChildProcess=181
-_bashlyk_hError[$_bashlyk_iErrorNotChildProcess]="not child process"
-_bashlyk_iErrorNotAvailable=166
-_bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
 _kurenma_sVersion=0.7
 _kurenma_pathLib=/usr/share/kurenma
 _kurenma_sSignal=none
@@ -136,112 +132,128 @@ udfSignal() {
 #
 udfMain() {
 
-	DEBUGLEVEL=5
+  DEBUGLEVEL=5
 
-	udfThrowOnCommandNotFound echo grep ip mkdir nc openssl sed sleep tail wg
+  udfThrowOnCommandNotFound echo grep ip mkdir nc openssl sed sleep tail wg
 
-	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
+  [[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
-	local -a aId
-	local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
-	local csvSectionMain csvSectionSSL ipsAllowed aReqOptByRole
+  local -a aId
+  local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
+  local bDefaultRoute pool port portAuth role tsKeepalive tsPeerTimeout
+  local aReqOptByRole ca cn dh dev host server
 
-	csvSectionMain='bDefaultRoute;dev;host;server;pool;port;portAuth;role;tsKeepalive;tsPeerTimeout'
-	csvSectionSSL='ca;cn;dh'
-	eval $( udfLocalVarFromCSV $csvSectionMain $csvSectionSSL )
+  udfExitIfAlreadyStarted
 
-	udfExitIfAlreadyStarted
+  pathDat=$( _ pathDat )
+  pathIni=$( _ pathIni )
+  pathRun=$( _ pathRun )
 
-	pathDat=$( _ pathDat )
-	pathIni=$( _ pathIni )
-	pathRun=$( _ pathRun )
+  pathCA=${pathIni}/ssl/certs
+  pathCrt=${pathIni}/ssl/public
+  pathKey=${pathIni}/ssl/private
+  ini=${pathIni}/kurenma.ini
 
-	pathCA=${pathIni}/ssl/certs
-	pathCrt=${pathIni}/ssl/public
-	pathKey=${pathIni}/ssl/private
-	ini=${pathIni}/kurenma.ini
+  mkdir -p $pathDat || eval $( udfOnError retecho NotExistNotCreated $pathDat )
 
-	mkdir -p $pathDat || eval $( udfOnError retecho NotExistNotCreated $pathDat )
+  INI ini
+  ini.load $ini                                                               :\
+              []bDefaultRoute,dev,host,server,pool,port,portAuth,role,        :\
+                tsKeepalive,tsPeerTimeout                                     :\
+                                                                              :\
+           [ssl]ca,cn,dh                                                      :\
+                                                                              :\
+    [ipsAllowed]=                                                             :\
+  :
 
-	## INI ini
-	## ini.load $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}" "ipsAllowed:="
+  role=$( ini.get role )
 
-	udfIni $ini ":${csvSectionMain}" "ssl:${csvSectionSSL}" "ipsAllowed:="
+  case $role in
 
-	##role=$( ini.get role )
-	case $role in
+  client)
 
-	client)
-		aReqOptByRole="host"
-	;;
+             host=$( ini.get host )
+    bDefaultRoute=$( ini.get bDefaultRoute )
 
-	server)
-		##aReqOptByRole="server,pool,port"
-		##[[ $( ini.get pool   ]] || ini.set pool = dynamic
-		##[[ $( ini.get port   ]] || ini.set port = 12912
-		##[[ $( ini.get server ]] || ini.set server = 192.168.29.1/24
+    : ${bDefaultRoute:=false}
 
-		aReqOptByRole="server pool port"
-		: ${pool:=dynamic}
-		: ${server:=192.168.29.1/24}
-		: ${port:=12912}
-	;;
+    aReqOptByRole="host"
 
-	     *)
-		eval $( udfOnError throw InvalidArgument "$role - permissible 'client' or 'server'" )
-	;;
+  ;;
 
-	esac
+  server)
 
-	aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, v${_kurenma_sVersion} rev${aId[2]}"
-	udfDebug 1 "start $( _ s0 ) as ${role}${s}"
+      pool=$( ini.get pool )
+      port=$( ini.get port )
+    server=$( udfGetValidCIDR $( ini.get server ) )
 
-	##ini.set server = $( udfGetValidCIDR $( ini.get server ) )
-	##[[ $( ini.get dev      ) ]] || ini.set dev      = wg0
-	##[[ $( ini.get portAuth ) ]] || ini.set portAuth = 42912
+    :   ${pool:=dynamic}
+    :   ${port:=12912}
+    : ${server:=192.168.29.1/24}
 
-	server=$( udfGetValidCIDR $server )
-	: ${dev:=wg0}
-	: ${portAuth:=42912}
+    aReqOptByRole="server pool port"
 
-	##udfIsNumber $( ini.get tsKeepalive ) || ini.set tsKeepalive = 0
-	udfIsNumber $tsKeepalive || tsKeepalive=0
-	##(( $( ini.get tsKeepalive ) > 65355 )) && init.set tsKeepalive = 65355
-	(( $tsKeepalive > 65355 )) && tsKeepalive=65355
+  ;;
 
-	##_bashlyk_sBehaviorOnError=return ini.set tsPeerTimeout = $( udfGetTimeInSec $( ini.get tsPeerTimeout ) "32min" )
-	_bashlyk_sBehaviorOnError=return udfGetTimeInSec -v tsPeerTimeout $tsPeerTimeout "32min"
+      *)
 
-	##if (( $( ini.get tsPeerTimeout ) < 30 )); then
-	if (( tsPeerTimeout < 30 )); then
+    eval $( udfOnError throw InvalidArgument "$role - must have client or server" )
 
-		##eval $( udfOnError warn InvalidArgument "$( ini.get tsPeerTimeout ) is too low, it increased to 30" )
-		##ini.set tsPeerTimeout = 30
-		eval $( udfOnError warn InvalidArgument "$tsPeerTimeout is too low, it increased to 30" )
-		tsPeerTimeout=30
+  ;;
 
-	fi
+  esac
 
-	##udfDebug 3 "configuration:" && ini.show
-	udfDebug 3 "configuration:" && udfShowVariable cn dev ipsAllowed portAuth role tsKeepalive tsPeerTimeout $aReqOptByRole
-	## TODO ini.throw_on_empty_options :cn,dev,portAuth,role,tsPeerTimeout,$aReqOptByRole ##? ipsAllowed:=
-	## udfThrowOnEmptyVariable pathCrt pathDat pathIni pathKey pathRun role
-	udfThrowOnEmptyVariable cn dev pathCrt pathDat pathIni pathKey pathRun portAuth role tsPeerTimeout $aReqOptByRole
+  cn=$( ini.get [ssl]cn )
 
-	fnCA=${pathCrt}/cacert.pem
-	fnCrt=${pathCrt}/${cn}.crt
-	fnKey=${pathKey}/${cn}.key
+  aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, v${_kurenma_sVersion} rev${aId[2]}"
+  udfDebug 1 "start $( _ s0 ) as ${role}${s}"
 
-	[[ -d $_kurenma_pathLib ]] || eval $( udfOnError throw NoSuchFileOrDir "$_kurenma_pathLib" )
-	[[ -s ${_kurenma_pathLib}/${role}.kurenma.src ]] || eval $( udfOnError throw NoSuchFileOrDir "${role}.kurenma.src" )
+       dev=$( ini.get dev      )
+  portAuth=$( ini.get portAuth )
 
-	. ${_kurenma_pathLib}/${role}.kurenma.src
+  :      ${dev:=wg0}
+  : ${portAuth:=42912}
 
-	trap udfSignal 31
+  tsKeepalive=$( ini.get tsKeepalive )
+  udfIsNumber $tsKeepalive || tsKeepalive=0
+  (( tsKeepalive > 65355 )) && tsKeepalive=65355
 
-	udfService
+  _bashlyk_OnError=return tsPeerTimeout=$( udfGetTimeInSec $( ini.get tsPeerTimeout ) "32min" )
 
-	udfFinally "service down,"
+  if (( tsPeerTimeout < 30 )); then
+
+    eval $( udfOnError warn InvalidArgument "$tsPeerTimeout is too low, it increased to 30" )
+    tsPeerTimeout=30
+
+  fi
+
+  if udfDebug 3; then
+
+    ini.set [ __settings__ ] bConfMode = true
+    echo -e "configuration:\n~~~~~~~~~~~~~~\n"
+    ini.show
+    echo -e "~~~~~~~~~~~~~~\n"
+    ini.set [ __settings__ ] bConfMode = false
+
+  fi
+
+  udfThrowOnEmptyVariable cn dev pathCrt pathDat pathIni pathKey pathRun portAuth role tsPeerTimeout $aReqOptByRole
+
+  fnCA=${pathCrt}/cacert.pem
+  fnCrt=${pathCrt}/${cn}.crt
+  fnKey=${pathKey}/${cn}.key
+
+  [[ -d $_kurenma_pathLib ]] || eval $( udfOnError throw NoSuchFileOrDir "$_kurenma_pathLib" )
+  [[ -s ${_kurenma_pathLib}/${role}.kurenma.src ]] || eval $( udfOnError throw NoSuchFileOrDir "${role}.kurenma.src" )
+
+  . ${_kurenma_pathLib}/${role}.kurenma.src
+
+  trap udfSignal 31
+
+  udfService
+
+  udfFinally "service down,"
+
 }
 #
 #

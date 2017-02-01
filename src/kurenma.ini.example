@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 131 2017-02-01 14:42:04+04:00 toor $
+# $Id: kurenma.ini.example 132 2017-02-01 21:35:01+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -103,7 +103,7 @@
 #
 #        Default: dynamic
 #
-#    SECTION [ipsAllowed] are given sequence of networks (CIDR) permitted to
+#    SECTION [ips.allowed] are given sequence of networks (CIDR) permitted to
 #        WireGuard tunnel.
 #
 #    SECTION [ssl] should contain Сommon Names of peers that bind X.509
@@ -134,7 +134,7 @@
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 # role            = server
   port.tunnel     = 12912
-  server          = 192.168.29.1/24
+# server          = 192.168.29.1/24
 # pool            = dynamic
 # pool            = commonname
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
@@ -143,17 +143,17 @@
 [ssl]
 
 # cn              = peer.common.name
-  ca              = cacert.pem
-  dh              = dh2048.pem
+# ca              = cacert.pem
+# dh              = dh2048.pem
 
-[ipsAllowed]
+[ips.allowed]
 
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
-  192.168.29.0/24
+# 192.168.29.0/24
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 
 #~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
-#	0.0.0.0/24
+# 0.0.0.0/24
 #~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
 
 #******

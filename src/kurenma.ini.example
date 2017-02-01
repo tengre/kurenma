@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 123 2016-10-29 13:02:36+04:00 toor $
+# $Id: kurenma.ini.example 131 2017-02-01 14:42:04+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -40,7 +40,7 @@
 #        creating to the server and check tunnel state, for  server  role  -
 #        listen client requests for tunnel creation only.
 #
-#    dev STRING
+#    device STRING
 #        this parameter define WireGuard tunnel device name
 #
 #        Default: wg0
@@ -49,7 +49,7 @@
 #        this  parameter define valid hostname or IPv4 address of the server
 #        side of kurenmad(8)
 #
-#    port NUMBER
+#    port.tunnel NUMBER
 #        UDP port number that the WireGuard device of the "server" role will
 #        listen on
 #
@@ -58,20 +58,20 @@
 #        It  makes  sense only for "server" role because the client receives
 #        the port number on a successful key exchange.
 #
-#    portAuth NUMBER
+#    port.auth NUMBER
 #        TCP port number that the daemon of the "server" role will listen on
 #        for auth and key exchange
 #
 #        Default: 42912
 #
-#    tsKeepalive NUMBER
+#    ts.keepalive NUMBER
 #        Number  parameter  (0..65535)  of  time  interval  in seconds. This
 #        option supported Wireguard option  "PersistentKeepalive"  for  keep
 #        connection when peer is behind NAT or a firewall, see wg(1)
 #
 #        Default: 0 (disabled)
 #
-#    tsPeer￼Timeout Formatted STRING or NUMBER
+#    ts.timeout.peer￼ Formatted STRING or NUMBER
 #        Threshold  time  of  inactivity,  that  is  recognized  as  a  peer
 #        disconnect
 #
@@ -118,34 +118,42 @@
 #
 #  SOURCE
 
-	role		= client
-#	role		= server
+  device          = wg0
+  port.auth       = 42912
 
-	dev		= wg0
-	host		= server.domain
-	port		= 12912
-	portAuth	= 42912
+  ts.keepalive    = 25
+  ts.timeout.peer = 8min
 
-	tsKeepalive	= 25
 
-	tsPeerTimeout   = 8min
+#~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
+# role            = client
+# host            = server.domain
+  route.default   = false
+#~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
 
-	bDefaultRoute	= false
-
-	server			= 192.168.29.1/24
-
-#	pool			= dynamic
-#	pool			= commonname
+#~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
+# role            = server
+  port.tunnel     = 12912
+  server          = 192.168.29.1/24
+# pool            = dynamic
+# pool            = commonname
+#~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 
 
 [ssl]
 
-	cn		= peer.common.name
-#	ca		= cacert.pem
-#	dh		= dh2048.pem
+# cn              = peer.common.name
+  ca              = cacert.pem
+  dh              = dh2048.pem
 
 [ipsAllowed]
 
-	192.168.29.0/24
+#~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
+  192.168.29.0/24
+#~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
+
+#~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
+#	0.0.0.0/24
+#~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
 
 #******

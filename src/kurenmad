@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 133 2017-02-02 17:16:54+04:00 toor $"
+# $Id: kurenmad 134 2017-02-02 22:24:38+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -79,54 +79,54 @@ _kurenma_sSignal=none
 #******
 udfWaitSignal() {
 
-	if [[ $_kurenma_sSignal == "stop" ]]; then
+  if [[ $_kurenma_sSignal == "stop" ]]; then
 
-		udfDebug 4 "Stop signal received before waiting"
-		return $(_ iErrorAbortedBySignal)
+    udfDebug 4 "Stop signal received before waiting"
+    return $(_ iErrorAbortedBySignal)
 
-	fi
+  fi
 
-	[[ $1 =~ ^[0-9]+(\.[0-9]+)?$ ]] || eval $( udfOnError return InvalidArgument "$1" )
+  [[ $1 =~ ^[0-9]+(\.[0-9]+)?$ ]] || eval $( udfOnError return InvalidArgument "$1" )
 
-	sleep $1 &
-	wait $!
+  sleep $1 &
+  wait $!
 
-	if [[ $_kurenma_sSignal == "stop" ]]; then
+  if [[ $_kurenma_sSignal == "stop" ]]; then
 
-		udfDebug 4 "Stop signal received after waiting"
-		return $(_ iErrorAbortedBySignal)
+    udfDebug 4 "Stop signal received after waiting"
+    return $(_ iErrorAbortedBySignal)
 
-	fi
+  fi
 
-	return 0
+  return 0
 }
 #
 udfShowPeerInfo() {
 
-	udfThrowOnEmptyVariable dev
+  udfThrowOnEmptyVariable dev
 
-	printf -- "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
+  printf -- "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
 
-	wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
+  wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
 
-	ip addr show $dev | grep inet
+  ip addr show $dev | grep inet
 
-	printf -- "\n----\n"
+  printf -- "\n----\n"
 
 }
 #
 udfSignal() {
 
-	[[ -n "$_kurenma_control_channel" && -p "$_kurenma_control_channel" ]] && echo "signalStop" > $_kurenma_control_channel
+  [[ -n "$_kurenma_control_channel" && -p "$_kurenma_control_channel" ]] && echo "signalStop" > $_kurenma_control_channel
 
-	_kurenma_sSignal='stop'
+  _kurenma_sSignal='stop'
 
-	udfStopProcess childs sleep
+  udfStopProcess childs sleep
 
-	udfFinally "service down initiated by signal,"
+  udfFinally "service down initiated by signal,"
 
-	sleep 1.8
-	#udfOnTrap
+  sleep 1.8
+  #udfOnTrap
 
 }
 #
@@ -158,10 +158,10 @@ udfMain() {
 
   INI ini
   ini.load $ini                                                                \
-              []role,tunnel.name,server,port,tunnel.cidr,pool.method,          \
-                ts.keepalive,ts.timeout.peer,route.default                    :\
+               []role,tunnel.name,server,port,tunnel.cidr,pool.method,         \
+                 ts.keepalive,ts.timeout.peer,route.default                   :\
                                                                                \
-           [ssl]ca,cn,dh,port                                                 :\
+            [ssl]ca,cn,dh,port                                                :\
                                                                                \
     [ips.allowed]=                                                             \
   :
@@ -205,7 +205,9 @@ udfMain() {
 
   cn=$( ini.get [ssl]cn )
 
-  aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, v${_kurenma_sVersion} rev${aId[2]}"
+  aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) \
+    && s=", (с) ${aId[3]}, v${_kurenma_sVersion} rev${aId[2]}"
+
   udfDebug 1 "start $( _ s0 ) as ${role}${s}"
 
        dev=$( ini.get tunnel.name )

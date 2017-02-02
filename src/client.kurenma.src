@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 130 2017-01-31 16:51:53+04:00 toor $
+# $Id: client.kurenma.src 134 2017-02-02 22:24:38+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -7,265 +7,265 @@ _bashlyk=kurenma . bashlyk
 #
 udfKnocking() {
 
-	udfThrowOnEmptyVariable fnCA host portAuth
+  udfThrowOnEmptyVariable fnCA host portAuth
 
-	local i s
+  local i s
 
-	i=256
+  i=256
 
-	s=$( openssl x509 -sha1 -in $fnCA -noout -fingerprint | sed -r -e "s/^SHA1 Fingerprint=(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
+  s=$( openssl x509 -sha1 -in $fnCA -noout -fingerprint | sed -r -e "s/^SHA1 Fingerprint=(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
 
-	[[ -n "$s" ]] || eval $( udfOnError throw EmptyResult "$fnCA - not valid format" )
+  [[ -n "$s" ]] || eval $( udfOnError throw EmptyResult "$fnCA - not valid format" )
 
-	udfDebug 5 "CA cert fingerprint header: $s"
+  udfDebug 5 "CA cert fingerprint header: $s"
 
-	s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError throw InvalidArgument "$fnCA - hexadecimal data expected" )
+  s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError throw InvalidArgument "$fnCA - hexadecimal data expected" )
 
-	udfDebug 5 "knock ports sequence: $s"
+  udfDebug 5 "knock ports sequence: $s"
 
-	udfDebug 2 "check server $host availibity:"
+  udfDebug 2 "check server $host availibity:"
 
-	while true; do
+  while true; do
 
-		nc -w 3 -z ${host} ${portAuth} 2>/dev/null && break
-		udfDebug 2 && echo -n "."
+    nc -w 3 -z ${host} ${portAuth} 2>/dev/null && break
+    udfDebug 2 && echo -n "."
 
-		if ! (( i % 8 )); then
+    if ! (( i % 8 )); then
 
-			knock $host $s
-			udfDebug 2 && echo -n "!"
+      knock $host $s
+      udfDebug 2 && echo -n "!"
 
-		fi
+    fi
 
-		if ! udfWaitSignal 1; then
+    if ! udfWaitSignal 1; then
 
-			echo "x"
-			return $(_ iErrorAbortedBySignal)
+      echo "x"
+      return $(_ iErrorAbortedBySignal)
 
-		fi
+    fi
 
-		i=$((i-1))
+    i=$((i-1))
 
-		! (( i % 32 )) && echo ""
+    ! (( i % 32 )) && echo ""
 
-		if (( $i <= 0 )); then
+    if (( $i <= 0 )); then
 
-			echo "fail after 256 attempts.. try again"
-			eval $( udfOnError warn NotAvailable "${host}:${portAuth}" )
-			i=256
+      echo "fail after 256 attempts.. try again"
+      eval $( udfOnError warn NotAvailable "${host}:${portAuth}" )
+      i=256
 
-		fi
+    fi
 
-	done >&2
+  done >&2
 
-	return 0
+  return 0
 
 }
 #
 udfGetTunnelSettings() {
 
-	udfThrowOnEmptyVariable cmdSSL cn fnKey host portAuth
+  udfThrowOnEmptyVariable cmdSSL cn fnKey host portAuth
 
-	local fmt fnAns sKey sPub s
+  local fmt fnAns sKey sPub s
 
-	fmt="\nclient WireGuard keys:\nprivate - %s<skipped>\npublic  - %s<skipped>\n"
+  fmt="\nclient WireGuard keys:\nprivate - %s<skipped>\npublic  - %s<skipped>\n"
 
-	s="$(_ iErrorAbortedBySignal) stop signal received"
+  s="$(_ iErrorAbortedBySignal) stop signal received"
 
-	udfMakeTemp fnAns
+  udfMakeTemp fnAns
 
-	while true; do
+  while true; do
 
-		udfKnocking || break
+    udfKnocking || break
 
-		udfDebug 2 "ok."
+    udfDebug 2 "ok."
 
-		udfWaitSignal 4 || break
+    udfWaitSignal 4 || break
 
-		sKey=$( wg genkey )
-		sPub=$( echo $sKey | wg pubkey )
+    sKey=$( wg genkey )
+    sPub=$( echo $sKey | wg pubkey )
 
-		s="$( echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns | grep '^OK:' )"
+    s="$( echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns | grep '^OK:' )"
 
-		udfDebug 3 && printf -- $fmt "${sKey:0:10}" "${sPub:0:10}"
+    udfDebug 3 && printf -- $fmt "${sKey:0:10}" "${sPub:0:10}"
 
-		[[ $s =~ ^OK: ]] && break
+    [[ $s =~ ^OK: ]] && break
 
-		[[ -z "$s" ]] && s="$(< $fnAns)"
+    [[ -z "$s" ]] && s="$(< $fnAns)"
 
-		eval $( udfOnError warn InvalidArgument "malformed answer from ${host}:${portAuth} $s" )
+    eval $( udfOnError warn InvalidArgument "malformed answer from ${host}:${portAuth} $s" )
 
-		s="$(_ iErrorAbortedBySignal ) stop signal received"
-		udfWaitSignal 8 || break
+    s="$(_ iErrorAbortedBySignal ) stop signal received"
+    udfWaitSignal 8 || break
 
-	done >&2
+  done >&2
 
-	rm -f $fnAns
+  rm -f $fnAns
 
-	echo "${s//:/ } $sKey"
+  echo "${s//:/ } $sKey"
 
-	return 0
+  return 0
 }
 #
 udfSetupTunnel() {
 
-	udfThrowOnEmptyVariable dev host
+  udfThrowOnEmptyVariable dev host
 
-	local ipClient ipServer peer port sKey
+  local ipClient ipServer peer port sKey
 
-	[[ $1 == $( _ iErrorAbortedBySignal  ) ]] && return $( _ iErrorAbortedBySignal  )
-	[[ $1 != "OK"   ]] && return $( _ iErrorInvalidArgument )
+  [[ $1 == $( _ iErrorAbortedBySignal  ) ]] && return $( _ iErrorAbortedBySignal  )
+  [[ $1 != "OK"   ]] && return $( _ iErrorInvalidArgument )
 
-	shift
+  shift
 
-	peer=$( echo $1 | grep -P "^[a-zA-Z0-9+/]+={0,2}$" )
-	udfIsNumber $2 && port=$2 || port=''
-	ipClient=$( udfGetValidIPsOnly $3 )
-	ipServer=$( udfGetValidIPsOnly $4 )
-	sKey=$5
+  peer=$( echo $1 | grep -P "^[a-zA-Z0-9+/]+={0,2}$" )
+  udfIsNumber $2 && port=$2 || port=''
+  ipClient=$( udfGetValidIPsOnly $3 )
+  ipServer=$( udfGetValidIPsOnly $4 )
+  sKey=$5
 
-	udfDebug 3 && printf -- "$fmtCon" "$host" "$port" "${peer:0:10}<skipped>" "$ipClient" "$ipServer"
+  udfDebug 3 && printf -- "$fmtCon" "$host" "$port" "${peer:0:10}<skipped>" "$ipClient" "$ipServer"
 
-	udfThrowOnEmptyVariable peer port ipClient ipServer
+  udfThrowOnEmptyVariable peer port ipClient ipServer
 
-	udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>: " "${peer:0:10}"
-	#
-	try-every-line
+  udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>: " "${peer:0:10}"
+  #
+  try-every-line
 
-		ip link del dev $dev || true
-		ip link add dev $dev type wireguard
+    ip link del dev $dev || true
+    ip link add dev $dev type wireguard
 
-		wg set $dev private-key <( echo $sKey ) \
-			peer $peer \
-			allowed-ips 0.0.0.0/0 \
-			persistent-keepalive $tsKeepalive \
-			endpoint "${host}:${port}"
+    wg set $dev private-key <( echo $sKey ) \
+      peer $peer \
+      allowed-ips 0.0.0.0/0 \
+      persistent-keepalive $tsKeepalive \
+      endpoint "${host}:${port}"
 
-		ip address add "${ipClient}"/24 dev $dev
-		ip link set up dev $dev
+    ip address add "${ipClient}"/24 dev $dev
+    ip link set up dev $dev
 
-	catch-every-line
+  catch-every-line
 
-	return 0
+  return 0
 
 }
 #
 udfSetDefaultRoute() {
 
-	udfThrowOnEmptyVariable dev _peIPv4
+  udfThrowOnEmptyVariable dev _peIPv4
 
-	local s
+  local s
 
-	s="$( wg show $dev endpoints | sed -re 's/.*\t(.*):.*/\1/' )"
-	udfDebug 4 "server endpoint: $s"
+  s="$( wg show $dev endpoints | sed -re 's/.*\t(.*):.*/\1/' )"
+  udfDebug 4 "server endpoint: $s"
 
-	s="$( ip route get $s | grep -Po "$_peIPv4 via $_peIPv4" )"
-	udfDebug 4 "route rule for server: $s"
+  s="$( ip route get $s | grep -Po "$_peIPv4 via $_peIPv4" )"
+  udfDebug 4 "route rule for server: $s"
 
-	if [[ -n "$s" ]]; then
+  if [[ -n "$s" ]]; then
 
-		try-every-line
+    try-every-line
 
-			ip route add $s || true
-			ip route add 0/1 dev $dev
-			ip route add 128/1 dev $dev
+      ip route add $s || true
+      ip route add 0/1 dev $dev
+      ip route add 128/1 dev $dev
 
-		catch-every-line
+    catch-every-line
 
-		udfDebug 2 "tunnel $dev used as default route ($s)"
+    udfDebug 2 "tunnel $dev used as default route ($s)"
 
-	else
+  else
 
-		eval $( udfOnError throw EmptyOrMissingArgument "default route fail" )
+    eval $( udfOnError throw EmptyOrMissingArgument "default route fail" )
 
-	fi
+  fi
 
-	return 0
+  return 0
 
 }
 #
 udfService() {
 
-	udfThrowOnCommandNotFound false knock ping tee true
-	udfThrowOnEmptyVariable bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni portAuth tsPeerTimeout
+  udfThrowOnCommandNotFound false knock ping tee true
+  udfThrowOnEmptyVariable bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni portAuth tsPeerTimeout
 
-	local bStart cmdSSL fmtCon fmtSSL s
+  local bStart cmdSSL fmtCon fmtSSL s
 
-	fmtSSL="SSL auth info:\nClient Common Name - %s\n"
-	fmtCon="Connection properties from %s:\nremote port: %d\nserver  key: %s\ntunnel  IPs: leased/remote - %s/%s\n"
+  fmtSSL="SSL auth info:\nClient Common Name - %s\n"
+  fmtCon="Connection properties from %s:\nremote port: %d\nserver  key: %s\ntunnel  IPs: leased/remote - %s/%s\n"
 
-	cmdSSL="openssl s_client -connect ${host}:${portAuth} -CAfile $fnCA -cert $fnCrt -key $fnKey -verify 1 -quiet"
+  cmdSSL="openssl s_client -connect ${host}:${portAuth} -CAfile $fnCA -cert $fnCrt -key $fnKey -verify 1 -quiet"
 
-	for s in "$fnCrt" "$fnKey" "$fnCA"; do
+  for s in "$fnCrt" "$fnKey" "$fnCA"; do
 
-		[[ -f $s ]] || eval $( udfOnError exitecho NoSuchFileOrDir "$s" )
+    [[ -f $s ]] || eval $( udfOnError exitecho NoSuchFileOrDir "$s" )
 
-		if ! grep -P '^-----(BEGIN|END)' $s >/dev/null 2>&1; then
+    if ! grep -P '^-----(BEGIN|END)' $s >/dev/null 2>&1; then
 
-			eval $( udfOnError exitecho InvalidArgument "$s - bad format" )
+      eval $( udfOnError exitecho InvalidArgument "$s - bad format" )
 
-		fi
+    fi
 
-	done
+  done
 
-	[[ $bDefaultRoute =~ ^(false|true)$ ]] || bDefaultRoute=false
+  [[ $bDefaultRoute =~ ^(false|true)$ ]] || bDefaultRoute=false
 
-	udfDebug 3 && printf -- "$fmtSSL" "$cn"
+  udfDebug 3 && printf -- "$fmtSSL" "$cn"
 
-	bStart=true
+  bStart=true
 
-	while true; do
+  while true; do
 
-		if $bStart; then
+    if $bStart; then
 
-			## TODO try first use saved wg config
+      ## TODO try first use saved wg config
 
-			udfSetupTunnel $( udfGetTunnelSettings ) || {
+      udfSetupTunnel $( udfGetTunnelSettings ) || {
 
-				eval $( udfOnError warn $? "setup tunnel settings" )
-				break
+        eval $( udfOnError warn $? "setup tunnel settings" )
+        break
 
-			}
+      }
 
-			$bDefaultRoute && udfSetDefaultRoute
-			udfDebug 1 && printf -- "\nclient configuration done.\n"
-			udfDebug 5 && udfShowPeerInfo
+      $bDefaultRoute && udfSetDefaultRoute
+      udfDebug 1 && printf -- "\nclient configuration done.\n"
+      udfDebug 5 && udfShowPeerInfo
 
-			wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
-			chmod 0600 ${pathIni}/${cn}.${dev}.conf
+      wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
+      chmod 0600 ${pathIni}/${cn}.${dev}.conf
 
-			ping -q -W 1 -с 3 $ipServer >/dev/null 2>&1
+      ping -q -W 1 -с 3 $ipServer >/dev/null 2>&1
 
-		fi
+    fi
 
-		udfDebug 2 "check connection every $tsPeerTimeout sec.."
-		udfWaitSignal $tsPeerTimeout || break
+    udfDebug 2 "check connection every $tsPeerTimeout sec.."
+    udfWaitSignal $tsPeerTimeout || break
 
-		for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
+    for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
 
-			if udfIsNumber ${s##*:}; then
+      if udfIsNumber ${s##*:}; then
 
-				if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
+        if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
 
-					wg set $dev peer ${s%%:*} remove
-					udfDebug 3 "peer ${s:0:10}<skipped> removed .. $?"
-					bStart=true
+          wg set $dev peer ${s%%:*} remove
+          udfDebug 3 "peer ${s:0:10}<skipped> removed .. $?"
+          bStart=true
 
-				else
+        else
 
-					bStart=false
+          bStart=false
 
-				fi
+        fi
 
-			else
+      else
 
-				eval $( udfOnError warn InvalidArgument "${s##*:}" )
+        eval $( udfOnError warn InvalidArgument "${s##*:}" )
 
-			fi
+      fi
 
-		done
+    done
 
-	done
+  done
 
 }
 #

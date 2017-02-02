@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 106 2016-10-14 13:56:06+04:00 toor $
+# $Id: update-firehol 134 2017-02-02 22:24:39+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -38,131 +38,131 @@ _bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 #******
 udfMain() {
 
-	udfExitIfAlreadyStarted
+  udfExitIfAlreadyStarted
 
-	[[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
+  [[ $UID == 0 ]] || eval $( udfOnError throw iErrorNotPermitted "You must be root to run this." )
 
-	udfThrowOnCommandNotFound cp date diff echo firehol flock grep kurenmactl mkdir mv rm sed sort touch uniq wg xargs
+  udfThrowOnCommandNotFound cp date diff echo firehol flock grep kurenmactl mkdir mv rm sed sort touch uniq wg xargs
 
-	local cnf csv fn fnKnock fnLock ini ipv4Black ipv4Client ipv4White pathDat pathIni s sDig
+  local cnf csv fn fnKnock fnLock ini ipv4Black ipv4Client ipv4White pathDat pathIni s sDig
 
-	pathDat=$( _ pathDat )
-	fnKnock="${pathDat}/lastknocks.dat"
-	fnLock="$( _ pathRun )/$( _ s0 ).lock"
-	mkdir -p $pathDat || eval $( udfOnError throw NotExistAndNotCreated $pathDat )
-	touch $fnLock || eval $( udfOnError throw NotExistAndNotCreated $fnLock )
+  pathDat=$( _ pathDat )
+  fnKnock="${pathDat}/lastknocks.dat"
+  fnLock="$( _ pathRun )/$( _ s0 ).lock"
+  mkdir -p $pathDat || eval $( udfOnError throw NotExistAndNotCreated $pathDat )
+  touch $fnLock || eval $( udfOnError throw NotExistAndNotCreated $fnLock )
 
-	eval set -- $( _ sArg )
+  eval set -- $( _ sArg )
 
-	s=$( udfGetValidIPsOnly $1 ) || eval $( udfOnError exitecho InvalidArgument "IP or hostname required" )
+  s=$( udfGetValidIPsOnly $1 ) || eval $( udfOnError exitecho InvalidArgument "IP or hostname required" )
 
-	if [[ -z "$_kurenma_flock" ]]; then
+  if [[ -z "$_kurenma_flock" ]]; then
 
-		udfDebug 0 "try lock from $s"
+    udfDebug 0 "try lock from $s"
 
-		## TODO check fo
-		(( ${#_bashlyk_afoClean[$BASHPID]} > 0 )) && rm -f ${_bashlyk_afoClean[$BASHPID]}
-		exec env _kurenma_flock="$$" flock -x -w 99 $fnLock $0 $s $$
+    ## TODO check fo
+    (( ${#_bashlyk_afoClean[$BASHPID]} > 0 )) && rm -f ${_bashlyk_afoClean[$BASHPID]}
+    exec env _kurenma_flock="$$" flock -x -w 99 $fnLock $0 $s $$
 
-	fi
+  fi
 
-	if [[ "$_kurenma_flock" != "$2" ]]; then
+  if [[ "$_kurenma_flock" != "$2" ]]; then
 
-		eval $( udfOnError retecho iErrorNotPermitted "invalid process $2" )
+    eval $( udfOnError retecho iErrorNotPermitted "invalid process $2" )
 
-	fi
+  fi
 
-	udfDebug 0 "starting from $s $2"
-	echo "${s}:$(date +%s)" >> $fnKnock
+  udfDebug 0 "starting from $s $2"
+  echo "${s}:$(date +%s)" >> $fnKnock
 
-	pathIni=$( _ pathIni )
+  pathIni=$( _ pathIni )
 
-	for s in $pathDat $patIni; do
+  for s in $pathDat $patIni; do
 
-		[[ -n "$s" && -d "$s" ]] || eval $( udfOnError NoSuchFileOrDir "$s" )
+    [[ -n "$s" && -d "$s" ]] || eval $( udfOnError NoSuchFileOrDir "$s" )
 
-	done
+  done
 
-	cnf="/etc/firehol/firehol.conf"
-	ini="${pathIni}/ipslist.ini"
+  cnf="/etc/firehol/firehol.conf"
+  ini="${pathIni}/ipslist.ini"
 
-	udfIni $ini "ipv4White:= ipv4Black:="
+  udfIni $ini "ipv4White:= ipv4Black:="
 
-	udfDebug 2 && udfShowVariable ipv4White ipv4Black ipv4Client
+  udfDebug 2 && udfShowVariable ipv4White ipv4Black ipv4Client
 
-	cp $cnf ${cnf:0:-3}bak
+  cp $cnf ${cnf:0:-3}bak
 
-	ipv4Client=$( wg show | grep 'endpoint:' | sed -r -e "s/^.*t: (.*):.*$/\1/" | sort | uniq | xargs )
+  ipv4Client=$( wg show | grep 'endpoint:' | sed -r -e "s/^.*t: (.*):.*$/\1/" | sort | uniq | xargs )
 
-	touch $fnKnock
-	udfMakeTemp fn
+  touch $fnKnock
+  udfMakeTemp fn
 
-	while read s; do
+  while read s; do
 
-		udfIsNumber ${s##*:} || continue
-		#
-		# 240 - time interval for safety from collisions
-		#
-		if (( $(date +%s) - ${s##*:} < 240 )); then
+    udfIsNumber ${s##*:} || continue
+    #
+    # 240 - time interval for safety from collisions
+    #
+    if (( $(date +%s) - ${s##*:} < 240 )); then
 
-			echo "$s"
-			ipv4Client+=" ${s%%:*}"
+      echo "$s"
+      ipv4Client+=" ${s%%:*}"
 
-		fi
+    fi
 
-	done < $fnKnock > $fn
-	mv -f $fn $fnKnock
+  done < $fnKnock > $fn
+  mv -f $fn $fnKnock
 
-	if udfIsValidVariable ipv4White; then
+  if udfIsValidVariable ipv4White; then
 
-		s="ipv4White=\"$( udfGetValidIPsOnly ${ipv4White//[,;]/ } ${1//[,;]/ } $ipv4Client )\""
-		[[ -z $ipv4White ]] && ipv4White='127.0.0.1'
-		udfDebug 2 "new white list $s"
-		sed -i -re "s/ipv4White=.*/$s/" $cnf
+    s="ipv4White=\"$( udfGetValidIPsOnly ${ipv4White//[,;]/ } ${1//[,;]/ } $ipv4Client )\""
+    [[ -z $ipv4White ]] && ipv4White='127.0.0.1'
+    udfDebug 2 "new white list $s"
+    sed -i -re "s/ipv4White=.*/$s/" $cnf
 
-	fi
+  fi
 
-	if udfIsValidVariable ipv4Black; then
+  if udfIsValidVariable ipv4Black; then
 
-		s="ipv4Black=\"$( udfGetValidIPsOnly ${ipv4Black//[,;]/ } ${2//[,;]/ } )\""
-		[[ -z $ipv4Black ]] && ipv4Black='1.1.1.1'
-		udfDebug 2 "new black list $s"
-		sed -i -re "s/ipv4Black=.*/$s/" $cnf
+    s="ipv4Black=\"$( udfGetValidIPsOnly ${ipv4Black//[,;]/ } ${2//[,;]/ } )\""
+    [[ -z $ipv4Black ]] && ipv4Black='1.1.1.1'
+    udfDebug 2 "new black list $s"
+    sed -i -re "s/ipv4Black=.*/$s/" $cnf
 
-	fi
+  fi
 
-	printf -- "\n\n\n---> the differences (if any) --->\n"
-	diff -du ${cnf:0:-3}bak $cnf
-	printf -- "\n<--- ------------------------ <---\n\n\n"
+  printf -- "\n\n\n---> the differences (if any) --->\n"
+  diff -du ${cnf:0:-3}bak $cnf
+  printf -- "\n<--- ------------------------ <---\n\n\n"
 
-	echo "Firehol configuration testing:"
-	if firehol debug 2>&1 | grep -A5 "ERROR\|FAILED"; then
+  echo "Firehol configuration testing:"
+  if firehol debug 2>&1 | grep -A5 "ERROR\|FAILED"; then
 
-		echo "restore old configuration:"
-		mv -v ${cnf:0:-3}bak $cnf
+    echo "restore old configuration:"
+    mv -v ${cnf:0:-3}bak $cnf
 
-		eval $( udfOnError throw InvalidArgument "$* and/or $ini" )
+    eval $( udfOnError throw InvalidArgument "$* and/or $ini" )
 
-	else
+  else
 
-		echo " OK!"
-		echo "Starting new configuration:"
+    echo " OK!"
+    echo "Starting new configuration:"
 
-		if echo commit | firehol try; then
+    if echo commit | firehol try; then
 
-			[[ -n "$*" ]] && kurenmactl start
+      [[ -n "$*" ]] && kurenmactl start
 
-			echo " OK."
+      echo " OK."
 
-		else
+    else
 
-			echo " FAILED.."
+      echo " FAILED.."
 
-		fi
+    fi
 
-	fi
+  fi
 
-	udfFinally "service down"
+  udfFinally "service down"
 
 }
 #

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 111 2016-10-18 17:32:07+04:00 toor $
+# $Id: gen-ssl-kurenma 134 2017-02-02 22:24:38+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -35,132 +35,132 @@ _bashlyk=kurenma . bashlyk
 #******
 udfMain() {
 
-	udfExitIfAlreadyStarted
+  udfExitIfAlreadyStarted
 
-	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
+  [[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
-	udfThrowOnCommandNotFound chmod cp date echo mkdir openssl rm sed tee touch wg
+  udfThrowOnCommandNotFound chmod cp date echo mkdir openssl rm sed tee touch wg
 
-	local conf confDN csv fnTemplate path pathCnf pathCrt pathCsr pathIni pathKey s
+  local conf confDN csv fnTemplate path pathCnf pathCrt pathCsr pathIni pathKey s
 
-	pathIni=$( _ pathIni )
-	udfThrowOnEmptyVariable pathIni
+  pathIni=$( _ pathIni )
+  udfThrowOnEmptyVariable pathIni
 
-	path=${pathIni}/ssl
-	pathCsr=${path}/csr
-	pathCrt=${path}/public
-	pathCnf=${path}/configs
-	pathKey=${path}/private
-	confDN=${pathIni}/dn.kurenma.ini
-	fnTemplate=/usr/share/kurenma/openssl.cnf.template
-	csv='C;ST;L;O;OU;CN;EA'
+  path=${pathIni}/ssl
+  pathCsr=${path}/csr
+  pathCrt=${path}/public
+  pathCnf=${path}/configs
+  pathKey=${path}/private
+  confDN=${pathIni}/dn.kurenma.ini
+  fnTemplate=/usr/share/kurenma/openssl.cnf.template
+  csv='C;ST;L;O;OU;CN;EA'
 
-	eval $( udfLocalVarFromCSV $csv )
+  eval $( udfLocalVarFromCSV $csv )
 
-	udfIni $confDN ":${csv}"
+  udfIni $confDN ":${csv}"
 
-	: ${C:=XX}
-	: ${ST:=State}
-	: ${L:=Locality}
-	: ${O:=Organizational}
-	: ${OU:=OrganizationalUnit}
-	: ${CN:=CommonName}
+  : ${C:=XX}
+  : ${ST:=State}
+  : ${L:=Locality}
+  : ${O:=Organizational}
+  : ${OU:=OrganizationalUnit}
+  : ${CN:=CommonName}
 
-	for s in "$confDN" "$fnTemplate"; do
+  for s in "$confDN" "$fnTemplate"; do
 
-		[[ -f $s ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
+    [[ -f $s ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
 
-	done
+  done
 
-	eval set -- $( _ sArg )
+  eval set -- $( _ sArg )
 
-	case "$1" in
+  case "$1" in
 
-	 ca)
+   ca)
 
-		if [[ -s ${pathKey}/cakey.pem && -s ${pathCrt}/cacert.pem ]]; then
+    if [[ -s ${pathKey}/cakey.pem && -s ${pathCrt}/cacert.pem ]]; then
 
-			eval $( udfOnError exitecho Unexpected "Already exist ${pathKey}/cakey.pem and/or ${pathCrt}/cacert.pem" )
+      eval $( udfOnError exitecho Unexpected "Already exist ${pathKey}/cakey.pem and/or ${pathCrt}/cacert.pem" )
 
-		fi
+    fi
 
-	 	mkdir -p ${path}/{public,private,configs,certs,newcerts,crl,csr}
-		chmod 0710 $pathKey
+     mkdir -p ${path}/{public,private,configs,certs,newcerts,crl,csr}
+    chmod 0710 $pathKey
 
-		date "+%s" > ${path}/serial
-		date "+%s" > ${path}/crlnumber
+    date "+%s" > ${path}/serial
+    date "+%s" > ${path}/crlnumber
 
-		rm -f ${path}/index.txt
-		touch ${path}/index.txt
+    rm -f ${path}/index.txt
+    touch ${path}/index.txt
 
-		conf=${pathCnf}/kurenma.ssl
+    conf=${pathCnf}/kurenma.ssl
 
-		: ${EA:=email@domain.name}
+    : ${EA:=email@domain.name}
 
-		;;
+    ;;
 
-	 client|server)
+   client|server)
 
-		[[ -n "$2" ]] || eval $( udfOnError exitecho EmptyOrMissingArgument "argument required.. see usage" )
+    [[ -n "$2" ]] || eval $( udfOnError exitecho EmptyOrMissingArgument "argument required.. see usage" )
 
-		if [[ -s ${pathKey}/${2}.key && -s ${pathCrt}/${2}.crt ]]; then
+    if [[ -s ${pathKey}/${2}.key && -s ${pathCrt}/${2}.crt ]]; then
 
-			eval $( udfOnError exitecho Unexpected "Already exist ${pathKey}/${2}.key and/or ${pathCrt}/${2}.crt" )
+      eval $( udfOnError exitecho Unexpected "Already exist ${pathKey}/${2}.key and/or ${pathCrt}/${2}.crt" )
 
-		fi
+    fi
 
-		for s in "$path" "$pathKey" "$pathCrt" "$pathCsr" "$pathCnf"; do
+    for s in "$path" "$pathKey" "$pathCrt" "$pathCsr" "$pathCnf"; do
 
-			[[ -d "$s" ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
+      [[ -d "$s" ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
 
-		done
+    done
 
-		conf=${pathCnf}/${2}.kurenma.ssl
+    conf=${pathCnf}/${2}.kurenma.ssl
 
-		: ${EA:=postmaster@$2}
+    : ${EA:=postmaster@$2}
 
-		OU=${2%%.*}
-		CN=$2
+    OU=${2%%.*}
+    CN=$2
 
-		;;
+    ;;
 
-	 *)
+   *)
 
-		echo "Error: unknown option.. ${*}"
-		echo "usage: ${0##*/} ca | { client|server <CommonName> }"
-		exit 1
+    echo "Error: unknown option.. ${*}"
+    echo "usage: ${0##*/} ca | { client|server <CommonName> }"
+    exit 1
 
-	esac
+  esac
 
-	cp $fnTemplate $conf || eval $( udfOnError throw NoSuchFileOrDir $conf )
+  cp $fnTemplate $conf || eval $( udfOnError throw NoSuchFileOrDir $conf )
 
-	for s in ${csv//[;,]/ }; do
+  for s in ${csv//[;,]/ }; do
 
-		sed -i -r -e "s/%${s}%/${!s}/ig" $conf
+    sed -i -r -e "s/%${s}%/${!s}/ig" $conf
 
-	done
+  done
 
-	case "$1" in
+  case "$1" in
 
-	 ca)
-		openssl req -nodes -new -x509 -keyout ${pathKey}/cakey.pem -out ${pathCrt}/cacert.pem -days 3650 -config $conf -verbose
+   ca)
+    openssl req -nodes -new -x509 -keyout ${pathKey}/cakey.pem -out ${pathCrt}/cacert.pem -days 3650 -config $conf -verbose
 
-		;;
+    ;;
 
-	 client|server)
+   client|server)
 
-		sed -i -r -e "s/%nsCertType%/${1}/ig" $conf
+    sed -i -r -e "s/%nsCertType%/${1}/ig" $conf
 
-		[[ "$1" == "server" ]] && openssl dhparam -out ${pathCrt}/dh2048.pem 2048
+    [[ "$1" == "server" ]] && openssl dhparam -out ${pathCrt}/dh2048.pem 2048
 
-		openssl req -new -nodes -keyout ${pathKey}/${2}.key -out ${pathCsr}/${2}.csr -config $conf -verbose
-		openssl ca  -in ${pathCsr}/${2}.csr -out ${pathCrt}/${2}.crt -config $conf -verbose
+    openssl req -new -nodes -keyout ${pathKey}/${2}.key -out ${pathCsr}/${2}.csr -config $conf -verbose
+    openssl ca  -in ${pathCsr}/${2}.csr -out ${pathCrt}/${2}.crt -config $conf -verbose
 
-		;;
+    ;;
 
-	esac
+  esac
 
-	chmod 0600 ${pathKey}/*
+  chmod 0600 ${pathKey}/*
 
 }
 #

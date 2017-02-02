@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 131 2017-02-01 14:41:57+04:00 toor $"
+# $Id: kurenmad 133 2017-02-02 17:16:54+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -158,12 +158,12 @@ udfMain() {
 
   INI ini
   ini.load $ini                                                                \
-              []bDefaultRoute,dev,host,server,pool,port,portAuth,role,         \
-                tsKeepalive,tsPeerTimeout                                     :\
+              []role,tunnel.name,server,port,tunnel.cidr,pool.method,          \
+                ts.keepalive,ts.timeout.peer,route.default                    :\
                                                                                \
-           [ssl]ca,cn,dh                                                      :\
+           [ssl]ca,cn,dh,port                                                 :\
                                                                                \
-    [ipsAllowed]=                                                              \
+    [ips.allowed]=                                                             \
   :
 
   role=$( ini.get role )
@@ -172,8 +172,8 @@ udfMain() {
 
   client)
 
-             host=$( ini.get host )
-    bDefaultRoute=$( ini.get bDefaultRoute )
+             host=$( ini.get server )
+    bDefaultRoute=$( ini.get route.default )
 
     : ${bDefaultRoute:=false}
 
@@ -183,9 +183,9 @@ udfMain() {
 
   server)
 
-      pool=$( ini.get pool )
+      pool=$( ini.get pool.method )
       port=$( ini.get port )
-    server=$( udfGetValidCIDR $( ini.get server ) )
+    server=$( udfGetValidCIDR $( ini.get tunnel.cidr ) )
 
     :   ${pool:=dynamic}
     :   ${port:=12912}
@@ -208,17 +208,17 @@ udfMain() {
   aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) && s=", (с) ${aId[3]}, v${_kurenma_sVersion} rev${aId[2]}"
   udfDebug 1 "start $( _ s0 ) as ${role}${s}"
 
-       dev=$( ini.get dev      )
-  portAuth=$( ini.get portAuth )
+       dev=$( ini.get tunnel.name )
+  portAuth=$( ini.get [ssl]port   )
 
   :      ${dev:=wg0}
   : ${portAuth:=42912}
 
-  tsKeepalive=$( ini.get tsKeepalive )
+  tsKeepalive=$( ini.get ts.keepalive )
   udfIsNumber $tsKeepalive || tsKeepalive=0
   (( tsKeepalive > 65355 )) && tsKeepalive=65355
 
-  _bashlyk_OnError=return tsPeerTimeout=$( udfGetTimeInSec $( ini.get tsPeerTimeout ) "32min" )
+  _bashlyk_OnError=return tsPeerTimeout=$( udfGetTimeInSec $( ini.get ts.timeout.peer ) "32min" )
 
   if (( tsPeerTimeout < 30 )); then
 

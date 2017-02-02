@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 132 2017-02-01 21:35:01+04:00 toor $
+# $Id: kurenma.ini.example 133 2017-02-02 17:16:55+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -40,16 +40,16 @@
 #        creating to the server and check tunnel state, for  server  role  -
 #        listen client requests for tunnel creation only.
 #
-#    device STRING
+#    tunnel.name STRING
 #        this parameter define WireGuard tunnel device name
 #
 #        Default: wg0
 #
-#    host STRING
+#    server STRING
 #        this  parameter define valid hostname or IPv4 address of the server
 #        side of kurenmad(8)
 #
-#    port.tunnel NUMBER
+#    port NUMBER
 #        UDP port number that the WireGuard device of the "server" role will
 #        listen on
 #
@@ -57,12 +57,6 @@
 #
 #        It  makes  sense only for "server" role because the client receives
 #        the port number on a successful key exchange.
-#
-#    port.auth NUMBER
-#        TCP port number that the daemon of the "server" role will listen on
-#        for auth and key exchange
-#
-#        Default: 42912
 #
 #    ts.keepalive NUMBER
 #        Number  parameter  (0..65535)  of  time  interval  in seconds. This
@@ -80,7 +74,7 @@
 #
 #        Default: 32minutes
 #
-#    server CIDR (ip/mask)
+#    tunnel.cidr CIDR (ip/mask)
 #        Tunnel IP address and network mask of the server peer.
 #
 #        It  makes  sense  only  for  "server" role. The client receives the
@@ -88,7 +82,7 @@
 #
 #        Default: 192.168.29.1/24
 #
-#    pool constant STRING
+#    pool.method constant STRING
 #        Leased mode for client peers. This parameter can be set to  dynamic
 #        or commonname
 #
@@ -112,39 +106,44 @@
 #    cn STRING
 #        Common Name (CN) that refers to the signed peer certificate
 #
+#    port NUMBER
+#        TCP port number that the daemon of the "server" role will listen on
+#        for auth and key exchange
+#
+#        Default: 42912
+#
 #  SEE ALSO
 #
 #    kurenmad(8), wg(1)
 #
 #  SOURCE
 
-  device          = wg0
-  port.auth       = 42912
-
+  tunnel.name     = wg0
   ts.keepalive    = 25
   ts.timeout.peer = 8min
 
 
 #~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
-# role            = client
-# host            = server.domain
+  role            = client
+# server          = server.domain
   route.default   = false
 #~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
 
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 # role            = server
-  port.tunnel     = 12912
-# server          = 192.168.29.1/24
-# pool            = dynamic
-# pool            = commonname
+  port            = 12912
+# tunnel.cidr     = 192.168.29.1/24
+  pool.method     = dynamic
+# pool.method     = commonname
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 
 
 [ssl]
 
+  port            = 42912
 # cn              = peer.common.name
-# ca              = cacert.pem
-# dh              = dh2048.pem
+  ca              = cacert.pem
+  dh              = dh2048.pem
 
 [ips.allowed]
 
@@ -153,7 +152,7 @@
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 
 #~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
-# 0.0.0.0/24
+  0.0.0.0/24
 #~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
 
 #******

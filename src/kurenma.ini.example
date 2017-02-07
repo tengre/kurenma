@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 133 2017-02-02 17:16:55+04:00 toor $
+# $Id: kurenma.ini.example 135 2017-02-07 17:30:01+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -118,23 +118,22 @@
 #
 #  SOURCE
 
-  tunnel.name     = wg0
-  ts.keepalive    = 25
-  ts.timeout.peer = 8min
-
+  tunnel name          = wg0
+  persistent keepalive = 25
+  pause between checks = 8min
 
 #~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
-  role            = client
-# server          = server.domain
-  route.default   = false
+  role          = client
+# server        = server.domain
+  default route = false
 #~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
 
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 # role            = server
-  port            = 12912
-# tunnel.cidr     = 192.168.29.1/24
-  pool.method     = dynamic
-# pool.method     = commonname
+  listen port     = 12912
+# tunnel network  = 192.168.29.1/24
+  IPv4 lease method = dynamic
+# IPv4 lease method = commonname
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 
 
@@ -145,7 +144,7 @@
   ca              = cacert.pem
   dh              = dh2048.pem
 
-[ips.allowed]
+[ips allowed]
 
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 # 192.168.29.0/24

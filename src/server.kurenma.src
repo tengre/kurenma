@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 134 2017-02-02 22:24:39+04:00 toor $"
+# $Id: server.kurenma.src 136 2017-02-08 23:15:34+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -254,7 +254,7 @@ udfHandleRequest() {
 
   fi
 
-  aCIDR=$( udfGetValidCIDR ${ipClient}/32 ${ipsAllowed//[;,]/} )
+  aCIDR=$( udfGetValidCIDR ${ipClient}/32 ${aIpsAllowed[@]} )
 
   udfDebug 5 "allowed ips: $aCIDR"
 

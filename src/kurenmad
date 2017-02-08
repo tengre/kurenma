@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 134 2017-02-02 22:24:38+04:00 toor $"
+# $Id: kurenmad 136 2017-02-08 23:15:34+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -138,7 +138,7 @@ udfMain() {
 
   [[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
-  local -a aId
+  local -a aId aIpsAllowed
   local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
   local bDefaultRoute pool port portAuth role tsKeepalive tsPeerTimeout
   local aReqOptByRole ca cn dh dev host server
@@ -158,12 +158,13 @@ udfMain() {
 
   INI ini
   ini.load $ini                                                                \
-               []role,tunnel.name,server,port,tunnel.cidr,pool.method,         \
-                 ts.keepalive,ts.timeout.peer,route.default                   :\
+               []role,tunnel name,server,listen port,tunnel network,           \
+                 IPv4 lease method,persistent keepalive,pause between checks,  \
+                 default route                                                :\
                                                                                \
             [ssl]ca,cn,dh,port                                                :\
                                                                                \
-    [ips.allowed]=                                                             \
+    [ips allowed]=                                                             \
   :
 
   role=$( ini.get role )
@@ -173,7 +174,7 @@ udfMain() {
   client)
 
              host=$( ini.get server )
-    bDefaultRoute=$( ini.get route.default )
+    bDefaultRoute=$( ini.get default route )
 
     : ${bDefaultRoute:=false}
 
@@ -183,9 +184,9 @@ udfMain() {
 
   server)
 
-      pool=$( ini.get pool.method )
-      port=$( ini.get port )
-    server=$( udfGetValidCIDR $( ini.get tunnel.cidr ) )
+      pool=$( ini.get IPv4 lease method )
+      port=$( ini.get listen port )
+    server=$( udfGetValidCIDR $( ini.get tunnel network ) )
 
     :   ${pool:=dynamic}
     :   ${port:=12912}
@@ -210,17 +211,17 @@ udfMain() {
 
   udfDebug 1 "start $( _ s0 ) as ${role}${s}"
 
-       dev=$( ini.get tunnel.name )
+       dev=$( ini.get tunnel name )
   portAuth=$( ini.get [ssl]port   )
 
   :      ${dev:=wg0}
   : ${portAuth:=42912}
 
-  tsKeepalive=$( ini.get ts.keepalive )
+  tsKeepalive=$( ini.get persistent keepalive )
   udfIsNumber $tsKeepalive || tsKeepalive=0
   (( tsKeepalive > 65355 )) && tsKeepalive=65355
 
-  _bashlyk_OnError=return tsPeerTimeout=$( udfGetTimeInSec $( ini.get ts.timeout.peer ) "32min" )
+  _bashlyk_OnError=return tsPeerTimeout=$( udfGetTimeInSec $( ini.get pause between checks ) "32min" )
 
   if (( tsPeerTimeout < 30 )); then
 
@@ -228,6 +229,9 @@ udfMain() {
     tsPeerTimeout=30
 
   fi
+
+  s=$( ini.get [ips allowed] )
+  eval "${s/declare -p a/declare -p aIpsAllowed}"
 
   if udfDebug 3; then
 

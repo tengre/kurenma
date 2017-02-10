@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 135 2017-02-07 17:30:01+04:00 toor $
+# $Id: kurenma.ini.example 137 2017-02-10 15:58:31+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -34,13 +34,13 @@
 #
 #    GLOBAL UNNAMED SECTION contain global named parameters:
 #
-#    role constant STRING
+#    "role" constant STRING
 #        This parameter can be set to client or server and define  the  role
 #        of  kurenmad(8).  Service  for client role send requests for tunnel
 #        creating to the server and check tunnel state, for  server  role  -
 #        listen client requests for tunnel creation only.
 #
-#    tunnel.name STRING
+#    "tunnel name" STRING
 #        this parameter define WireGuard tunnel device name
 #
 #        Default: wg0
@@ -49,7 +49,7 @@
 #        this  parameter define valid hostname or IPv4 address of the server
 #        side of kurenmad(8)
 #
-#    port NUMBER
+#    "listen port" NUMBER
 #        UDP port number that the WireGuard device of the "server" role will
 #        listen on
 #
@@ -58,31 +58,32 @@
 #        It  makes  sense only for "server" role because the client receives
 #        the port number on a successful key exchange.
 #
-#    ts.keepalive NUMBER
+#    "persistent keepalive" NUMBER
 #        Number  parameter  (0..65535)  of  time  interval  in seconds. This
 #        option supported Wireguard option  "PersistentKeepalive"  for  keep
 #        connection when peer is behind NAT or a firewall, see wg(1)
 #
 #        Default: 0 (disabled)
 #
-#    ts.timeout.peer￼ Formatted STRING or NUMBER
-#        Threshold  time  of  inactivity,  that  is  recognized  as  a  peer
-#        disconnect
+#    "pause between checks￼" Formatted STRING or NUMBER
+#        Pause between checks tunnel endpoint. On the client side is used to
+#        check the operability of the tunnel. For the server is used as the
+#        client inactivity threshold, that is recognized as a peer disconnect
 #
 #        This parameter can be presented as a number (of seconds)  or  as  a
 #        presentation time string "number<sec|min|hour|day|week|month|year>"
 #
 #        Default: 32minutes
 #
-#    tunnel.cidr CIDR (ip/mask)
+#    "tunnel network" CIDR (ip/mask)
 #        Tunnel IP address and network mask of the server peer.
 #
 #        It  makes  sense  only  for  "server" role. The client receives the
-#        server tunnel IP-address in the key exchange
+#        tunnel IP-address in the key exchange with server
 #
 #        Default: 192.168.29.1/24
 #
-#    pool.method constant STRING
+#    "IP lease method" constant STRING
 #        Leased mode for client peers. This parameter can be set to  dynamic
 #        or commonname
 #
@@ -97,7 +98,7 @@
 #
 #        Default: dynamic
 #
-#    SECTION [ips.allowed] are given sequence of networks (CIDR) permitted to
+#    SECTION [ips allowed] are given sequence of networks (CIDR) permitted to
 #        WireGuard tunnel.
 #
 #    SECTION [ssl] should contain Сommon Names of peers that bind X.509
@@ -132,8 +133,8 @@
 # role            = server
   listen port     = 12912
 # tunnel network  = 192.168.29.1/24
-  IPv4 lease method = dynamic
-# IPv4 lease method = commonname
+  IP lease method = dynamic
+# IP lease method = commonname
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 136 2017-02-08 23:15:34+04:00 toor $"
+# $Id: kurenmad 137 2017-02-10 15:58:31+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -159,7 +159,7 @@ udfMain() {
   INI ini
   ini.load $ini                                                                \
                []role,tunnel name,server,listen port,tunnel network,           \
-                 IPv4 lease method,persistent keepalive,pause between checks,  \
+                 IP lease method,persistent keepalive,pause between checks,    \
                  default route                                                :\
                                                                                \
             [ssl]ca,cn,dh,port                                                :\

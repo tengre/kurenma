@@ -35,7 +35,11 @@ case "$1" in
 esac
 
 
-[ -d /run/systemd/system ] && deb-systemd-invoke stop ${PACKAGE}.service || true
+if [ -d /run/systemd/system ]; then
+
+  deb-systemd-invoke stop ${PACKAGE}.service || systemctl stop ${PACKAGE}.service || true
+
+fi
 
 if [ -x "/etc/init.d/kurenma" ]; then
 

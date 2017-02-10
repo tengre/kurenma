@@ -34,10 +34,16 @@ esac
 
 rm -f ${cmdSystemV}.disabled-by-systemd
 
-deb-systemd-helper disable ${PACKAGE}.service || true
+if [ -d /run/systemd/system ]; then
+
+  deb-systemd-helper disable ${PACKAGE}.service || systemctl disable ${PACKAGE}.service || true
+
+fi
 
 if [ -x "/etc/init.d/kurenma" ]; then
-	update-rc.d -f kurenma remove >/dev/null
+
+  update-rc.d -f kurenma remove >/dev/null
+
 fi
 
 # dh_installdeb will replace this with shell code automatically

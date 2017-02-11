@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 137 2017-02-10 15:58:31+04:00 toor $"
+# $Id: kurenmad 138 2017-02-12 02:03:13+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -86,7 +86,11 @@ udfWaitSignal() {
 
   fi
 
-  [[ $1 =~ ^[0-9]+(\.[0-9]+)?$ ]] || eval $( udfOnError return InvalidArgument "$1" )
+  [[ $1 =~ ^[0-9]+(\.[0-9]+)?$ ]] || eval $(                                   \
+                                                                               \
+    udfOnError return InvalidArgument "$1"                                     \
+                                                                               \
+  )
 
   sleep $1 &
   wait $!
@@ -117,7 +121,8 @@ udfShowPeerInfo() {
 #
 udfSignal() {
 
-  [[ -n "$_kurenma_control_channel" && -p "$_kurenma_control_channel" ]] && echo "signalStop" > $_kurenma_control_channel
+  [[ -n "$_kurenma_control_channel" && -p "$_kurenma_control_channel" ]]       \
+    && echo "signalStop" > $_kurenma_control_channel
 
   _kurenma_sSignal='stop'
 
@@ -126,7 +131,6 @@ udfSignal() {
   udfFinally "service down initiated by signal,"
 
   sleep 1.8
-  #udfOnTrap
 
 }
 #
@@ -136,7 +140,11 @@ udfMain() {
 
   udfThrowOnCommandNotFound echo grep ip mkdir nc openssl sed sleep tail wg
 
-  [[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
+  [[ $UID == 0 ]] || eval $(                                                   \
+                                                                               \
+    udfOnError throw NotPermitted "You must be root to run this."              \
+                                                                               \
+  )
 
   local -a aId aIpsAllowed
   local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
@@ -184,7 +192,7 @@ udfMain() {
 
   server)
 
-      pool=$( ini.get IPv4 lease method )
+      pool=$( ini.get IP lease method )
       port=$( ini.get listen port )
     server=$( udfGetValidCIDR $( ini.get tunnel network ) )
 
@@ -198,7 +206,11 @@ udfMain() {
 
       *)
 
-    eval $( udfOnError throw InvalidArgument "$role - must have client or server" )
+    eval $(                                                                    \
+                                                                               \
+      udfOnError throw InvalidArgument "$role - must have client or server"    \
+                                                                               \
+    )
 
   ;;
 
@@ -221,17 +233,27 @@ udfMain() {
   udfIsNumber $tsKeepalive || tsKeepalive=0
   (( tsKeepalive > 65355 )) && tsKeepalive=65355
 
-  _bashlyk_OnError=return tsPeerTimeout=$( udfGetTimeInSec $( ini.get pause between checks ) "32min" )
+  _bashlyk_OnError=return tsPeerTimeout=$(                                     \
+                                                                               \
+    udfGetTimeInSec $( ini.get pause between checks ) "32min"                  \
+                                                                               \
+  )
 
   if (( tsPeerTimeout < 30 )); then
 
-    eval $( udfOnError warn InvalidArgument "$tsPeerTimeout is too low, it increased to 30" )
+    eval $(                                                                    \
+                                                                               \
+      udfOnError warn InvalidArgument                                          \
+        "$tsPeerTimeout is too low, it increased to 30"                        \
+                                                                               \
+    )
+
     tsPeerTimeout=30
 
   fi
 
   s=$( ini.get [ips allowed] )
-  eval "${s/declare -p a/declare -p aIpsAllowed}"
+  eval "${s/declare -a a/declare -a aIpsAllowed}"
 
   if udfDebug 3; then
 
@@ -243,14 +265,24 @@ udfMain() {
 
   fi
 
-  udfThrowOnEmptyVariable cn dev pathCrt pathDat pathIni pathKey pathRun portAuth role tsPeerTimeout $aReqOptByRole
+  udfThrowOnEmptyVariable cn dev pathCrt pathDat pathIni pathKey pathRun       \
+    portAuth role tsPeerTimeout $aReqOptByRole
 
   fnCA=${pathCrt}/cacert.pem
   fnCrt=${pathCrt}/${cn}.crt
   fnKey=${pathKey}/${cn}.key
 
-  [[ -d $_kurenma_pathLib ]] || eval $( udfOnError throw NoSuchFileOrDir "$_kurenma_pathLib" )
-  [[ -s ${_kurenma_pathLib}/${role}.kurenma.src ]] || eval $( udfOnError throw NoSuchFileOrDir "${role}.kurenma.src" )
+  [[ -d $_kurenma_pathLib ]] || eval $(                                        \
+                                                                               \
+    udfOnError throw NoSuchFileOrDir "$_kurenma_pathLib"                       \
+                                                                               \
+  )
+
+  [[ -s ${_kurenma_pathLib}/${role}.kurenma.src ]] || eval $(                  \
+                                                                               \
+    udfOnError throw NoSuchFileOrDir "${role}.kurenma.src"                     \
+                                                                               \
+  )
 
   . ${_kurenma_pathLib}/${role}.kurenma.src
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 134 2017-02-02 22:24:38+04:00 toor $
+# $Id: kurenmactl 138 2017-02-12 02:03:13+04:00 toor $
 #
 _kurenma_sVersion=0.7
 #
@@ -47,15 +47,19 @@ udfUsage() {
     Usage: $(_ s0) start|stop
     where:
 
-#      start - start service
-#      stop  - stop  service
-#
-#    without arguments show this usage and exit
+    #      start - start service
+    #      stop  - stop  service
+    #
+    #    without arguments show this usage and exit
 
-  EOF
-  eval $(udfOnError exit)
+EOF
+
+  eval $( udfOnError exit )
 
 }
+#
+#
+#
 udfMain() {
 
   DEBUGLEVEL=3

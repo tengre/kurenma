@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 134 2017-02-02 22:24:38+04:00 toor $
+# $Id: client.kurenma.src 138 2017-02-12 02:03:13+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -13,13 +13,26 @@ udfKnocking() {
 
   i=256
 
-  s=$( openssl x509 -sha1 -in $fnCA -noout -fingerprint | sed -r -e "s/^SHA1 Fingerprint=(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" )
+  s=$(                                                                         \
+                                                                               \
+    openssl x509 -sha1 -in $fnCA -noout -fingerprint | sed -r -e               \
+    "s/^SHA1 Fing.*nt=(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" \
+                                                                               \
+  )
 
-  [[ -n "$s" ]] || eval $( udfOnError throw EmptyResult "$fnCA - not valid format" )
+  [[ -n "$s" ]] || eval $(                                                     \
+                                                                               \
+    udfOnError throw EmptyResult "$fnCA - not valid format"                    \
+                                                                               \
+  )
 
   udfDebug 5 "CA cert fingerprint header: $s"
 
-  s=$( printf -- "%d %d %d" $s ) || eval $( udfOnError throw InvalidArgument "$fnCA - hexadecimal data expected" )
+  s=$( printf -- "%d %d %d" $s ) || eval $(                                    \
+                                                                               \
+    udfOnError throw InvalidArgument "$fnCA - hexadecimal data expected"       \
+                                                                               \
+  )
 
   udfDebug 5 "knock ports sequence: $s"
 
@@ -93,7 +106,12 @@ udfGetTunnelSettings() {
 
     [[ -z "$s" ]] && s="$(< $fnAns)"
 
-    eval $( udfOnError warn InvalidArgument "malformed answer from ${host}:${portAuth} $s" )
+    eval $(                                                                    \
+                                                                               \
+      udfOnError warn InvalidArgument                                          \
+        "malformed answer from ${host}:${portAuth} $s"                         \
+                                                                               \
+    )
 
     s="$(_ iErrorAbortedBySignal ) stop signal received"
     udfWaitSignal 8 || break
@@ -113,7 +131,9 @@ udfSetupTunnel() {
 
   local ipClient ipServer peer port sKey
 
-  [[ $1 == $( _ iErrorAbortedBySignal  ) ]] && return $( _ iErrorAbortedBySignal  )
+  [[ $1 == $( _ iErrorAbortedBySignal  ) ]] \
+    && return $( _ iErrorAbortedBySignal  )
+
   [[ $1 != "OK"   ]] && return $( _ iErrorInvalidArgument )
 
   shift
@@ -124,13 +144,14 @@ udfSetupTunnel() {
   ipServer=$( udfGetValidIPsOnly $4 )
   sKey=$5
 
-  udfDebug 3 && printf -- "$fmtCon" "$host" "$port" "${peer:0:10}<skipped>" "$ipClient" "$ipServer"
+  udfDebug 3 && printf -- "$fmtCon" "$host" "$port" "${peer:0:10}<skipped>"    \
+    "$ipClient" "$ipServer"
 
   udfThrowOnEmptyVariable peer port ipClient ipServer
 
   udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>: " "${peer:0:10}"
-  #
-  try-every-line
+
+try-every-line
 
     ip link del dev $dev || true
     ip link add dev $dev type wireguard
@@ -144,7 +165,7 @@ udfSetupTunnel() {
     ip address add "${ipClient}"/24 dev $dev
     ip link set up dev $dev
 
-  catch-every-line
+catch-every-line
 
   return 0
 
@@ -164,13 +185,13 @@ udfSetDefaultRoute() {
 
   if [[ -n "$s" ]]; then
 
-    try-every-line
+try-every-line
 
       ip route add $s || true
       ip route add 0/1 dev $dev
       ip route add 128/1 dev $dev
 
-    catch-every-line
+catch-every-line
 
     udfDebug 2 "tunnel $dev used as default route ($s)"
 
@@ -187,7 +208,8 @@ udfSetDefaultRoute() {
 udfService() {
 
   udfThrowOnCommandNotFound false knock ping tee true
-  udfThrowOnEmptyVariable bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni portAuth tsPeerTimeout
+  udfThrowOnEmptyVariable bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni   \
+    portAuth tsPeerTimeout
 
   local bStart cmdSSL fmtCon fmtSSL s
 
@@ -219,6 +241,7 @@ udfService() {
     if $bStart; then
 
       ## TODO try first use saved wg config
+      ## TODO bad error handling
 
       udfSetupTunnel $( udfGetTunnelSettings ) || {
 

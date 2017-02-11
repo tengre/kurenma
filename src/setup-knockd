@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 134 2017-02-02 22:24:39+04:00 toor $
+# $Id: setup-knockd 138 2017-02-12 02:03:14+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -40,10 +40,9 @@ udfMain() {
 
   [[ -s $fnCA ]] || eval $( udfOnError throw NoSuchFileOrDir $fnCA )
 
-  s=$(                                                                            \
-    openssl x509 -sha1 -in $fnCA -noout -fingerprint                              \
-    | sed -r -e \                                                                 \
-    "s/^SHA1 Fingerprint=(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" \
+  s=$(                                                                         \
+    openssl x509 -sha1 -in $fnCA -noout -fingerprint | sed -r -e               \
+    "s/^SHA1 Fing.*nt=(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" \
   )
 
   udfDebug 2 "CA cert fingerprint header: $s"

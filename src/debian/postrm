@@ -37,6 +37,7 @@ rm -f ${cmdSystemV}.disabled-by-systemd
 if [ -d /run/systemd/system ]; then
 
   deb-systemd-helper disable ${PACKAGE}.service || systemctl disable ${PACKAGE}.service || true
+  systemctl daemon-reload || true
 
 fi
 

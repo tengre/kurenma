@@ -47,8 +47,8 @@ fi
 
 while [ -d /run/systemd/system ]; do
 
-  deb-systemd-helper enable ${PACKAGE}.service
-  systemctl enable ${PACKAGE}.service
+  deb-systemd-helper enable ${PACKAGE}.service || systemctl enable ${PACKAGE}.service || true
+  systemctl daemon-reload || true
   deb-systemd-invoke start ${PACKAGE}.service || systemctl start ${PACKAGE}.service || break
 
   if [ -f $cmdSystemV ]; then

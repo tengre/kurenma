@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 138 2017-02-12 02:03:13+04:00 toor $
+# $Id: client.kurenma.src 139 2017-02-15 20:27:24+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -151,7 +151,7 @@ udfSetupTunnel() {
 
   udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>: " "${peer:0:10}"
 
-try-every-line
+  try {
 
     ip link del dev $dev || true
     ip link add dev $dev type wireguard
@@ -165,7 +165,12 @@ try-every-line
     ip address add "${ipClient}"/24 dev $dev
     ip link set up dev $dev
 
-catch-every-line
+   } catch {
+
+      ERR::exception.message
+      exit $?
+
+   }
 
   return 0
 
@@ -185,13 +190,18 @@ udfSetDefaultRoute() {
 
   if [[ -n "$s" ]]; then
 
-try-every-line
+  try {
 
       ip route add $s || true
       ip route add 0/1 dev $dev
       ip route add 128/1 dev $dev
 
-catch-every-line
+   } catch {
+
+      ERR::exception.message
+      exit $?
+
+   }
 
     udfDebug 2 "tunnel $dev used as default route ($s)"
 

@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 136 2017-02-08 23:15:34+04:00 toor $"
+# $Id: server.kurenma.src 139 2017-02-15 20:27:24+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -298,7 +298,7 @@ udfSetupTunnel() {
 
   udfDebug 3 "Init WireGuard device $dev"
 
-  try-every-line
+  try {
 
     ip link del dev $dev 2>/dev/null || true
     ip link add dev $dev type wireguard
@@ -306,7 +306,12 @@ udfSetupTunnel() {
     wg set $dev private-key <(wg genkey) listen-port $port
     ip link set up dev $dev
 
-  catch-every-line
+   } catch {
+
+      ERR::exception.message
+      exit $?
+
+   }
 
   udfDebug 3 "init new server pub key: $( wg show $dev private-key | wg pubkey | head -c 10 )<skipped>"
 

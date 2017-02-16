@@ -12,12 +12,12 @@
 #  SOURCE
 
 [options]
-	logfile = /var/log/knockd.log
+  logfile = /var/log/knockd.log
 
 [kurenma]
-	sequence    = 1891,389,23489
-	seq_timeout = 5
-	command     = /usr/bin/update-firehol %IP%
-	tcpflags    = syn
+  sequence    = 1891,389,23489
+  seq_timeout = 5
+  command     = /usr/bin/update-firehol %IP%
+  tcpflags    = syn
 
 #******

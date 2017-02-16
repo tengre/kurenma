@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 138 2017-02-12 02:03:14+04:00 toor $
+# $Id: setup-knockd 144 2017-02-16 16:51:31+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -30,11 +30,10 @@ udfMain() {
 
   udfThrowOnCommandNotFound cat grep openssl sed
 
-  local fmtKnockd fnCA iniKnockd pathIni s
-  fmtKnockd="sequence=%d,%d,%d;seq_timeout=5;command=/usr/bin/update-firehol %%IP%%;tcpflags=syn"
+  local fnCA conf pathIni s
 
   pathIni=$( _ pathIni )
-  iniKnockd="/etc/knockd.conf"
+  conf="/etc/knockd.conf"
   #
   fnCA=${pathIni}/ssl/public/cacert.pem
 
@@ -46,14 +45,23 @@ udfMain() {
   )
 
   udfDebug 2 "CA cert fingerprint header: $s"
-  s=$( printf -- "$fmtKnockd" $s )
+  s=$( printf -- "%d,%d,%d" $s )
   udfDebug 2 "knock ports sequence: $s"
 
-  udfIniChange $iniKnockd "$s" "kurenma01"
+  INI ini
+  ini.load $conf
 
-  udfDebug 2 && cat $iniKnockd
+  ini.set [ kurenma ] sequence    = $s
+  ini.set [ kurenma ] seq_timeout = 5
+  ini.set [ kurenma ] command     = /usr/bin/update-firehol %IP%
+  ini.set [ kurenma ] tcpflags    = syn
 
-  if systemctl >/dev/null 2>&1; then
+  ini.save $conf
+  ini.free
+
+  udfDebug 2 && cat $conf
+
+  if [[ -d /run/systemd/system ]]; then
 
     systemctl restart knockd.service
 

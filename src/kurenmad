@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 138 2017-02-12 02:03:13+04:00 toor $"
+# $Id: kurenmad 144 2017-02-16 16:53:48+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -44,7 +44,8 @@ _kurenma_sSignal=none
 #
 #  SEE ALSO
 #       kurenmactl(8), kurenmad(8), kurenma.ini(5), gen-ssl-kurenma(8),
-#       update-firehol(8), setup-knockd(8), firehol(1), knockd(1), knockd.conf(5)
+#       update-firehol(8), setup-knockd(8), firehol(1), knockd(1),
+#       knockd.conf(5)
 #******
 #****h* kurenma/command
 #  DESCRIPTION
@@ -109,9 +110,11 @@ udfShowPeerInfo() {
 
   udfThrowOnEmptyVariable dev
 
-  printf -- "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
+  printf -- \
+    "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
 
-  wg show $dev | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
+  wg show $dev \
+    | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
 
   ip addr show $dev | grep inet
 
@@ -121,7 +124,7 @@ udfShowPeerInfo() {
 #
 udfSignal() {
 
-  [[ -n "$_kurenma_control_channel" && -p "$_kurenma_control_channel" ]]       \
+  [[ -n "$_kurenma_control_channel" && -p "$_kurenma_control_channel" ]] \
     && echo "signalStop" > $_kurenma_control_channel
 
   _kurenma_sSignal='stop'

@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 124 2016-10-30 01:02:42+04:00 toor $
+# $Id: kurenmactl 138 2017-02-12 02:03:13+04:00 toor $
 #
-_kurenma_sVersion=0.7
+_kurenma_sVersion=0.8
 #
 _bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 #
@@ -37,97 +37,103 @@ _bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 #******
 udfUsage() {
 
-    	local -a aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) )
+  local -a aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) )
 
-	printf -- "\t%s v%s rev%s, Kurenma Service Management Tool, (c) %s\n" "$(_ s0)" "$_kurenma_sVersion" "${aId[2]}" "${aId[3]}"
+  printf -- "\t%s v%s rev%s, Kurenma Service Management Tool, (c) %s\n" \
+            "$(_ s0)" "$_kurenma_sVersion" "${aId[2]}" "${aId[3]}"
 
-	cat <<-EOF | tr -d '#'
+  cat <<-EOF | tr -d '#'
 
-		Usage: $(_ s0) start|stop
-		where:
+    Usage: $(_ s0) start|stop
+    where:
 
-#			start	- start service
-#			stop	- stop  service
-#
-#		without arguments show this usage and exit
+    #      start - start service
+    #      stop  - stop  service
+    #
+    #    without arguments show this usage and exit
 
-	EOF
-	eval $(udfOnError exit)
+EOF
+
+  eval $( udfOnError exit )
 
 }
+#
+#
+#
 udfMain() {
 
-	DEBUGLEVEL=3
+  DEBUGLEVEL=3
 
-	[[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
+  [[ $UID == 0 ]] \
+    || eval $( udfOnError throw NotPermitted "You must be root to run this." )
 
-	if [[ $START_KURENMA =~ ^([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|0)$ ]]; then
+  if [[ $START_KURENMA =~ ^([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|0)$ ]]; then
 
-		udfDebug 1 "service starting disabled, see /etc/default/kurenma.."
-		return 0
+    udfDebug 1 "service starting disabled, see /etc/default/kurenma.."
+    return 0
 
-	fi
+  fi
 
-	udfThrowOnCommandNotFound cat echo grep head kurenmad mkdir nohup sleep tr
+  udfThrowOnCommandNotFound cat echo grep head kurenmad mkdir nohup sleep tr
 
-	local cmd fnPid ini pathRun pid portAuth s
+  local cmd fnPid ini pathRun pid portAuth s
 
-	cmd=kurenmad
-	pathRun=$( _ pathRun )
+  cmd=kurenmad
+  pathRun=$( _ pathRun )
 
-	udfThrowOnEmptyVariable pathRun
+  udfThrowOnEmptyVariable pathRun
 
-	mkdir -p $pathRun || eval $( udfOnError throw NotExistNotCreated "$pathRun" )
+  mkdir -p $pathRun || eval $( udfOnError throw NotExistNotCreated "$pathRun" )
 
-	eval set -- $(_ sArg)
+  eval set -- $(_ sArg)
 
-	case "$1" in
+  case "$1" in
 
-		start)
-			udfDebug 1 "service $cmd starting.."
+    start)
+      udfDebug 1 "service $cmd starting.."
 
-			cd /
-			nohup $cmd </dev/null >/dev/null 2>/dev/null &
+      cd /
+      nohup $cmd </dev/null >/dev/null 2>/dev/null &
 
-			return 0
-		;;
+      return 0
+    ;;
 
-		 stop)
-			udfDebug 1 && echo -n "service $cmd stopping.."
+     stop)
+      udfDebug 1 && echo -n "service $cmd stopping.."
 
-			fnPid="${pathRun}/${cmd}.pid"
-			[[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
+      fnPid="${pathRun}/${cmd}.pid"
+      [[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
 
-			udfIsNumber $pid && kill -31 $pid
+      udfIsNumber $pid && kill -31 $pid
 
-			for s in 1 2 3 4 5 6 7 8; do
+      for s in 1 2 3 4 5 6 7 8; do
 
-					[[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
+          [[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
 
-					udfIsNumber $pid || break
+          udfIsNumber $pid || break
 
-					sleep 0.75 && udfDebug 1 && echo -n "."
+          sleep 0.75 && udfDebug 1 && echo -n "."
 
-			done
+      done
 
-			echo ""
+      echo ""
 
-			udfIsNumber $pid && udfStopProcess pid=$pid $cmd || true
-			s=$?
+      udfIsNumber $pid && udfStopProcess pid=$pid $cmd || true
+      s=$?
 
-			[[ $s == $( _ iErrorNoSuchProcess ) ]] && s=0
+      [[ $s == $( _ iErrorNoSuchProcess ) ]] && s=0
 
-			return $s
-		;;
+      return $s
+    ;;
 
-		    *)
-			udfDebug 1 && udfUsage
-			return 1
-		;;
+        *)
+      udfDebug 1 && udfUsage
+      return 1
+    ;;
 
-	esac
+  esac
 
-	return 0
+  return 0
 }
 #
 #

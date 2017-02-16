@@ -1,3 +1,24 @@
+Thu, 16 Feb 2017 00:30:23 +0400
+	New upstream release
+	Version 0.8
+ - configuration options become more clear through the use of bashlyk version
+   1.89 with new INI implementation:
+        dev           -> tunnel name
+        tsKeepalive   -> persistent keepalive
+        tsPeerTimeout -> pause between checks
+        bDefaultRoute -> default route
+        port          -> listen port
+        server        -> tunnel network
+        pool          -> IP lease method
+        host          -> server
+        portAuth      -> port (moved to [ssl] section)
+ - INI-options and variables can now be different
+ - '{try,catch}-every-line' box replaced by 'try .. catch' implementation from
+   bashlyk 1.89.689
+ - fixed error of the DNS name resolving
+ - improved code style and debian scripts, updated descriptions
+
+
 Mon, 07 Nov 2016 15:56:10 +0400
 	New upstream release
 	Version 0.7
@@ -15,15 +36,15 @@ Mon, 07 Nov 2016 15:56:10 +0400
 
 kurenmad:
  - udfSignal changes:
-   * send "stopsignal" to pipe of openssl
-   * kill all child 'sleep' command by udfStopProcess (bashlyk 1.87)
-   * set _kurenma_sSignal='stop' earlier than stopped sleep
+   - send "stopsignal" to pipe of openssl
+   - kill all child 'sleep' command by udfStopProcess (bashlyk 1.87)
+   - set _kurenma_sSignal='stop' earlier than stopped sleep
  - udfWaitRequest changes:
-   * used return code of bash builtin command "read":
-     ** >128 - timeout
-     ** >0   - closed input
-   * added support of s_server 'Q' command (shutdown) on event "stopsignal"
-   * improved CN and data handling
+   - used return code of bash builtin command "read":
+     - >128 - timeout
+     - >0   - closed input
+   - added support of s_server 'Q' command (shutdown) on event "stopsignal"
+   - improved CN and data handling
 
 server.kurenma.src:
  - openssl - used s_server instead smime
@@ -40,8 +61,8 @@ kurenma.ini.example:
  - option 'ipServer' renamed to 'server' and now is the CIDR
  - option 'ipClient' renamed to 'pool'
  - section ssl:
-   * parameter cn{Client,Server} replaced by 'cn'
-   * added parameters 'ca', 'dh'
+   - parameter cn{Client,Server} replaced by 'cn'
+   - added parameters 'ca', 'dh'
 
 gen-ssl-kurenma:
  - 'crt' option replaced by 'server' and 'client' for separate generation of
@@ -72,23 +93,23 @@ Tue, 18 Oct 2016 11:12:06 +0400
  kurenmad:
  - added global variable $_kurenma_sSignal as status of signal
  - udfWatchdog renamed to udfWaitSignal with changes:
-   * used one argument - wait time, allowed decimal fractions
-   * reduced cpu usage by using background process of sleep with wait
-   * background process is added to the stop list
-   * returned iErrorAbortedBySignal if $_kurenma_sSignal equal "stop"
-   * used a log messages of level 4
+   - used one argument - wait time, allowed decimal fractions
+   - reduced cpu usage by using background process of sleep with wait
+   - background process is added to the stop list
+   - returned iErrorAbortedBySignal if $_kurenma_sSignal equal "stop"
+   - used a log messages of level 4
  - netcat pipe in role of server is run in a background with wait
  - added function udfSignal for trapping signal No.31 with actions:
-   * stopping of netcat (nc) in role of server
-   * set variable $_kurenma_sSignal to value of "stop"
-   * stopping of child processes with udfOnTrap
+   - stopping of netcat (nc) in role of server
+   - set variable $_kurenma_sSignal to value of "stop"
+   - stopping of child processes with udfOnTrap
  - updated udfSelfCheck:
-   * the number of calls udfWaitSignal reduced to one with random waiting
+   - the number of calls udfWaitSignal reduced to one with random waiting
      (~20-189 sec)
  - fixed udfHandleRequest:
-   * removed unused local variable, added not defined
-   * improved messages
-   * allocation of IP-addresses to the client is presented more clearly
+   - removed unused local variable, added not defined
+   - improved messages
+   - allocation of IP-addresses to the client is presented more clearly
  - tsPeerTimeout can't be less than 30 seconds
 
  debian/{postinst,prerm}, Makefile.am:
@@ -99,21 +120,21 @@ Wed, 12 Oct 2016 12:51:45 +0400
 	New upstream release
 	Version 0.5
  - added infrastructure to create a debian package:
-   * used deb-systemd-{helper,invoke} instead systemctl
-   * direct use of {invoke,update}-rc.d, if necessary
-   * postrm used for uninstall, prerm - for service stopping,
-   * closed lintian founded errors and warns
+   - used deb-systemd-{helper,invoke} instead systemctl
+   - direct use of {invoke,update}-rc.d, if necessary
+   - postrm used for uninstall, prerm - for service stopping,
+   - closed lintian founded errors and warns
  - supported System D and System V inits
  - added/renamed project files:
-   * kurenma.default - environment for initscripts
-   * kurenma.logrotated - configuration for log rotating
-   * kurenma.initd - System V init script instead kurenma
+   - kurenma.default - environment for initscripts
+   - kurenma.logrotated - configuration for log rotating
+   - kurenma.initd - System V init script instead kurenma
  - added doc infrastructure - mans and robodoc files:
-   * added xml sources of man pages for all commands and configurations
-   * added robodoc headers for all commands and configurations
-   * added Makefile.am rules for create manpages
-   * added robodoc.{rc,css} files for html generation
-   * added patch template for robodoc single file header
+   - added xml sources of man pages for all commands and configurations
+   - added robodoc headers for all commands and configurations
+   - added Makefile.am rules for create manpages
+   - added robodoc.{rc,css} files for html generation
+   - added patch template for robodoc single file header
  - update-firehol,setup-knockd - added udfFinally call
  - kurenma.ini.example - added 'dev' parameter
  - setup-knockd - added service restarting
@@ -146,16 +167,16 @@ Tue, 27 Sep 2016 12:20:47 +0400
 	New upstream release
 	Version 0.4
  - refactored for unification client and server code:
-   * as a service used kurenmad file that contains the common code to initialize
+   - as a service used kurenmad file that contains the common code to initialize
      and run regardless of role. The specific code for each of the roles is
      loaded dynamically from files client.kurenma.src or server.kurenma.src
-   * used unified single config file kurenma.ini for client and server with
+   - used unified single config file kurenma.ini for client and server with
      'role' option as selector. Added config example kurenma.ini.example that
      included  all options for client and server roles
  - added new file 'kurenmactl' as service management tool:
-   * improved Systemd support, used forking type for unit
-   * added SystemV init support
-   * used special control file for gracefully service ending
+   - improved Systemd support, used forking type for unit
+   - added SystemV init support
+   - used special control file for gracefully service ending
  - used 'portAuth' option as port for key exchange
  - udfCheckNetcat replaced by udfStopProcess from bashlyk version 1.86 - the
    most versatile way to stop the process
@@ -182,11 +203,11 @@ client.kurenma.src:
  - no reexec required for reconnection with server
  - knock used after availibility checking
  - improved logging, code splittes to small blocks, added new functions:
-   * udfKnocking - check server availibity
-   * udfGetTunnelSettings - try bind keys with server
-   * udfSetupTunnel - use getted settings for tunnel activating
-   * udfSetDefaultRoute - set default route if needed
-   * udfShowPeerInfo - show created peer info if needed
+   - udfKnocking - check server availibity
+   - udfGetTunnelSettings - try bind keys with server
+   - udfSetupTunnel - use getted settings for tunnel activating
+   - udfSetDefaultRoute - set default route if needed
+   - udfShowPeerInfo - show created peer info if needed
  - added new Error state - NotAvailable
 
 kurenmactl:
@@ -225,8 +246,8 @@ Fri, 02 Sep 2016 00:37:23 +0400
    udfOnError, 'udfDebug' with stderr support
  - used pseudo 'try - catch' block 'try-every-line' - 'catch-every-line' from
    bashlyk 1.85 for simplify control the flow of external commands:
-   * showed a dot for each successful execution of the command-line from a flow
-   * display the line number, code, output and the call stack for a non-zero
+   - showed a dot for each successful execution of the command-line from a flow
+   - display the line number, code, output and the call stack for a non-zero
      status of the command from catching flow
  - updated WireGuard 'persistent-keepalive' handling - default value of
    'persistent-keepalive' now is 0, i.e off, persistent-keepalive disabled on
@@ -241,15 +262,15 @@ Fri, 02 Sep 2016 00:37:23 +0400
  kurenmas:
  - improved mime data sending to openssl
  - fixed handling input for netcat, udfWaitRequest updated:
-   * loop of input reading not stopped on any events
-   * input buffer cleared on starting of SSL message, after handling of SSL
+   - loop of input reading not stopped on any events
+   - input buffer cleared on starting of SSL message, after handling of SSL
      message or overflow of input data
  - netcat used option -k ( not exit on connection close)
  - udfCheckNetcat - try kill -15 and -9, if necessary
  - after stopping the netcat checks for the "stop" command in PID file
  - check first argument as control command for service :
-   * start - normal start to endless loop around netcat
-   * stop - send "stop" command via PID file, kill netcat and exit
+   - start - normal start to endless loop around netcat
+   - stop - send "stop" command via PID file, kill netcat and exit
  - use global variable _kurenmas_ctl for daemonize with systemd
  - if latest-handshake of peer equal 0 then peer do not removed
  - used {try,catch}-every-line block for tunnel init
@@ -261,10 +282,10 @@ Fri, 02 Sep 2016 00:37:23 +0400
    port and key exchange process is repeated until a successful attempt
  - added support for options bDaemonize, bDefaultRoute, tsPeerTimeout and
    tsKeepalive from client.kurenma.ini:
-   * tsPeerTimeout - max time without handshake, used human readable format
-   * bDaemonize for set/unset idle mode for kurenmac
-   * bDefaultRoute for set default route via WireGuard tunnel
-   * tsKeepalive for persistent-keepalive options of WireGuard
+   - tsPeerTimeout - max time without handshake, used human readable format
+   - bDaemonize for set/unset idle mode for kurenmac
+   - bDefaultRoute for set default route via WireGuard tunnel
+   - tsKeepalive for persistent-keepalive options of WireGuard
  - restarts connection if there are no a handshake with the server during the
    time "tsPeerTimeout" in idle mode
 
@@ -292,27 +313,27 @@ Wed, 03 Aug 2016 10:50:04 +0400
  - prevented running multiple instances of the peers
  - enabled run instances of the peers only from root
  - server side runned as service by endless loop around of netcat:
-   * stdin and stdout of netcat looped through a named pipe
-   * added function udfWaitRequest to control the netcat
-   * used PKCS7 format for initial key exchange
-   * input stream more than 64 lines discarded
-   * added function udfHandleRequest for WireGuard tunnel creation
-   * used stderr for logging, applies 1-5 levels of messages
-   * added new function udfSelfCheck for cleaning unexpected long connection
+   - stdin and stdout of netcat looped through a named pipe
+   - added function udfWaitRequest to control the netcat
+   - used PKCS7 format for initial key exchange
+   - input stream more than 64 lines discarded
+   - added function udfHandleRequest for WireGuard tunnel creation
+   - used stderr for logging, applies 1-5 levels of messages
+   - added new function udfSelfCheck for cleaning unexpected long connection
      with the client
-   * server gives first free IP for client (option 'dynamic' - default), or
+   - server gives first free IP for client (option 'dynamic' - default), or
      finds IP by using the 'Common Name' of the client as FQDN ('commonname')
-   * client gets previously leased IP (if it is available) after reconnection in
+   - client gets previously leased IP (if it is available) after reconnection in
      the 'dynamic' mode. This address temporary binded to the client certificate
-   * added handling of section 'ipsAllowed' for getting list of allowed hosts
+   - added handling of section 'ipsAllowed' for getting list of allowed hosts
      and networks
-   * added cleaning WireGuard peers with empty allowed-ips
+   - added cleaning WireGuard peers with empty allowed-ips
  - added new configuration dn.kurenma.ini to determine the Distinguished Name of
    the Center of Authority (CA) and defaults values for client and server certs
    generation.
  - used single script gen-ssl-kurenma for keys and certs generation:
-   * ca                - make CA files and infrastructure
-   * crt <Common Name> - make key and certificate files for client or server
+   - ca                - make CA files and infrastructure
+   - crt <Common Name> - make key and certificate files for client or server
  - openssl configurations saved to ../ssl/configs, CSR files saved to ../ssl/csr
  - used knock to start peers handshaking from client
  - added function udfGetValidIPsOnly for IP validating

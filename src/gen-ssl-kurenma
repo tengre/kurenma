@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 144 2017-02-16 16:51:30+04:00 toor $
+# $Id: gen-ssl-kurenma 145 2017-02-19 00:56:23+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -60,8 +60,8 @@ udfMain() {
   fnTemplate=/usr/share/kurenma/openssl.cnf.template
 
   INI ini
-  ini.load $confDN Country, State, Locality, Organizational,                   \
-                   Organizational Unit, Common Name
+  ini.load $confDN Common Name, Country, State, Locality, Organizational,      \
+                   Organizational Unit,
 
    C=$( ini.get Country             ) ||  C=XX
   ST=$( ini.get State               ) || ST=State

@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 139 2017-02-15 20:27:24+04:00 toor $
+# $Id: client.kurenma.src 145 2017-02-18 02:52:30+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -98,7 +98,10 @@ udfGetTunnelSettings() {
     sKey=$( wg genkey )
     sPub=$( echo $sKey | wg pubkey )
 
-    s="$( echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns | grep '^OK:' )"
+    s="$(                                                                      \
+      echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns             \
+        | grep '^OK:'                                                          \
+    )"
 
     udfDebug 3 && printf -- $fmt "${sKey:0:10}" "${sPub:0:10}"
 
@@ -224,9 +227,13 @@ udfService() {
   local bStart cmdSSL fmtCon fmtSSL s
 
   fmtSSL="SSL auth info:\nClient Common Name - %s\n"
-  fmtCon="Connection properties from %s:\nremote port: %d\nserver  key: %s\ntunnel  IPs: leased/remote - %s/%s\n"
+  fmtCon="Connection properties from %s:\nremote port: %d\nserver  key:        \
+    %s\ntunnel  IPs: leased/remote - %s/%s\n"
 
-  cmdSSL="openssl s_client -connect ${host}:${portAuth} -CAfile $fnCA -cert $fnCrt -key $fnKey -verify 1 -quiet"
+  cmdSSL="                                                                     \
+    openssl s_client -connect ${host}:${portAuth} -CAfile $fnCA -cert $fnCrt   \
+      -key $fnKey -verify 1 -quiet                                             \
+  "
 
   for s in "$fnCrt" "$fnKey" "$fnCA"; do
 

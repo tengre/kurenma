@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 139 2017-02-15 20:27:24+04:00 toor $"
+# $Id: server.kurenma.src 145 2017-02-19 01:00:53+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -122,7 +122,7 @@ udfWaitRequest() {
       else
 
         s=${s##*client-data}
-        udfDebug 3 "client data: ${s:1:10}<skipped>"
+        udfDebug 3 "client data: ${s:1:10}<skip>"
         udfHandleRequest $cn ${s:1:45}
 
         sleep 1.1
@@ -130,7 +130,8 @@ udfWaitRequest() {
 
       fi
 
-    elif [[ $s =~ ^(verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]]; then
+    elif [[ $s =~ ^(verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]];
+    then
 
       udfDebug 3 "SSL: $s"
 
@@ -145,9 +146,10 @@ udfWaitRequest() {
 udfHandleRequest() {
 
   udfThrowOnEmptyOrMissingArgument "$1" "$2"
-  udfThrowOnEmptyVariable dev pathDat pathIni pool tsKeepalive tsPeerTimeout server
+  udfThrowOnEmptyVariable dev pathDat pathIni pool tsKeepalive tsPeerTimeout   \
+                          server
 
-  local aCIDR cnClient fn fnLeased i ip ipClient peer s
+  local aCIDR cmdWG cnClient fn fnLeased i ip ipClient peer s
 
   cnClient=$1
   peer=$2
@@ -155,14 +157,16 @@ udfHandleRequest() {
   fnLeased=${pathDat}/${cn}.${dev}.leased
 
   udfDebug 3 && printf -- \
-  "\nremote peer info:\n\tClient Common Name\t- %s\n\tPublic key for %s\t- %s\n" \
-      "$cnClient" "$dev" "${peer:0:10}<skipped>" >&2
+    "\nremote peer info:\n\tClient CommonName\t- %s\n\tPub key for %s\t- %s\n" \
+    "$cnClient" "$dev" "${peer:0:10}<skip>" >&2
 
   if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
 
-    wg set $dev peer \
-      $(wg show $dev latest-handshakes | sort -k 2 -b -n | head -n 1 | cut -f 1) \
-        remove
+    wg set $dev peer $(                                                        \
+                                                                               \
+      wg show $dev latest-handshakes | sort -k 2 -b -n | head -n 1 | cut -f 1  \
+                                                                               \
+    ) remove
 
   fi
 
@@ -179,7 +183,7 @@ udfHandleRequest() {
 
         wg set $dev peer ${s%%:*} remove
         udfDebug 2 \
-        "peer ${s:0:10}<skipped> is removed due to inactivity over an ${i}s .. $?"
+          "peer ${s:0:10}<skip> is removed due to inactivity over an ${i}s.. $?"
 
       fi
 
@@ -207,7 +211,12 @@ udfHandleRequest() {
 
     [[ -f $fnLeased ]] || touch $fnLeased
 
-    ipClient=$( grep -P "^${cnClient}:\S+$" $fnLeased | tail -n 1 | cut -f 2 -d':' | xargs )
+    ipClient=$(                                                                \
+                                                                               \
+      grep -P "^${cnClient}:\S+$" $fnLeased |tail -n 1| cut -f 2 -d':'|xargs   \
+                                                                               \
+    )
+
     ipClient=$( udfGetValidIPsOnly $ipClient )
     s="Leased early used IP to $cnClient"
     udfDebug 5 "$s - $ipClient"
@@ -216,7 +225,13 @@ udfHandleRequest() {
 
   if [[ ${server%/*} == $ipClient ]]; then
 
-    eval $( udfOnError warn InvalidArgument "the IP address $ipClient is already in use, skipped" )
+    eval $(                                                                    \
+                                                                               \
+      udfOnError warn InvalidArgument                                          \
+        "the IP address $ipClient is already in use, skipped"                  \
+                                                                               \
+    )
+
     unset ipClient
 
   fi
@@ -250,7 +265,11 @@ udfHandleRequest() {
   if [[ -z "$ipClient" || ${server%/*} == $ipClient ]]; then
 
     echo "not allocated IP to the client"
-    eval $( udfOnError retecho InvalidArgument "not allocated IP to the client" )
+    eval $(                                                                    \
+                                                                               \
+      udfOnError retecho InvalidArgument "not allocated IP to the client"      \
+                                                                               \
+    )
 
   fi
 
@@ -259,15 +278,28 @@ udfHandleRequest() {
   udfDebug 5 "allowed ips: $aCIDR"
 
   udfMakeTemp fn
-  if wg set $dev peer "$peer" allowed-ips "${aCIDR// /,}" persistent-keepalive $tsKeepalive 2>$fn; then
 
-    echo "OK:$( wg show $dev private-key | wg pubkey ):$( wg show $dev listen-port ):${ipClient}:${server%/*}"
+  cmdWG="$(                                                                    \
+                                                                               \
+    printf -- 'wg set %s peer "%s" allowed-ips "%s" persistent-keepalive %d'   \
+              "$dev" "$peer" "${aCIDR// /,}" "$tsKeepalive"                    \
+                                                                               \
+  )"
+
+  if $cmdWG 2>$fn; then
+
+    printf -- 'OK:%s:%s:%s:%s\n'                                               \
+              "$( wg show $dev private-key | wg pubkey )"                      \
+              "$( wg show $dev listen-port )"                                  \
+              "${ipClient}"                                                    \
+              "${server%/*}"
 
     for s in $( wg show $dev peers ); do
 
       grep ":${s:0:10}$" $fnLeased
 
     done > $fn
+
     mv -f $fn $fnLeased
     echo "${cnClient}:${ipClient}:$(date +%s):${peer:0:10}" >> $fnLeased
 
@@ -280,7 +312,7 @@ udfHandleRequest() {
   for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
 
     wg set $dev peer $s remove
-    udfDebug 3 "${dev}: peer ${s:0:10}<skipped> is removed as unused .. $?"
+    udfDebug 3 "${dev}: peer ${s:0:10}<skip> is removed as unused .. $?"
 
   done
 
@@ -313,7 +345,8 @@ udfSetupTunnel() {
 
    }
 
-  udfDebug 3 "init new server pub key: $( wg show $dev private-key | wg pubkey | head -c 10 )<skipped>"
+  udfDebug 3 "init new server pub key: \
+    $( wg show $dev private-key | wg pubkey | head -c 10 )<skip>"
 
   return 0
 
@@ -323,21 +356,31 @@ udfService() {
 
   DEBUGLEVEL=5
 
-  [[ $UID == 0 ]] || eval $( udfOnError throw NotPermitted "You must be root to run this." )
+  [[ $UID == 0 ]] || eval $(                                                   \
+                                                                               \
+    udfOnError throw NotPermitted "You must be root to run this."              \
+                                                                               \
+  )
 
   udfThrowOnCommandNotFound cut kill ps sort
-  udfThrowOnEmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey port portAuth server
+  udfThrowOnEmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey port \
+                          portAuth server
 
   local cmdSSL fn fnDH
 
-  if [[ -z "$( wg | grep $dev )" || -z "$( ip addr show $dev | grep ${server%/*} )" ]]; then
+  if [[ $( wg | grep $dev ) && $( ip addr show $dev | grep ${server%/*} ) ]];
+  then
 
     udfSetupTunnel
 
   fi
 
   fnDH=${pathCrt}/dh2048.pem
-  cmdSSL="openssl s_server -cert $fnCrt -key $fnKey -accept $portAuth -CApath $pathCA -Verify 2 -crl_check_all -dhparam $fnDH"
+
+  cmdSSL="                                                                     \
+    openssl s_server -cert $fnCrt -key $fnKey -accept $portAuth                \
+      -CApath $pathCA -Verify 2 -crl_check_all -dhparam $fnDH                  \
+  "
 
   udfStopProcess $cmdSSL
 

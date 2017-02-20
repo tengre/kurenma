@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 145 2017-02-19 01:00:53+04:00 toor $"
+# $Id: server.kurenma.src 146 2017-02-20 11:46:09+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -281,7 +281,7 @@ udfHandleRequest() {
 
   cmdWG="$(                                                                    \
                                                                                \
-    printf -- 'wg set %s peer "%s" allowed-ips "%s" persistent-keepalive %d'   \
+    printf -- 'wg set %s peer %s allowed-ips %s persistent-keepalive %d'       \
               "$dev" "$peer" "${aCIDR// /,}" "$tsKeepalive"                    \
                                                                                \
   )"
@@ -338,12 +338,12 @@ udfSetupTunnel() {
     wg set $dev private-key <(wg genkey) listen-port $port
     ip link set up dev $dev
 
-   } catch {
+  } catch {
 
-      ERR::exception.message
-      exit $?
+    ERR::exception.message
+    exit $?
 
-   }
+  }
 
   udfDebug 3 "init new server pub key: \
     $( wg show $dev private-key | wg pubkey | head -c 10 )<skip>"
@@ -368,7 +368,7 @@ udfService() {
 
   local cmdSSL fn fnDH
 
-  if [[ $( wg | grep $dev ) && $( ip addr show $dev | grep ${server%/*} ) ]];
+  if [[ ! ( $( wg|grep $dev ) && $( ip addr show $dev|grep ${server%/*} ) ) ]];
   then
 
     udfSetupTunnel

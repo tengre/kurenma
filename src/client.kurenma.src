@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 145 2017-02-18 02:52:30+04:00 toor $
+# $Id: client.kurenma.src 146 2017-02-20 11:46:08+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -81,7 +81,7 @@ udfGetTunnelSettings() {
 
   local fmt fnAns sKey sPub s
 
-  fmt="\nclient WireGuard keys:\nprivate - %s<skipped>\npublic  - %s<skipped>\n"
+  fmt="\nclient WireGuard keys:\nprivate - %s<skip>\npublic  - %s<skip>\n"
 
   s="$(_ iErrorAbortedBySignal) stop signal received"
 
@@ -107,7 +107,7 @@ udfGetTunnelSettings() {
 
     [[ $s =~ ^OK: ]] && break
 
-    [[ -z "$s" ]] && s="$(< $fnAns)"
+    [[ $s ]] || s="$(< $fnAns)"
 
     eval $(                                                                    \
                                                                                \
@@ -137,7 +137,7 @@ udfSetupTunnel() {
   [[ $1 == $( _ iErrorAbortedBySignal  ) ]] \
     && return $( _ iErrorAbortedBySignal  )
 
-  [[ $1 != "OK"   ]] && return $( _ iErrorInvalidArgument )
+  [[ $1 != "OK" ]] && return $( _ iErrorInvalidArgument )
 
   shift
 
@@ -147,12 +147,12 @@ udfSetupTunnel() {
   ipServer=$( udfGetValidIPsOnly $4 )
   sKey=$5
 
-  udfDebug 3 && printf -- "$fmtCon" "$host" "$port" "${peer:0:10}<skipped>"    \
+  udfDebug 3 && printf -- $fmtCon "$host" "$port" "${peer:0:10}<skip>"    \
     "$ipClient" "$ipServer"
 
   udfThrowOnEmptyVariable peer port ipClient ipServer
 
-  udfDebug 0 && printf -- "Setup tunnel for peer %s<skipped>: " "${peer:0:10}"
+  udfDebug 0 && printf -- "Setup tunnel for peer %s<skip>: " "${peer:0:10}"
 
   try {
 
@@ -288,7 +288,7 @@ udfService() {
         if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
 
           wg set $dev peer ${s%%:*} remove
-          udfDebug 3 "peer ${s:0:10}<skipped> removed .. $?"
+          udfDebug 3 "peer ${s:0:10}<skip> removed .. $?"
           bStart=true
 
         else

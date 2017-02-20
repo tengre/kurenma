@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 146 2017-02-20 11:46:09+04:00 toor $"
+# $Id: server.kurenma.src 148 2017-02-20 15:33:31+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -306,6 +306,7 @@ udfHandleRequest() {
   else
 
     echo "Error $(< $fn) $?"
+    rm -f $fn
 
   fi
 

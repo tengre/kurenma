@@ -1,12 +1,14 @@
 #!/bin/bash
 #
-# $Id: kurenmad 144 2017-02-16 16:53:48+04:00 toor $"
+# $Id: kurenmad 148 2017-02-20 16:11:11+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
+_kurenma_sDate=2017-02-20
 _kurenma_sVersion=0.8
+_kurenma_sRevision=148
 _kurenma_pathLib=/usr/share/kurenma
 _kurenma_sSignal=none
 #
@@ -221,10 +223,20 @@ udfMain() {
 
   cn=$( ini.get [ssl]cn )
 
-  aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ) \
-    && s=", (с) ${aId[3]}, v${_kurenma_sVersion} rev${aId[2]}"
+  if [[ $_kurenma_sDate && $_kurenma_sRevision ]]; then
 
-  udfDebug 1 "start $( _ s0 ) as ${role}${s}"
+    s="$( printf -- ", %s.%s %s, (c) 2016-%s\n\n"                              \
+                    "${_kurenma_sVersion}" "${_kurenma_sRevision}"             \
+                    "$_kurenma_sDate" "$(date +%Y)"                            \
+    )"
+
+  else
+
+    s=
+
+  fi
+
+  udfDebug 1 "start ${0##*/} as ${role}${s}"
 
        dev=$( ini.get tunnel name )
   portAuth=$( ini.get [ssl]port   )

@@ -1,8 +1,10 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 138 2017-02-12 02:03:13+04:00 toor $
+# $Id: kurenmactl 148 2017-02-20 16:11:11+04:00 toor $
 #
+_kurenma_sDate=2017-02-20
 _kurenma_sVersion=0.8
+_kurenma_sRevision=148
 #
 _bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 #
@@ -39,8 +41,10 @@ udfUsage() {
 
   local -a aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) )
 
-  printf -- "\t%s v%s rev%s, Kurenma Service Management Tool, (c) %s\n" \
-            "$(_ s0)" "$_kurenma_sVersion" "${aId[2]}" "${aId[3]}"
+  printf -- "\t%s %s.%s %s, Kurenma Service Management Tool, (c) 2016-%s\n"    \
+            "${0##*/}"                                                         \
+            "$_kurenma_sVersion" "$_kurenma_sRevision" "$_kurenma_sDate"       \
+            "$(date +%Y)"
 
   cat <<-EOF | tr -d '#'
 

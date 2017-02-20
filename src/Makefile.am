@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 148 2017-02-20 16:11:11+04:00 toor $
+## $Id: Makefile.am 149 2017-02-20 23:21:47+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -19,10 +19,7 @@ systemd_DATA		= ${PACKAGE}.service
 sysconfdir		= ${ETC}/${PACKAGE}
 sysconf_DATA		= ipslist.ini ${PACKAGE}.ini.example dn.${PACKAGE}.ini
 syslibdir		= /usr/share/${PACKAGE}
-syslib_DATA		= knockd.conf.example openssl.cnf.template client.kurenma.src server.kurenma.src
-PACKAGEDATE		= $(shell git log -1 --pretty=format:"%ci" | cut -f1 -d' ' 2>/dev/null )
-PACKAGEVERSION		= $(shell test -f ../ChangeLog && sed -n "3p" ../ChangeLog | sed -e "s/.*Version.//")
-PACKAGEREVISION		= $(shell s=$$(git shortlog -s 2>/dev/null | grep -oP '^\s+\d+\s+' | xargs | sed -e "s/ / + /g") && expr $$s + 1 )
+syslib_DATA		= knockd.conf.example openssl.cnf.template client.kurenma.src server.kurenma.src ../VERSION
 DESTDIR			=
 
 $(systemv_SCRIPTS) : ${PACKAGE}.initd
@@ -49,11 +46,3 @@ uninstall-hook:
 
 clean-local:
 	-rm -rf .${ETC}
-
-all:
-	$(shell) test -n ${PACKAGEDATE} && sed -i -e "s/_kurenma_sDate=.*/_kurenma_sDate=${PACKAGEDATE}/" kurenmactl
-	$(shell) test -n ${PACKAGEDATE} && sed -i -e "s/_kurenma_sDate=.*/_kurenma_sDate=${PACKAGEDATE}/" kurenmad
-	$(shell) test -n ${PACKAGEVERSION} && sed -i -e "s/_kurenma_sVersion=.*/_kurenma_sVersion=${PACKAGEVERSION}/" kurenmactl
-	$(shell) test -n ${PACKAGEVERSION} && sed -i -e "s/_kurenma_sVersion=.*/_kurenma_sVersion=${PACKAGEVERSION}/" kurenmad
-	$(shell) test -n ${PACKAGEREVISION} && sed -i -e "s/_kurenma_sRevision=.*/_kurenma_sRevision=${PACKAGEREVISION}/" kurenmactl
-	$(shell) test -n ${PACKAGEREVISION} && sed -i -e "s/_kurenma_sRevision=.*/_kurenma_sRevision=${PACKAGEREVISION}/" kurenmad

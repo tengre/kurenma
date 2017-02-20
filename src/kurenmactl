@@ -1,10 +1,8 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 148 2017-02-20 16:11:11+04:00 toor $
+# $Id: kurenmactl 149 2017-02-20 23:21:47+04:00 toor $
 #
-_kurenma_sDate=2017-02-20
-_kurenma_sVersion=0.8
-_kurenma_sRevision=148
+_kurenma_pathLib=/usr/share/kurenma
 #
 _bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 #
@@ -39,12 +37,20 @@ _bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 #******
 udfUsage() {
 
-  local -a aId=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) )
+  local -a a
 
-  printf -- "\t%s %s.%s %s, Kurenma Service Management Tool, (c) 2016-%s\n"    \
-            "${0##*/}"                                                         \
-            "$_kurenma_sVersion" "$_kurenma_sRevision" "$_kurenma_sDate"       \
-            "$(date +%Y)"
+  if [[ -s ${_kurenma_pathLib}/VERSION ]]; then
+
+    a=( $( < ${_kurenma_pathLib}/VERSION ) )
+    printf -- "\t%s %s.%s %s, Kurenma Service Management Tool, (c) 2016-%s\n"  \
+              "${0##*/}" "${a[0]}" "${a[1]}" "${a[2]}" "$(date +%Y)"
+
+  elif a=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ); then
+
+    printf -- "\t%s rev%s %s, Kurenma Service Management Tool, (c) 2016-%s\n"  \
+              "${0##*/}" "${a[2]}" "${a[3]}" "$(date +%Y)"
+
+  fi
 
   cat <<-EOF | tr -d '#'
 

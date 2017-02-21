@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 144 2017-02-16 16:51:31+04:00 toor $
+# $Id: setup-knockd 150 2017-02-21 17:01:14+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -57,9 +57,8 @@ udfMain() {
   ini.set [ kurenma ] tcpflags    = syn
 
   ini.save $conf
+  udfDebug 2 && ini.show
   ini.free
-
-  udfDebug 2 && cat $conf
 
   if [[ -d /run/systemd/system ]]; then
 

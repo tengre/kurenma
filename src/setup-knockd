@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 150 2017-02-21 17:01:14+04:00 toor $
+# $Id: setup-knockd 151 2017-02-27 22:56:07+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -49,6 +49,9 @@ udfMain() {
   udfDebug 2 "knock ports sequence: $s"
 
   INI ini
+  ini.settings.section.padding = false
+  ini.settings chComment       = '#'
+
   ini.load $conf
 
   ini.set [ kurenma ] sequence    = $s
@@ -57,7 +60,7 @@ udfMain() {
   ini.set [ kurenma ] tcpflags    = syn
 
   ini.save $conf
-  udfDebug 2 && ini.show
+  udfDebug 2 && ini.show | sed -re "s/^[[:space:]]/\x1c  /"
   ini.free
 
   if [[ -d /run/systemd/system ]]; then

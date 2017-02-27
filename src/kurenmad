@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 149 2017-02-20 23:27:27+04:00 toor $"
+# $Id: kurenmad 151 2017-02-27 22:56:07+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -278,11 +278,9 @@ udfMain() {
 
   if udfDebug 3; then
 
-    ini.set [ __settings__ ] bConfMode = true
     echo -e "configuration:\n~~~~~~~~~~~~~~\n"
-    ini.show
+    ini.show | sed -re "s/^[[:space:]]/\x1c  /"
     echo -e "~~~~~~~~~~~~~~\n"
-    ini.set [ __settings__ ] bConfMode = false
 
   fi
 

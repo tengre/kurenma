@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 151 2017-02-27 22:56:07+04:00 toor $
+# $Id: setup-knockd 152 2017-02-28 11:06:57+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -60,16 +60,21 @@ udfMain() {
   ini.set [ kurenma ] tcpflags    = syn
 
   ini.save $conf
-  udfDebug 2 && ini.show | sed -re "s/^[[:space:]]/\x1c  /"
+  udfDebug 2 && ini.show | sed -re "s/^[[:space:]]/\xc2\xa0\x20/"
   ini.free
 
   if [[ -d /run/systemd/system ]]; then
 
-    systemctl restart knockd.service
+    systemctl stop  knockd.service
+    sleep 2
+    systemctl start knockd.service
+
 
   else
 
-    service knockd restart
+    service knockd stop
+    sleep 2
+    service knockd start
 
   fi
 

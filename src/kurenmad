@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 151 2017-02-27 22:56:07+04:00 toor $"
+# $Id: kurenmad 152 2017-02-28 11:06:57+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -279,7 +279,7 @@ udfMain() {
   if udfDebug 3; then
 
     echo -e "configuration:\n~~~~~~~~~~~~~~\n"
-    ini.show | sed -re "s/^[[:space:]]/\x1c  /"
+    ini.show | sed -re "s/^[[:space:]]/\xc2\xa0\x20/"
     echo -e "~~~~~~~~~~~~~~\n"
 
   fi

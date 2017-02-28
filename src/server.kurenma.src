@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 148 2017-02-20 15:33:31+04:00 toor $"
+# $Id: server.kurenma.src 152 2017-02-28 11:06:57+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -18,11 +18,11 @@ udmResetCounters() {
 #
 udmCloseConnection() {
 
-  udfDebug 3 "client $cn connection closed"
+  udfDebug 3 "client $cn - exchange completed"
 
   udmResetCounters
 
-  echo "connection down"
+  echo "exchange completed"
   sleep 1
   echo "q"
 
@@ -49,12 +49,12 @@ udmLimitConnectionTime() {
 
   local i=$(( $(date "+%s") - $tsStart ))
 
-  (( i > 16 )) && udfDebug 3 "client $cn connection time is ${i}sec"
+  (( i > 16 )) && udfDebug 3 "client $cn - exchange time is ${i}sec"
 
   if (( $i > $1 )); then
 
-    udfDebug 3 "client $cn connection down by timeout ${i}sec"
-    echo "client $cn connection down by timeout"
+    udfDebug 3 "client $cn - exchange down by timeout ${i}sec"
+    echo "client $cn - exchange down by timeout"
 
     udmCloseConnection
 
@@ -108,7 +108,7 @@ udfWaitRequest() {
 
       [[ "$s" == "$cn" ]] && continue || cn=$s
 
-      udfDebug 3 "client $cn connection start"
+      udfDebug 3 "client $cn - exchange started"
 
       tsStart=$(date "+%s")
       tsWait=4

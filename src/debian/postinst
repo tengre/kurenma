@@ -19,10 +19,12 @@ set -e
 
 
 PACKAGE=kurenma
-cmdSystemV=/etc/init.d/${PACKAGE}
+SERVICE=${PACKAGE}.service
+SYSTEMV=/etc/init.d/${PACKAGE}
 
 
 case "$1" in
+
     configure)
 
     ;;
@@ -39,18 +41,16 @@ esac
 
 while [ -d /run/systemd/system ]; do
 
-  deb-systemd-helper enable ${PACKAGE}.service || \
-    systemctl enable ${PACKAGE}.service || break
+  deb-systemd-helper enable $SERVICE || systemctl enable $SERVICE || break
 
   systemctl daemon-reload || break
 
-  deb-systemd-invoke start ${PACKAGE}.service || \
-    systemctl start ${PACKAGE}.service || break
+  deb-systemd-invoke  start $SERVICE || systemctl  start $SERVICE || break
 
-  if [ -f $cmdSystemV ]; then
+  if [ -f $SYSTEMV ]; then
 
-    chmod -x $cmdSystemV
-    mv -f $cmdSystemV ${cmdSystemV}.disabled-by-systemd
+    chmod -x $SYSTEMV
+    mv -f $SYSTEMV ${SYSTEMV}.disabled-by-systemd
 
   fi
 
@@ -58,7 +58,7 @@ while [ -d /run/systemd/system ]; do
 
 done
 
-if [ -x "/etc/init.d/kurenma" ]; then
+if [ -x "$SYSTEMV" ]; then
 
   update-rc.d kurenma defaults 21 19 >/dev/null
   invoke-rc.d kurenma start || exit $?

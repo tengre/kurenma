@@ -19,9 +19,11 @@ set -e
 # the debian-policy package
 
 PACKAGE=kurenma
-cmdSystemV=/etc/init.d/${PACKAGE}
+SERVICE=${PACKAGE}.service
+SYSTEMV=/etc/init.d/${PACKAGE}
 
 case "$1" in
+
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;
 
@@ -32,16 +34,16 @@ case "$1" in
         echo "postrm called with unknown argument \`$1'" >&2
         exit 1
     ;;
+
 esac
 
-rm -f ${cmdSystemV}.disabled-by-systemd
+rm -f ${SYSTEMV}.disabled-by-systemd
 
-[ -x "/etc/init.d/kurenma" ] && update-rc.d -f kurenma remove >/dev/null || true
+[ -x "$SYSTEMV" ] && update-rc.d -f kurenma remove >/dev/null || true
 
 if [ -d /run/systemd/system ]; then
 
-  deb-systemd-helper disable ${PACKAGE}.service || \
-    systemctl disable ${PACKAGE}.service
+  deb-systemd-helper disable $SERVICE || systemctl disable $SERVICE
 
   systemctl daemon-reload
 

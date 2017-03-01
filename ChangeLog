@@ -1,8 +1,8 @@
-Thu, 16 Feb 2017 00:30:23 +0400
+Wed, 01 Mar 2017 12:35:53 +0400
 	New upstream release
 	Version 0.8
  - configuration options become more clear through the use of bashlyk version
-   1.89 with new INI implementation:
+   1.89.700 with new INI implementation (option names with whitespaces):
         dev           -> tunnel name
         tsKeepalive   -> persistent keepalive
         tsPeerTimeout -> pause between checks
@@ -16,7 +16,35 @@ Thu, 16 Feb 2017 00:30:23 +0400
  - '{try,catch}-every-line' box replaced by 'try .. catch' implementation from
    bashlyk 1.89.689
  - fixed error of the DNS name resolving
- - improved code style and debian scripts, updated descriptions
+ - improved code style and debian scripts - fixed lintian messages, updated
+   descriptions
+ - added special file VERSION for tracking version and revision from kurenmad
+   and kurenmactl
+
+server.kurenma.src:
+ - fixed format error for generating remote peer properties
+ - fixed condition for tunnel setup
+ - delete the temporary file when the failure preparing the remote peer
+   properties
+ - 'connection' word replaced by 'exchange' for client interaction
+   logging
+
+kurenmad, setup-knockd:
+ - use nonbreaked whitespace as leader char for display the configuration info
+
+kurenmactl:
+ - added variable _kurenma_pathLib
+
+setup-knockd:
+ - used 'INI::show' instead 'cat ..'
+ - support knockd INI parser with use INI::settings..
+ - split stop and start service by delay 2 sec
+
+debian/postrm:
+ - added missing variables
+
+Makefile.am:
+ - added target ..VERSION to syslib_DATA
 
 
 Mon, 07 Nov 2016 15:56:10 +0400
@@ -346,4 +374,4 @@ Sun, 10 Jul 2016 17:47:51 +0400
 	Version 0.1
 
 --
-$Id: ChangeLog 148 2017-02-20 15:51:52+04:00 toor $
+$Id: ChangeLog 154 2017-03-01 12:37:07+04:00 toor $

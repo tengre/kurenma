@@ -1,9 +1,131 @@
 #
-# $Id: client.kurenma.src 146 2017-02-20 11:46:08+04:00 toor $
+# $Id: client.kurenma.src 155 2017-03-03 16:40:27+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
+#
+#
+udmResetCounters() {
+
+  bRevoked=0
+  cn=''
+  tsStart=0
+  tsWait=60
+
+}
+#
+udmCloseConnection() {
+
+  udfDebug 3 "client $cn - exchange completed"
+
+  udmResetCounters
+
+  sleep 1
+  udfStopProcess $cmdSSL
+
+}
+#
+udmRevoked() {
+
+  udfDebug 3 "my $cn cert revoked"
+  udmCloseConnection
+
+}
+#
+#
+udmLimitConnectionTime() {
+
+  udfIsNumber $1 || eval $( udfOnError retwarn NotNumber "$1" )
+  udfIsNumber $tsStart || eval $( udfOnError retwarn NotNumber "$tsStart" )
+
+  (( tsStart > 0 )) || return 0
+  [[ $cn ]] || eval $( udfOnError retwarn EmptyArgument "server cn" )
+
+  local i=$(( $(date "+%s") - $tsStart ))
+
+  (( i > 16 )) && udfDebug 3 "server $cn - exchange time is ${i}sec"
+
+  if (( $i > $1 )); then
+
+    udfDebug 3 "server $cn - exchange down by timeout ${i}sec"
+    udmCloseConnection
+
+  fi
+
+}
+#
+udfWaitResponse() {
+
+  local bRevoked=0 cn rc s tsStart=0 tsWait=60
+
+  echo "client-data $sPub"
+  tsStart=$(date "+%s")
+
+  while true; do
+
+    read -t $tsWait s
+    rc=$?
+
+    if   (( rc > 128 )); then
+
+      (( bRevoked > 0 )) && udmRevoked
+
+    elif (( rc > 0 )); then
+
+      udfDebug 3 "input closed"
+      udmCloseConnection
+      sleep 0.2
+      break
+
+    elif [[ $s =~ ^signalStop$ ]]; then
+
+      udfDebug 3 "SSL client down"
+
+      udmCloseConnection
+      sleep 0.2
+      break
+
+    elif [[ $s =~ ^client.cert.revoked ]]; then
+
+      udfDebug 3 "warn: $cn revoked certificate"
+      bRevoked=1
+      tsWait=2
+
+    elif [[ $s =~ depth=0.*CN.* ]]; then
+
+      s="${s##*, CN = }"
+      s="${s%,*}"
+
+      [[ "$s" == "$cn" ]] && continue || cn=$s
+
+      udfDebug 3 "server $cn - exchange started"
+
+      tsStart=$(date "+%s")
+      tsWait=4
+
+    elif [[ $s =~ ^OK:.* ]]; then
+
+        udfDebug 3 "server data: ${s:1:32}<skip>"
+        sleep 1.1
+        udmCloseConnection
+        ## TODO
+        #udfSetupTunnel ${s//:/ } $sKey
+
+      fi
+
+    elif [[ $s =~ ^(verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]];
+    then
+
+      udfDebug 3 "SSL: $s"
+
+    fi
+
+    udmLimitConnectionTime 32
+
+  done
+
+}
 #
 udfKnocking() {
 
@@ -98,10 +220,15 @@ udfGetTunnelSettings() {
     sKey=$( wg genkey )
     sPub=$( echo $sKey | wg pubkey )
 
-    s="$(                                                                      \
-      echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns             \
-        | grep '^OK:'                                                          \
-    )"
+    #s="$(                                                                      \
+    #  echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns             \
+    #    | grep '^OK:'                                                          \
+    #)"
+
+    udfMakeTemp fn type=pipe
+    export _kurenma_control_channel=$fn
+
+    udfWatchResponse < $fn | $cmdSSL > $fn 2>&1 &
 
     udfDebug 3 && printf -- $fmt "${sKey:0:10}" "${sPub:0:10}"
 

@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 152 2017-02-28 11:06:57+04:00 toor $"
+# $Id: server.kurenma.src 155 2017-03-03 16:40:27+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -45,7 +45,7 @@ udmLimitConnectionTime() {
     || eval $( udfOnError return InvalidArgument "$tsStart - number expected" )
 
   (( tsStart > 0 )) || return 0
-  [[ -n "$cn" ]] || eval $( udfOnError return EmptyArgument "cn" )
+  [[ $cn ]] || eval $( udfOnError return EmptyArgument "cn" )
 
   local i=$(( $(date "+%s") - $tsStart ))
 

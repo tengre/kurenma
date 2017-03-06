@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 157 2017-03-06 16:10:03+04:00 toor $
+# $Id: client.kurenma.src 158 2017-03-06 17:29:54+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -229,7 +229,7 @@ udfGetTunnelSettings() {
     #export _kurenma_control_channel=$fn
     #udfWatchResponse < $fn | $cmdSSL > $fn 2>&1 &
 
-    udfDebug 3 && printf -- $fmt "${sKey:0:10}" "${sPub:0:10}"
+    udfDebug 3 && printf -- $fmt "${sKey:0:10}" "${sPub:0:10}" >&2
 
     [[ $s =~ ^OK: ]] && break
 
@@ -272,8 +272,8 @@ udfSetupTunnel() {
   ipServer=$( udfGetValidIPsOnly $4 )
   sKey=$5
 
-  udfDebug 3 && printf -- $fmtCon "$host" "$port" "${peer:0:10}<skip>"    \
-    "$ipClient" "$ipServer"
+  udfDebug 3 && printf -- $fmtCon "$host" "$port" "${peer:0:10}<skip>" \
+    "$ipClient" "$ipServer" >&2
 
   udfThrowOnEmptyVariable peer port ipClient ipServer
 

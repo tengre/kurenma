@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 155 2017-03-03 16:40:27+04:00 toor $
+# $Id: client.kurenma.src 156 2017-03-06 16:03:22+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -17,7 +17,7 @@ udmResetCounters() {
 #
 udmCloseConnection() {
 
-  udfDebug 3 "client $cn - exchange completed"
+  udfDebug 3 "server $cn - exchange completed"
 
   udmResetCounters
 
@@ -220,15 +220,16 @@ udfGetTunnelSettings() {
     sKey=$( wg genkey )
     sPub=$( echo $sKey | wg pubkey )
 
-    #s="$(                                                                      \
-    #  echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns             \
-    #    | grep '^OK:'                                                          \
-    #)"
+    ( sleep 6 && udfStopProcess $cmdSSL ) &
 
-    udfMakeTemp fn type=pipe
-    export _kurenma_control_channel=$fn
+    s="$(                                                                      \
+      echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns             \
+        | grep '^OK:'                                                          \
+    )"
 
-    udfWatchResponse < $fn | $cmdSSL > $fn 2>&1 &
+    #udfMakeTemp fn type=pipe
+    #export _kurenma_control_channel=$fn
+    #udfWatchResponse < $fn | $cmdSSL > $fn 2>&1 &
 
     udfDebug 3 && printf -- $fmt "${sKey:0:10}" "${sPub:0:10}"
 
@@ -261,8 +262,7 @@ udfSetupTunnel() {
 
   local ipClient ipServer peer port sKey
 
-  [[ $1 == $( _ iErrorAbortedBySignal  ) ]] \
-    && return $( _ iErrorAbortedBySignal  )
+  [[ $1 == $(_ iErrorAbortedBySignal) ]] && return $(_ iErrorAbortedBySignal)
 
   [[ $1 != "OK" ]] && return $( _ iErrorInvalidArgument )
 
@@ -279,7 +279,7 @@ udfSetupTunnel() {
 
   udfThrowOnEmptyVariable peer port ipClient ipServer
 
-  udfDebug 0 && printf -- "Setup tunnel for peer %s<skip>: " "${peer:0:10}"
+  udfDebug 0 && printf -- "\nSetup tunnel for peer %s<skip>: " "${peer:0:10}"
 
   try {
 

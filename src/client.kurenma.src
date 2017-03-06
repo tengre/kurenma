@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 156 2017-03-06 16:03:22+04:00 toor $
+# $Id: client.kurenma.src 157 2017-03-06 16:10:03+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -111,8 +111,6 @@ udfWaitResponse() {
         udmCloseConnection
         ## TODO
         #udfSetupTunnel ${s//:/ } $sKey
-
-      fi
 
     elif [[ $s =~ ^(verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]];
     then

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 159 2017-03-07 14:30:41+04:00 toor $"
+# $Id: kurenmad 160 2017-03-07 16:05:51+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -103,22 +103,6 @@ udfWaitSignal() {
   fi
 
   return 0
-}
-#
-udfShowPeerInfo() {
-
-  udfThrowOnEmptyVariable dev
-
-  printf -- \
-    "\n\nWireGuard interface %s info:\n-----------------------------\n\n" "$dev"
-
-  wg show $dev \
-    | sed -re "s/(peer:|public.?key[ :]|private.?key[ :]).*$/\1 <hidden>/ig"
-
-  ip addr show $dev | grep inet
-
-  printf -- "\n----\n"
-
 }
 #
 udfSignal() {

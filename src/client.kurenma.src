@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 159 2017-03-07 14:30:41+04:00 toor $
+# $Id: client.kurenma.src 160 2017-03-07 16:05:51+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -396,7 +396,6 @@ udfService() {
 
       $bDefaultRoute && udfSetDefaultRoute
       udfDebug 1 && printf -- "\nclient configuration done.\n"
-      udfDebug 5 && udfShowPeerInfo
 
       wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
       chmod 0600 ${pathIni}/${cn}.${dev}.conf

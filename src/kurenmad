@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 152 2017-02-28 11:06:57+04:00 toor $"
+# $Id: kurenmad 159 2017-03-07 14:30:41+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -123,7 +123,7 @@ udfShowPeerInfo() {
 #
 udfSignal() {
 
-  [[ -n "$_kurenma_control_channel" && -p "$_kurenma_control_channel" ]] \
+  [[ $_kurenma_control_channel && -p $_kurenma_control_channel ]] \
     && echo "signalStop" > $_kurenma_control_channel
 
   _kurenma_sSignal='stop'
@@ -279,7 +279,7 @@ udfMain() {
   if udfDebug 3; then
 
     echo -e "configuration:\n~~~~~~~~~~~~~~\n"
-    ini.show | sed -re "s/^[[:space:]]/\xc2\xa0\x20/"
+    ini.show | sed -re "s/^[[:space:]]/\xc2\xa0/"
     echo -e "~~~~~~~~~~~~~~\n"
 
   fi

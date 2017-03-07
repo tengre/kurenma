@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 155 2017-03-03 16:40:27+04:00 toor $"
+# $Id: server.kurenma.src 159 2017-03-07 14:30:41+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -207,7 +207,7 @@ udfHandleRequest() {
 
   fi
 
-  if [[ -z "$ipClient" || $pool == "dynamic" ]]; then
+  if [[ ! $ipClient || $pool == "dynamic" ]]; then
 
     [[ -f $fnLeased ]] || touch $fnLeased
 
@@ -236,7 +236,7 @@ udfHandleRequest() {
 
   fi
 
-  if [[ -z "$ipClient" ]]; then
+  if [[ ! $ipClient ]]; then
 
     ipClient=$(( ${server%/*} ))
     s="$( wg show $dev allowed-ips )"
@@ -262,7 +262,7 @@ udfHandleRequest() {
 
   fi
 
-  if [[ -z "$ipClient" || ${server%/*} == $ipClient ]]; then
+  if [[ ! $ipClient || ${server%/*} == $ipClient ]]; then
 
     echo "not allocated IP to the client"
     eval $(                                                                    \
@@ -329,7 +329,7 @@ udfSetupTunnel() {
 
   udfThrowOnEmptyVariable dev server port
 
-  udfDebug 3 "Init WireGuard device $dev"
+  udfDebug 3 && printf -- "Init WireGuard device %s" "$dev"
 
   try {
 

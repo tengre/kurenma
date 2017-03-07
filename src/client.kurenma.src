@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 158 2017-03-06 17:29:54+04:00 toor $
+# $Id: client.kurenma.src 159 2017-03-07 14:30:41+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -140,7 +140,7 @@ udfKnocking() {
                                                                                \
   )
 
-  [[ -n "$s" ]] || eval $(                                                     \
+  [[ $s ]] || eval $(                                                          \
                                                                                \
     udfOnError throw EmptyResult "$fnCA - not valid format"                    \
                                                                                \
@@ -165,7 +165,7 @@ udfKnocking() {
 
     if ! (( i % 8 )); then
 
-      knock $host $s
+      knock $host $s >/dev/null 2>&1
       udfDebug 2 && echo -n "!"
 
     fi
@@ -201,7 +201,7 @@ udfGetTunnelSettings() {
 
   local fmt fnAns sKey sPub s
 
-  fmt="\nclient WireGuard keys:\nprivate - %s<skip>\npublic  - %s<skip>\n"
+  fmt="\nclient keys: public=%s<skip> private=%s<skip>\n"
 
   s="$(_ iErrorAbortedBySignal) stop signal received"
 
@@ -218,6 +218,7 @@ udfGetTunnelSettings() {
     sKey=$( wg genkey )
     sPub=$( echo $sKey | wg pubkey )
 
+    udfDebug 0 "server ${host}:${portAuth} SSL exchange start"
     ( sleep 6 && udfStopProcess $cmdSSL ) &
 
     s="$(                                                                      \
@@ -225,11 +226,12 @@ udfGetTunnelSettings() {
         | grep '^OK:'                                                          \
     )"
 
+    udfDebug 0 "server ${host}:${portAuth} SSL exchange done"
     #udfMakeTemp fn type=pipe
     #export _kurenma_control_channel=$fn
     #udfWatchResponse < $fn | $cmdSSL > $fn 2>&1 &
 
-    udfDebug 3 && printf -- $fmt "${sKey:0:10}" "${sPub:0:10}" >&2
+    udfDebug 3 && printf -- "$fmt" "${sPub:0:10}" "${sKey:0:10}" >&2
 
     [[ $s =~ ^OK: ]] && break
 
@@ -252,13 +254,16 @@ udfGetTunnelSettings() {
   echo "${s//:/ } $sKey"
 
   return 0
+
 }
 #
 udfSetupTunnel() {
 
   udfThrowOnEmptyVariable dev host
 
-  local ipClient ipServer peer port sKey
+  local fmt ipClient ipServer peer port sKey
+
+  fmt="server keys: public=%s (%s:%d)\ntunnel leased/remote IPs - %s/%s\n"
 
   [[ $1 == $(_ iErrorAbortedBySignal) ]] && return $(_ iErrorAbortedBySignal)
 
@@ -272,8 +277,8 @@ udfSetupTunnel() {
   ipServer=$( udfGetValidIPsOnly $4 )
   sKey=$5
 
-  udfDebug 3 && printf -- $fmtCon "$host" "$port" "${peer:0:10}<skip>" \
-    "$ipClient" "$ipServer" >&2
+  udfDebug 3 && printf -- "$fmt" "${peer:0:10}<skip>" "$host" "$port" \
+                          "$ipClient" "$ipServer" >&2
 
   udfThrowOnEmptyVariable peer port ipClient ipServer
 
@@ -316,7 +321,7 @@ udfSetDefaultRoute() {
   s="$( ip route get $s | grep -Po "$_peIPv4 via $_peIPv4" )"
   udfDebug 4 "route rule for server: $s"
 
-  if [[ -n "$s" ]]; then
+  if [[ $s ]]; then
 
   try {
 
@@ -346,15 +351,12 @@ udfSetDefaultRoute() {
 udfService() {
 
   udfThrowOnCommandNotFound false knock ping tee true
-  udfThrowOnEmptyVariable bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni   \
-    portAuth tsPeerTimeout
+  udfThrowOnEmptyVariable   bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni \
+                            portAuth tsPeerTimeout
 
   local bStart cmdSSL fmtCon fmtSSL s
 
   fmtSSL="SSL auth info:\nClient Common Name - %s\n"
-  fmtCon="Connection properties from %s:\nremote port: %d\nserver  key:        \
-    %s\ntunnel  IPs: leased/remote - %s/%s\n"
-
   cmdSSL="                                                                     \
     openssl s_client -connect ${host}:${portAuth} -CAfile $fnCA -cert $fnCrt   \
       -key $fnKey -verify 1 -quiet                                             \

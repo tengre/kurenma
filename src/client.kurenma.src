@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 160 2017-03-07 16:05:51+04:00 toor $
+# $Id: client.kurenma.src 161 2017-03-08 22:48:25+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -197,11 +197,11 @@ udfKnocking() {
 #
 udfGetTunnelSettings() {
 
-  udfThrowOnEmptyVariable cmdSSL cn fnKey host portAuth
+  udfThrowOnEmptyVariable cmdSSL cn dev fnKey host portAuth
 
   local fmt fnAns sKey sPub s
 
-  fmt="\nclient keys: public=%s<skip> private=%s<skip>\n"
+  fmt="\n%s: client %s keys - public=%s<skip> private=%s<skip>\n"
 
   s="$(_ iErrorAbortedBySignal) stop signal received"
 
@@ -231,7 +231,7 @@ udfGetTunnelSettings() {
     #export _kurenma_control_channel=$fn
     #udfWatchResponse < $fn | $cmdSSL > $fn 2>&1 &
 
-    udfDebug 3 && printf -- "$fmt" "${sPub:0:10}" "${sKey:0:10}" >&2
+    udfDebug 3 && printf "$fmt" "$dev" "$cn" "${sPub:0:10}" "${sKey:0:10}" >&2
 
     [[ $s =~ ^OK: ]] && break
 
@@ -263,7 +263,7 @@ udfSetupTunnel() {
 
   local fmt ipClient ipServer peer port sKey
 
-  fmt="server keys: public=%s (%s:%d)\ntunnel leased/remote IPs - %s/%s\n"
+  fmt="%s: server %s:%s tunnel leased/remote IPs - %s/%s\n"
 
   [[ $1 == $(_ iErrorAbortedBySignal) ]] && return $(_ iErrorAbortedBySignal)
 
@@ -277,16 +277,16 @@ udfSetupTunnel() {
   ipServer=$( udfGetValidIPsOnly $4 )
   sKey=$5
 
-  udfDebug 3 && printf -- "$fmt" "${peer:0:10}<skip>" "$host" "$port" \
-                          "$ipClient" "$ipServer" >&2
+  udfDebug 3 && printf "$fmt" "$dev" "$host" "$port" "$ipClient" "$ipServer" >&2
 
   udfThrowOnEmptyVariable peer port ipClient ipServer
 
-  udfDebug 0 && printf -- "\nSetup tunnel for peer %s<skip>: " "${peer:0:10}"
+  udfDebug 0 && printf "\n%s: setup tunnel from server %s<skip>: " \
+                       "$dev" "${peer:0:10}"
 
   try {
 
-    ip link del dev $dev || true
+    ip link del dev $dev 2>/dev/null || true
     ip link add dev $dev type wireguard
 
     wg set $dev private-key <( echo $sKey ) \

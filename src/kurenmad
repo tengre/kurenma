@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 160 2017-03-07 16:05:51+04:00 toor $"
+# $Id: kurenmad 162 2017-03-09 10:15:56+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -161,6 +161,9 @@ udfMain() {
     [ips allowed]=                                                             \
   :
 
+  s=$( ini.get [ips allowed] )
+  eval "${s/declare -a a/declare -a aIpsAllowed}"
+
   role=$( ini.get role )
 
   case $role in
@@ -171,6 +174,7 @@ udfMain() {
     bDefaultRoute=$( ini.get default route )
 
     : ${bDefaultRoute:=false}
+    [[ ${aIpsAllowed[@]} ]] || aIpsAllowed[0]='0.0.0.0/0'
 
     aReqOptByRole="host"
 
@@ -256,9 +260,6 @@ udfMain() {
     tsPeerTimeout=30
 
   fi
-
-  s=$( ini.get [ips allowed] )
-  eval "${s/declare -a a/declare -a aIpsAllowed}"
 
   if udfDebug 3; then
 

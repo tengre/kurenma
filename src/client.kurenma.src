@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 161 2017-03-08 22:48:25+04:00 toor $
+# $Id: client.kurenma.src 162 2017-03-09 10:15:56+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -197,11 +197,11 @@ udfKnocking() {
 #
 udfGetTunnelSettings() {
 
-  udfThrowOnEmptyVariable cmdSSL cn dev fnKey host portAuth
+  udfThrowOnEmptyVariable cmdSSL cn fnKey host portAuth
 
   local fmt fnAns sKey sPub s
 
-  fmt="\n%s: client %s keys - public=%s<skip> private=%s<skip>\n"
+  fmt="\nclient %s keys - public=%s<skip> private=%s<skip>\n"
 
   s="$(_ iErrorAbortedBySignal) stop signal received"
 
@@ -218,20 +218,18 @@ udfGetTunnelSettings() {
     sKey=$( wg genkey )
     sPub=$( echo $sKey | wg pubkey )
 
-    udfDebug 0 "server ${host}:${portAuth} SSL exchange start"
+    udfDebug 0 "server ${host}:${portAuth} - SSL exchange started"
     ( sleep 6 && udfStopProcess $cmdSSL ) &
-
     s="$(                                                                      \
       echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns             \
         | grep '^OK:'                                                          \
     )"
-
-    udfDebug 0 "server ${host}:${portAuth} SSL exchange done"
+    udfDebug 0 "server ${host}:${portAuth} - SSL exchange completed"
     #udfMakeTemp fn type=pipe
     #export _kurenma_control_channel=$fn
     #udfWatchResponse < $fn | $cmdSSL > $fn 2>&1 &
 
-    udfDebug 3 && printf "$fmt" "$dev" "$cn" "${sPub:0:10}" "${sKey:0:10}" >&2
+    udfDebug 3 && printf "$fmt" "$cn" "${sPub:0:10}" "${sKey:0:10}" >&2
 
     [[ $s =~ ^OK: ]] && break
 
@@ -259,11 +257,9 @@ udfGetTunnelSettings() {
 #
 udfSetupTunnel() {
 
-  udfThrowOnEmptyVariable dev host
+  udfThrowOnEmptyVariable dev host aIpsAllowed
 
-  local fmt ipClient ipServer peer port sKey
-
-  fmt="%s: server %s:%s tunnel leased/remote IPs - %s/%s\n"
+  local ipClient ipServer peer port sKey
 
   [[ $1 == $(_ iErrorAbortedBySignal) ]] && return $(_ iErrorAbortedBySignal)
 
@@ -277,12 +273,18 @@ udfSetupTunnel() {
   ipServer=$( udfGetValidIPsOnly $4 )
   sKey=$5
 
-  udfDebug 3 && printf "$fmt" "$dev" "$host" "$port" "$ipClient" "$ipServer" >&2
+  udfDebug 5 && printf "server %s:%s public key - %s\n" \
+                       "$host" "$port" "${peer:0:10}" >&2
+  udfDebug 3 && printf "server %s:%s tunnel leased/remote IPs - %s/%s\n" \
+                       "$host" "$port" "$ipClient" "$ipServer" >&2
 
   udfThrowOnEmptyVariable peer port ipClient ipServer
 
-  udfDebug 0 && printf "\n%s: setup tunnel from server %s<skip>: " \
-                       "$dev" "${peer:0:10}"
+  udfDebug 0 && printf "setup tunnel %s to server %s:%s: " \
+                       "$dev" "$host" "$port"
+
+  s="$( udfGetValidCIDR ${aIpsAllowed[@]} )"
+  : ${s:=0.0.0.0/0}
 
   try {
 
@@ -291,10 +293,11 @@ udfSetupTunnel() {
 
     wg set $dev private-key <( echo $sKey ) \
       peer $peer \
-      allowed-ips 0.0.0.0/0 \
+      allowed-ips ${s// /,} \
       persistent-keepalive $tsKeepalive \
       endpoint "${host}:${port}"
 
+    ## TODO netmask hardcoded
     ip address add "${ipClient}"/24 dev $dev
     ip link set up dev $dev
 
@@ -340,7 +343,7 @@ udfSetDefaultRoute() {
 
   else
 
-    eval $( udfOnError throw EmptyOrMissingArgument "default route fail" )
+    eval $( udfOnError throw MissingArgument "default route fail" )
 
   fi
 

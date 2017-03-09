@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 152 2017-02-28 11:06:57+04:00 toor $"
+# $Id: server.kurenma.src 160 2017-03-07 16:05:51+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -45,7 +45,7 @@ udmLimitConnectionTime() {
     || eval $( udfOnError return InvalidArgument "$tsStart - number expected" )
 
   (( tsStart > 0 )) || return 0
-  [[ -n "$cn" ]] || eval $( udfOnError return EmptyArgument "cn" )
+  [[ $cn ]] || eval $( udfOnError return EmptyArgument "cn" )
 
   local i=$(( $(date "+%s") - $tsStart ))
 
@@ -149,16 +149,15 @@ udfHandleRequest() {
   udfThrowOnEmptyVariable dev pathDat pathIni pool tsKeepalive tsPeerTimeout   \
                           server
 
-  local aCIDR cmdWG cnClient fn fnLeased i ip ipClient peer s
+  local aCIDR cmdWG cnClient fmt fn fnLeased i ip ipClient peer s
 
   cnClient=$1
   peer=$2
+  fmt="\n%s - prepare tunnel settings (client public key=%s) on %s:\n"
 
   fnLeased=${pathDat}/${cn}.${dev}.leased
 
-  udfDebug 3 && printf -- \
-    "\nremote peer info:\n\tClient CommonName\t- %s\n\tPub key for %s\t- %s\n" \
-    "$cnClient" "$dev" "${peer:0:10}<skip>" >&2
+  udfDebug 3 && printf -- "$fmt" "$cnClient" "${peer:0:10}<skip>" "$dev" >&2
 
   if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
 
@@ -198,7 +197,7 @@ udfHandleRequest() {
   if [[ "$pool" == "commonname" ]]; then
 
     ## TODO IP must be in the server network - checking required
-    s="Leased IP by Common Name to $cnClient"
+    s="$cnClient - lease of the IP by Common Name"
     if ipClient=$( udfGetValidIPsOnly $cnClient ); then
       udfDebug 5 "$s - $ipClient"
     else
@@ -207,7 +206,7 @@ udfHandleRequest() {
 
   fi
 
-  if [[ -z "$ipClient" || $pool == "dynamic" ]]; then
+  if [[ ! $ipClient || $pool == "dynamic" ]]; then
 
     [[ -f $fnLeased ]] || touch $fnLeased
 
@@ -218,7 +217,7 @@ udfHandleRequest() {
     )
 
     ipClient=$( udfGetValidIPsOnly $ipClient )
-    s="Leased early used IP to $cnClient"
+    s="$cnClient - lease of the already used IP"
     udfDebug 5 "$s - $ipClient"
 
   fi
@@ -236,7 +235,7 @@ udfHandleRequest() {
 
   fi
 
-  if [[ -z "$ipClient" ]]; then
+  if [[ ! $ipClient ]]; then
 
     ipClient=$(( ${server%/*} ))
     s="$( wg show $dev allowed-ips )"
@@ -252,7 +251,7 @@ udfHandleRequest() {
       else
 
         ipClient=$( udfGetValidIPsOnly $ip )
-        s="Leased dynamic IP to $cnClient"
+        s="$cnClient - lease of the dynamic IP"
         udfDebug 5 "$s - $ipClient"
         break
 
@@ -262,7 +261,7 @@ udfHandleRequest() {
 
   fi
 
-  if [[ -z "$ipClient" || ${server%/*} == $ipClient ]]; then
+  if [[ ! $ipClient || ${server%/*} == $ipClient ]]; then
 
     echo "not allocated IP to the client"
     eval $(                                                                    \
@@ -275,7 +274,7 @@ udfHandleRequest() {
 
   aCIDR=$( udfGetValidCIDR ${ipClient}/32 ${aIpsAllowed[@]} )
 
-  udfDebug 5 "allowed ips: $aCIDR"
+  udfDebug 5 "$cnClient - allowed ips - $aCIDR"
 
   udfMakeTemp fn
 
@@ -318,7 +317,6 @@ udfHandleRequest() {
   done
 
   udfDebug 1 "server configuration updated."
-  udfDebug 5 && udfShowPeerInfo >&2
 
   wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
   chmod 0600 ${pathIni}/${cn}.${dev}.conf
@@ -329,7 +327,7 @@ udfSetupTunnel() {
 
   udfThrowOnEmptyVariable dev server port
 
-  udfDebug 3 "Init WireGuard device $dev"
+  udfDebug 3 && printf -- "Init WireGuard device %s" "$dev"
 
   try {
 

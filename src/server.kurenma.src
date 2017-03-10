@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 160 2017-03-07 16:05:51+04:00 toor $"
+# $Id: server.kurenma.src 166 2017-03-10 15:52:12+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -122,15 +122,15 @@ udfWaitRequest() {
       else
 
         s=${s##*client-data}
-        udfDebug 3 "client data: ${s:1:10}<skip>"
+        udfDebug 5 "client data: ${s:1:10}<skip>"
         udfHandleRequest $cn ${s:1:45}
 
-        sleep 1.1
+        sleep 0.1
         udmCloseConnection
 
       fi
 
-    elif [[ $s =~ ^(verify|CIPHER|ERROR|CONNECTION|ACCEPT|subject|issuer) ]];
+    elif [[ $s =~ ^(CIPHER|ERROR|ACCEPT|subject|issuer) ]];
     then
 
       udfDebug 3 "SSL: $s"
@@ -157,7 +157,7 @@ udfHandleRequest() {
 
   fnLeased=${pathDat}/${cn}.${dev}.leased
 
-  udfDebug 3 && printf -- "$fmt" "$cnClient" "${peer:0:10}<skip>" "$dev" >&2
+  udfDebug 4 && printf -- "$fmt" "$cnClient" "${peer:0:10}<skip>" "$dev" >&2
 
   if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
 
@@ -199,9 +199,9 @@ udfHandleRequest() {
     ## TODO IP must be in the server network - checking required
     s="$cnClient - lease of the IP by Common Name"
     if ipClient=$( udfGetValidIPsOnly $cnClient ); then
-      udfDebug 5 "$s - $ipClient"
+      udfDebug 3 "$s - $ipClient"
     else
-      udfDebug 5 "$s - not resolved.."
+      udfDebug 3 "$s - not resolved.."
     fi
 
   fi
@@ -218,7 +218,7 @@ udfHandleRequest() {
 
     ipClient=$( udfGetValidIPsOnly $ipClient )
     s="$cnClient - lease of the already used IP"
-    udfDebug 5 "$s - $ipClient"
+    udfDebug 3 "$s - $ipClient"
 
   fi
 
@@ -252,7 +252,7 @@ udfHandleRequest() {
 
         ipClient=$( udfGetValidIPsOnly $ip )
         s="$cnClient - lease of the dynamic IP"
-        udfDebug 5 "$s - $ipClient"
+        udfDebug 3 "$s - $ipClient"
         break
 
       fi
@@ -274,7 +274,7 @@ udfHandleRequest() {
 
   aCIDR=$( udfGetValidCIDR ${ipClient}/32 ${aIpsAllowed[@]} )
 
-  udfDebug 5 "$cnClient - allowed ips - $aCIDR"
+  udfDebug 3 "$cnClient - allowed ips - $aCIDR"
 
   udfMakeTemp fn
 

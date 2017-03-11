@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 166 2017-03-10 15:52:12+04:00 toor $"
+# $Id: server.kurenma.src 167 2017-03-12 00:26:18+04:00 toor $"
 #
 #_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
@@ -64,7 +64,7 @@ udmLimitConnectionTime() {
 #
 udfWaitRequest() {
 
-  local bRevoked=0 cn rc s tsStart=0 tsWait=60
+  local bIssuer='false' bRevoked=0 cn rc s tsStart=0 tsWait=60
 
   while true; do
 
@@ -103,15 +103,23 @@ udfWaitRequest() {
 
     elif [[ $s =~ depth=0.*CN.* ]]; then
 
+      rc="${s/depth=0/subject:}"
       s="${s##*, CN = }"
       s="${s%,*}"
 
       [[ "$s" == "$cn" ]] && continue || cn=$s
 
       udfDebug 3 "client $cn - exchange started"
+      udfDebug 3 "SSL: $rc"
+      rc=0
 
       tsStart=$(date "+%s")
       tsWait=4
+
+    elif [[ $bIssuer == 'false' && $s =~ depth=1.*CN.* ]]; then
+
+      udfDebug 3 "SSL: ${s/depth=1/ issuer:}"
+      bIssuer='true'
 
     elif [[ $s =~ client-data.* ]]; then
 
@@ -130,7 +138,7 @@ udfWaitRequest() {
 
       fi
 
-    elif [[ $s =~ ^(CIPHER|ERROR|ACCEPT|subject|issuer) ]];
+    elif [[ $s =~ ^(CIPHER|ERROR|ACCEPT) ]];
     then
 
       udfDebug 3 "SSL: $s"

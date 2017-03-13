@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 164 2017-03-09 12:58:05+04:00 toor $
+# $Id: client.kurenma.src 168 2017-03-13 14:29:15+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -64,7 +64,7 @@ udfKnocking() {
 
     if (( $i <= 0 )); then
 
-      echo "fail after 256 attempts.. try again"
+      printf -- "\nfail after 256 attempts.. try again\n"
       eval $( udfOnError warn NotAvailable "${host}:${portAuth}" )
       i=256
 
@@ -82,7 +82,7 @@ udfGetTunnelSettings() {
 
   local fmt fnAns pidWatch sKey sPub s
 
-  fmt="\nclient %s keys - public=%s<skip> private=%s<skip>\n"
+  fmt="\nclient %s - prepare new session with public key = %s<skip>\n"
 
   s="$(_ iErrorAbortedBySignal) stop signal received"
 
@@ -98,7 +98,7 @@ udfGetTunnelSettings() {
 
     sKey=$( wg genkey )
     sPub=$( echo $sKey | wg pubkey )
-    udfDebug 5 && printf "$fmt" "$cn" "${sPub:0:10}" "${sKey:0:10}"
+    udfDebug 5 && printf "$fmt" "$cn" "${sPub:0:10}"
 
     udfDebug 1 "server ${host}:${portAuth} - SSL exchange started"
 

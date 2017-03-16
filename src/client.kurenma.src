@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 168 2017-03-13 14:29:15+04:00 toor $
+# $Id: client.kurenma.src 169 2017-03-16 16:07:09+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -106,16 +106,13 @@ udfGetTunnelSettings() {
                                                                                \
       udfDebug 5 "watchdog of the SSL exchange started";                       \
       sleep 32;                                                                \
-      udfStopProcess $cmdSSL;                                                  \
+      udfStopProcess ${cmdSSL//:/ };                                           \
       udfDebug 5 "watchdog of the SSL exchange completed with status $?"       \
                                                                                \
     ) &
     pidWatch=$!
 
-    s="$(                                                                      \
-      echo "client-data $sPub" | $cmdSSL | tr -d '\r' | tee $fnAns             \
-        | grep '^OK:'                                                          \
-    )"
+    s="$( echo "client-data $sPub" | $cmdSSL | tee $fnAns | grep '^OK:' )"
 
     udfStopProcess pid=$pidWatch $0 && \
 			udfDebug 5 "watchdog of the SSL exchange forced stopped"
@@ -248,12 +245,7 @@ udfService() {
   udfThrowOnEmptyVariable   bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni \
                             portAuth tsPeerTimeout
 
-  local bStart cmdSSL fmtCon s
-
-  cmdSSL="                                                                     \
-    openssl s_client -connect ${host}:${portAuth} -CAfile $fnCA -cert $fnCrt   \
-      -key $fnKey -verify 1 -quiet                                             \
-  "
+  local bStart cmdSSL s
 
   for s in "$fnCrt" "$fnKey" "$fnCA"; do
 
@@ -268,6 +260,14 @@ udfService() {
   done
 
   [[ $bDefaultRoute =~ ^(false|true)$ ]] || bDefaultRoute=false
+
+  cmdSSL="$(                                                                   \
+                                                                               \
+    printf --                                                                  \
+      'openssl %s -connect %s:%d -CAfile %s -cert %s -key %s -verify 1 -quiet' \
+      's_client' "${host}" "${portAuth}" "$fnCA" "$fnCrt" "$fnKey"             \
+                                                                               \
+  )"
 
   udfDebug 1 && printf -- "client %s configuration started\n" "$cn"
 

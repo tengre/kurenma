@@ -1,7 +1,6 @@
 #
-# $Id: server.kurenma.src 167 2017-03-12 00:26:18+04:00 toor $"
+# $Id: server.kurenma.src 170 2017-04-19 08:46:12+04:00 toor $"
 #
-#_bashlyk=kurenma _bashlyk_log=nouse . bashlyk
 _bashlyk=kurenma . bashlyk
 #
 #

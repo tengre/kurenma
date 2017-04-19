@@ -12,3 +12,9 @@ kurenmactl -> kurenmad:
 +#00008 - use signals for control
 kurenmad:
 +#00009 - use server side connection
++#0000a - use net::ipv4.range for leasing
++#0000b - handle "double nat" error
++#0000c - sign package
++#0000d - update variable names
++#0000e - update wireguard version
+

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 162 2017-03-09 10:15:56+04:00 toor $"
+# $Id: kurenmad 170 2017-04-19 08:46:12+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -124,7 +124,7 @@ udfMain() {
 
   DEBUGLEVEL=5
 
-  udfThrowOnCommandNotFound echo grep ip mkdir nc openssl sed sleep tail wg
+  udfThrowOnCommandNotFound grep ip mkdir nc openssl sed sleep tail wg
 
   [[ $UID == 0 ]] || eval $(                                                   \
                                                                                \
@@ -154,12 +154,11 @@ udfMain() {
   ini.load $ini                                                                \
                []role,tunnel name,server,listen port,tunnel network,           \
                  IP lease method,persistent keepalive,pause between checks,    \
-                 default route                                                :\
+                 default route                                                 \
                                                                                \
-            [ssl]ca,cn,dh,port                                                :\
+            [ssl]ca,cn,dh,port                                                 \
                                                                                \
-    [ips allowed]=                                                             \
-  :
+    [ips allowed]=
 
   s=$( ini.get [ips allowed] )
   eval "${s/declare -a a/declare -a aIpsAllowed}"
@@ -263,9 +262,9 @@ udfMain() {
 
   if udfDebug 3; then
 
-    echo -e "configuration:\n~~~~~~~~~~~~~~\n"
+    printf -- "configuration:\n~~~~~~~~~~~~~~\n"
     ini.show | sed -re "s/^[[:space:]]/\xc2\xa0/"
-    echo -e "~~~~~~~~~~~~~~\n"
+    printf -- "~~~~~~~~~~~~~~\n"
 
   fi
 

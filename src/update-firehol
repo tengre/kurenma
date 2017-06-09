@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 144 2017-02-16 16:51:31+04:00 toor $
+# $Id: update-firehol 171 2017-06-09 15:26:28+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -36,18 +36,15 @@ _bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 #    firehol(1), firehol.conf(5), knockd(1), knockd.conf(5), setup-knockd(8)
 #
 #******
-udfMain() {
+kurenma-update-firehol::main() {
 
-  udfExitIfAlreadyStarted
 
-  [[ $UID == 0 ]] || eval $(                                                   \
-                                                                               \
-    udfOnError throw NotPermitted "You must be root to run this."              \
-                                                                               \
-  )
+  [[ $UID == 0 ]] || on error warn+exit NotPermitted "You must be root to run this."
 
-  udfThrowOnCommandNotFound cp date diff echo firehol flock grep kurenmactl    \
-                            mkdir mv rm sed sort touch uniq wg xargs
+  pid::onStarted.exit
+
+  exit+warn on CommandNotFound cp date diff firehol flock grep kurenmactl      \
+                               mkdir mv rm sed sort touch uniq wg xargs
 
   local cnf csv fn fnKnock fnLock ini ipv4Black ipv4Client ipv4White pathDat
   local pathIni s sDig
@@ -56,20 +53,16 @@ udfMain() {
   pathDat=$( _ pathDat )
   fnKnock="${pathDat}/lastknocks.dat"
   fnLock="$( _ pathRun )/$( _ s0 ).lock"
-  mkdir -p $pathDat || eval $( udfOnError throw NotExistAndNotCreated $pathDat )
-  touch $fnLock || eval $( udfOnError throw NotExistAndNotCreated $fnLock )
+  mkdir -p $pathDat || on error throw NotExistNotCreated $pathDat
+  touch $fnLock     || on error throw NotExistNotCreated $fnLock
 
   eval set -- $( _ sArg )
 
-  s=$( udfGetValidIPsOnly $1 ) || eval $(                                      \
-                                                                               \
-    udfOnError exitecho InvalidArgument "IP or hostname required"              \
-                                                                               \
-  )
+  s=$( net::ipv4.host $1 ) || on error echo+exit InvalidArgument "IP or hostname required"
 
   if [[ ! $_kurenma_flock ]]; then
 
-    udfDebug 0 "try lock from $s"
+    err::debug 0 "try lock from $s"
 
     ## TODO check fo
     (( ${#_bashlyk_afoClean[$BASHPID]} > 0 )) \
@@ -81,18 +74,18 @@ udfMain() {
 
   if [[ "$_kurenma_flock" != "$2" ]]; then
 
-    eval $( udfOnError retecho NotPermitted "invalid process $2" )
+    on error echo+return NotPermitted "invalid process $2"
 
   fi
 
-  udfDebug 0 "starting from $s $2"
+  err::debug 0 "starting from $s $2"
   echo "${s}:$(date +%s)" >> $fnKnock
 
   pathIni=$( _ pathIni )
 
   for s in $pathDat $patIni; do
 
-    [[ $s && -d "$s" ]] || eval $( udfOnError NoSuchFileOrDir "$s" )
+    [[ $s && -d "$s" ]] || on error throw NoSuchFileOrDir "$s"
 
   done
 
@@ -102,6 +95,7 @@ udfMain() {
   INI ini
   ini.load $ini [ipv4White]= : [ipv4Black]=
 
+  ## TODO get array ?
   eval "$( ini.get [ ipv4 white list ] )" && ipv4White="${a[@]}"
   eval "$( ini.get [ ipv4 black list ] )" && ipv4Black="${a[@]}"
 
@@ -116,18 +110,18 @@ udfMain() {
                                                                                \
   )
 
-  udfDebug 2 && udfShowVariable ipv4White ipv4Black ipv4Client
+  err::debug 2 && std::showVariable ipv4White ipv4Black ipv4Client
 
   touch $fnKnock
-  udfMakeTemp fn
+  std::temp fn
 
   while read s; do
 
-    udfIsNumber ${s##*:} || continue
+    std::isNumber ${s##*:} || continue
     #
     # 240 - time interval for safety from collisions
     #
-    if (( $(date +%s) - ${s##*:} < 240 )); then
+    if (( $( date +%s ) - ${s##*:} < 240 )); then
 
       echo "$s"
       ipv4Client+=" ${s%%:*}"
@@ -140,21 +134,21 @@ udfMain() {
   s=$(                                                                         \
                                                                                \
     printf -- 'ipv4White="%s"'                                                 \
-      "$( udfGetValidIPsOnly ${ipv4White//[,;]/ } ${1//[,;]/ } $ipv4Client )"  \
+      "$( net::ipv4.host ${ipv4White//[,;]/ } ${1//[,;]/ } $ipv4Client )"      \
                                                                                \
   )
   : ${ipv4White:='127.0.0.1'}
-  udfDebug 2 "new white list $s"
+  err::debug 2 "new white list $s"
   sed -i -re "s/ipv4White=.*/$s/" $cnf
 
   s=$(                                                                         \
                                                                                \
     printf -- 'ipv4Black="%s"'                                                 \
-      "$( udfGetValidIPsOnly ${ipv4Black//[,;]/ } ${2//[,;]/ } )"              \
+      "$( net::ipv4.host ${ipv4Black//[,;]/ } ${2//[,;]/ } )"                  \
                                                                                \
   )
   : ${ipv4Black:='1.1.1.1'}
-  udfDebug 2 "new black list $s"
+  err::debug 2 "new black list $s"
   sed -i -re "s/ipv4Black=.*/$s/" $cnf
 
   printf -- "\n\n\n---> the differences (if any) --->\n"
@@ -167,7 +161,7 @@ udfMain() {
     echo "restore old configuration:"
     mv -v ${cnf:0:-3}bak $cnf
 
-    eval $( udfOnError throw InvalidArgument "$* and/or $ini" )
+    on error warn+exit InvalidArgument "$* and/or $ini"
 
   else
 
@@ -188,11 +182,11 @@ udfMain() {
 
   fi
 
-  udfFinally "service down"
+  std::finally "service down"
 
 }
 #
 #
 #
-udfMain
+kurenma-update-firehol::main
 #

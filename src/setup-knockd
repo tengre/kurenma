@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 152 2017-02-28 11:06:57+04:00 toor $
+# $Id: setup-knockd 171 2017-06-09 15:26:28+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -21,32 +21,33 @@ _bashlyk=kurenma . bashlyk
 #    update-firehol(8), knockd(1), gen-ssl-kurenma(8)
 #
 #******
-udfMain() {
+kurenma-setup-knockd::main() {
 
-  udfExitIfAlreadyStarted
+  [[ $UID == 0 ]] || on error warn+exit NotPermitted "You must be root to run this."
 
-  [[ $UID == 0 ]] \
-    || eval $( udfOnError throw NotPermitted "You must be root to run this." )
+  pid::onStarted.exit
 
-  udfThrowOnCommandNotFound cat grep openssl sed
+  exit+warn on CommandNotFound openssl sed
 
   local fnCA conf pathIni s
 
   pathIni=$( _ pathIni )
+  throw on EmptyVariable pathIni
+
   conf="/etc/knockd.conf"
   #
   fnCA=${pathIni}/ssl/public/cacert.pem
 
-  [[ -s $fnCA ]] || eval $( udfOnError throw NoSuchFileOrDir $fnCA )
+  [[ -s $fnCA ]] || on error throw NoSuchFileOrDir $fnCA
 
   s=$(                                                                         \
     openssl x509 -sha1 -in $fnCA -noout -fingerprint | sed -r -e               \
     "s/^SHA1 Fing.*nt=(..):(..):(..):(..):(..):(..):.*$/0x\1\2 0x\3\4 0x\5\6/" \
   )
 
-  udfDebug 2 "CA cert fingerprint header: $s"
+  err::debug 2 "CA cert fingerprint header: $s"
   s=$( printf -- "%d,%d,%d" $s )
-  udfDebug 2 "knock ports sequence: $s"
+  err::debug 2 "knock ports sequence: $s"
 
   INI ini
   ini.settings.section.padding = false
@@ -60,7 +61,7 @@ udfMain() {
   ini.set [ kurenma ] tcpflags    = syn
 
   ini.save $conf
-  udfDebug 2 && ini.show | sed -re "s/^[[:space:]]/\xc2\xa0\x20/"
+  err::debug 2 && ini.show | sed -re "s/^[[:space:]]/\xc2\xa0\x20/"
   ini.free
 
   if [[ -d /run/systemd/system ]]; then
@@ -78,11 +79,11 @@ udfMain() {
 
   fi
 
-  udfFinally "service down"
+  std::finally "service down"
 
 }
 #
 #
 #
-udfMain
+kurenma-setup-knockd::main
 #

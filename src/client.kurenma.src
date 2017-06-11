@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 171 2017-06-09 15:26:27+04:00 toor $
+# $Id: client.kurenma.src 172 2017-06-11 20:33:40+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -48,11 +48,11 @@ kurenma-client::knocking() {
     if ! kurenma-daemon::waitSignal 1; then
 
       echo "x"
-      return $(_ iErrorAbortedBySignal)
+      return $( _ iErrorAbortedBySignal )
 
     fi
 
-    i=$((i-1))
+    i=$(( i-1 ))
 
     if (( $i <= 0 )); then
 
@@ -76,7 +76,7 @@ kurenma-client::getTunnelSettings() {
 
   fmt="\nclient %s - prepare new session with public key = %s<skip>\n"
 
-  s="$(_ iErrorAbortedBySignal) stop signal received"
+  s="$( _ iErrorAbortedBySignal ) stop signal received"
 
   std::temp fnAns
 
@@ -88,7 +88,7 @@ kurenma-client::getTunnelSettings() {
 
     kurenma-daemon::waitSignal 4 || break
 
-    sKey=$( wg genkey )
+    sKey=$( exec -c wg genkey )
     sPub=$( echo $sKey | wg pubkey )
     err::debug 5 && printf "$fmt" "$cn" "${sPub:0:10}"
 
@@ -117,7 +117,7 @@ kurenma-client::getTunnelSettings() {
 
     on error warn InvalidArgument "malformed answer from ${host}:${portAuth} $s"
 
-    s="$(_ iErrorAbortedBySignal ) stop signal received"
+    s="$( _ iErrorAbortedBySignal ) stop signal received"
     kurenma-daemon::waitSignal 8 || break
 
   done >&2
@@ -142,7 +142,7 @@ kurenma-client::setupTunnel() {
 
   shift
 
-  peer=$( echo $1 | grep -P "^[a-zA-Z0-9+/]+={0,2}$" )
+  peer=$( grep -P "^[a-zA-Z0-9+/]+={0,2}$" <<< "$1" )
   std::isNumber $2 && port=$2 || port=''
   ipClient=$( net::ipv4.host $3 )
   ipServer=$( net::ipv4.host $4 )
@@ -294,7 +294,7 @@ kurenma-daemon::service() {
 
       if std::isNumber ${s##*:}; then
 
-        if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
+        if (( $( exec -c date +%s ) - ${s##*:} >= tsPeerTimeout )); then
 
           wg set $dev peer ${s%%:*} remove
           err::debug 3 "peer ${s:0:10}<skip> removed .. $?"

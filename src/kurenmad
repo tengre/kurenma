@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 171 2017-06-09 15:26:27+04:00 toor $"
+# $Id: kurenmad 172 2017-06-11 20:33:40+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -82,7 +82,7 @@ kurenma-daemon::waitSignal() {
   if [[ $_kurenma_sSignal == "stop" ]]; then
 
     err::debug 4 "Stop signal received before waiting"
-    return $(_ iErrorAbortedBySignal)
+    return $( _ iErrorAbortedBySignal )
 
   fi
 
@@ -94,7 +94,7 @@ kurenma-daemon::waitSignal() {
   if [[ $_kurenma_sSignal == "stop" ]]; then
 
     err::debug 4 "Stop signal received after waiting"
-    return $(_ iErrorAbortedBySignal)
+    return $( _ iErrorAbortedBySignal )
 
   fi
 
@@ -202,14 +202,14 @@ kurenma-daemon::main() {
 
     s="$(                                                                      \
          printf -- ", %s.%s %s, (c) 2016-%s\n\n"                               \
-                   "${a[0]}" "${a[1]}" "${a[2]}" "$(date +%Y)"                 \
+                   "${a[0]}" "${a[1]}" "${a[2]}" "$( exec -c date +%Y )"       \
       )"
 
-  elif a=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ); then
+  elif a=($( exec -c grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 )); then
 
     s="$(                                                                      \
           printf -- ", %s.%s %s, (c) 2016-%s\n\n"                              \
-                    "${a[2]}" "${a[3]}" "$(date +%Y)"                          \
+                    "${a[2]}" "${a[3]}" "$( exec -c date +%Y )"                \
       )"
 
   else

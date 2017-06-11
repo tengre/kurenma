@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 171 2017-06-09 15:26:27+04:00 toor $"
+# $Id: server.kurenma.src 172 2017-06-11 20:51:51+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -110,7 +110,7 @@ kurenma-server::waitRequest() {
       err::debug 3 "SSL: $rc"
       rc=0
 
-      tsStart=$(date "+%s")
+      tsStart=$( exec -c date "+%s" )
       tsWait=4
 
     elif [[ $bIssuer == 'false' && $s =~ depth=1.*CN.* ]]; then
@@ -164,16 +164,6 @@ kurenma-server::handleRequest() {
 
   err::debug 4 && printf -- "$fmt" "$cnClient" "${peer:0:10}<skip>" "$dev" >&2
 
-  if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
-
-    wg set $dev peer $(                                                        \
-                                                                               \
-      wg show $dev latest-handshakes | sort -k 2 -b -n | head -n 1 | cut -f 1  \
-                                                                               \
-    ) remove
-
-  fi
-
   for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
 
     if std::isNumber ${s##*:}; then
@@ -181,7 +171,7 @@ kurenma-server::handleRequest() {
       #ignore too low timestamps
       (( ${s##*:} < 1800 )) && continue
 
-      i=$(( $(date +%s) - ${s##*:} ))
+      i=$(( $( exec -c date +%s ) - ${s##*:} ))
 
       if (( i >= tsPeerTimeout )); then
 
@@ -201,12 +191,23 @@ kurenma-server::handleRequest() {
 
   if [[ "$pool" == "commonname" ]]; then
 
-    ## TODO IP must be in the server network - checking required
-    s="$cnClient - lease of the IP by Common Name"
     if ipClient=$( net::ipv4.host $cnClient ); then
-      err::debug 3 "$s - $ipClient"
+
+      if grep -w $ipClient < <( net::ipv4.range $server ) >/dev/null 2>&1; then
+
+        err::debug 3 "$cnClient - lease of the IP by Common Name $ipClient"
+
+      else
+
+        err::debug 3 "$cnClient - $ipClient is out of range for tunnel $server"
+        ipClient=''
+
+      fi
+
     else
-      err::debug 3 "$s - not resolved.."
+
+      err::debug 3 "$cnClient - IP-address by Common Name not resolved.."
+
     fi
 
   fi
@@ -221,41 +222,36 @@ kurenma-server::handleRequest() {
                                                                                \
     )
 
-    ipClient=$( net::ipv4.host $ipClient )
-    s="$cnClient - lease of the already used IP"
-    err::debug 3 "$s - $ipClient"
+    if ipClient=$( net::ipv4.host $ipClient ); then
+
+      err::debug 3 "$cnClient - lease of the early used IP $ipClient"
+
+    else
+
+      ipClient=''
+
+    fi
 
   fi
 
   if [[ ${server%/*} == $ipClient ]]; then
 
-    on error warn InvalidArgument "the IP address $ipClient is already in use, skipped"
+    err::debug 3 "the IP address $ipClient is already in use, skipped"
 
-    unset ipClient
+    ipClient=''
 
   fi
 
   if [[ ! $ipClient ]]; then
 
-    ipClient=$(( ${server%/*} ))
-    s="$( wg show $dev allowed-ips )"
-    ## TODO ip range for pool
-    for ((i=$(( ${ipClient##*.} + 1 )); i<=254; i++)); do
+    s="$( exec -c wg show $dev allowed-ips )"
 
-      ip="${ipClient%.*}.$i";
+    for ipClient in $( net::ipv4.range $server ); do
 
-      if [[ $s =~ ${ip}/32 ]]; then
+      [[ $s =~ ${ipClient}/32 ]] && continue
 
-        continue
-
-      else
-
-        ipClient=$( net::ipv4.host $ip )
-        s="$cnClient - lease of the dynamic IP"
-        err::debug 3 "$s - $ipClient"
-        break
-
-      fi
+      err::debug 3 "$cnClient - lease of the dynamic IP - $ipClient"
+      break
 
     done
 
@@ -263,8 +259,7 @@ kurenma-server::handleRequest() {
 
   if [[ ! $ipClient || ${server%/*} == $ipClient ]]; then
 
-    echo "not allocated IP to the client"
-    on error echo+return InvalidArgument "not allocated IP to the client"
+    on error warn+return InvalidArgument "not allocated IP to the client.."
 
   fi
 
@@ -285,18 +280,18 @@ kurenma-server::handleRequest() {
 
     printf -- 'OK:%s:%s:%s:%s\n'                                               \
               "$( wg show $dev private-key | wg pubkey )"                      \
-              "$( wg show $dev listen-port )"                                  \
+              "$( exec -c wg show $dev listen-port )"                          \
               "${ipClient}"                                                    \
               "${server%/*}"
 
-    for s in $( wg show $dev peers ); do
+    for s in $( exec -c wg show $dev peers ); do
 
       grep ":${s:0:10}$" $fnLeased
 
     done > $fn
 
     mv -f $fn $fnLeased
-    echo "${cnClient}:${ipClient}:$(date +%s):${peer:0:10}" >> $fnLeased
+    echo "${cnClient}:${ipClient}:$(exec -c date +%s):${peer:0:10}" >> $fnLeased
 
   else
 
@@ -335,7 +330,7 @@ kurenma-server::setupTunnel() {
 
   } catch {
 
-    ERR::exception.message
+    err::exception.message
     exit $?
 
   }

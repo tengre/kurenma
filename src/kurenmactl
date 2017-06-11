@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 171 2017-06-09 15:26:27+04:00 toor $
+# $Id: kurenmactl 172 2017-06-11 20:33:40+04:00 toor $
 #
 _kurenma_pathLib=/usr/share/kurenma
 #
@@ -43,18 +43,18 @@ kurenmactl::usage() {
 
     a=( $( < ${_kurenma_pathLib}/VERSION ) )
     printf -- "\t%s %s.%s %s, Kurenma Service Management Tool, (c) 2016-%s\n"  \
-              "${0##*/}" "${a[0]}" "${a[1]}" "${a[2]}" "$(date +%Y)"
+              "${0##*/}" "${a[0]}" "${a[1]}" "${a[2]}" "$( exec -c date +%Y )"
 
-  elif a=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ); then
+  elif a=($( exec -c grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 )); then
 
     printf -- "\t%s rev%s %s, Kurenma Service Management Tool, (c) 2016-%s\n"  \
-              "${0##*/}" "${a[2]}" "${a[3]}" "$(date +%Y)"
+              "${0##*/}" "${a[2]}" "${a[3]}" "$( exec -c date +%Y )"
 
   fi
 
   cat <<-EOF | tr -d '#'
 
-    Usage: $(_ s0) start|stop
+    Usage: $( _ s0 ) start|stop
     where:
 
     #      start - start service
@@ -94,7 +94,7 @@ kurenmactl::main() {
 
   mkdir -p $pathRun || on error throw NotExistNotCreated "$pathRun"
 
-  eval set -- $(_ sArg)
+  eval set -- $( _ sArg )
 
   case "$1" in
 
@@ -111,13 +111,13 @@ kurenmactl::main() {
       err::debug 1 && echo -n "service $cmd stopping.."
 
       fnPid="${pathRun}/${cmd}.pid"
-      [[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
+      [[ -s $fnPid ]] && pid=$( exec -c head -n 1 $fnPid ) || pid=''
 
       std::isNumber $pid && kill -31 $pid
 
       for s in 1 2 3 4 5 6 7 8; do
 
-          [[ -s $fnPid ]] && pid=$( head -n 1 $fnPid ) || pid=''
+          [[ -s $fnPid ]] && pid=$( exec -c head -n 1 $fnPid ) || pid=''
 
           std::isNumber $pid || break
 

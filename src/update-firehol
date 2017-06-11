@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 171 2017-06-09 15:26:28+04:00 toor $
+# $Id: update-firehol 172 2017-06-11 20:33:41+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -79,7 +79,7 @@ kurenma-update-firehol::main() {
   fi
 
   err::debug 0 "starting from $s $2"
-  echo "${s}:$(date +%s)" >> $fnKnock
+  echo "${s}:$( exec -c date +%s )" >> $fnKnock
 
   pathIni=$( _ pathIni )
 
@@ -121,7 +121,7 @@ kurenma-update-firehol::main() {
     #
     # 240 - time interval for safety from collisions
     #
-    if (( $( date +%s ) - ${s##*:} < 240 )); then
+    if (( $( exec -c date +%s ) - ${s##*:} < 240 )); then
 
       echo "$s"
       ipv4Client+=" ${s%%:*}"

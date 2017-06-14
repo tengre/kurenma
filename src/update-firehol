@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 172 2017-06-11 20:33:41+04:00 toor $
+# $Id: update-firehol 173 2017-06-14 17:10:06+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -48,7 +48,7 @@ kurenma-update-firehol::main() {
 
   local cnf csv fn fnKnock fnLock ini ipv4Black ipv4Client ipv4White pathDat
   local pathIni s sDig
-  local -a a
+  local -a a aArg
 
   pathDat=$( _ pathDat )
   fnKnock="${pathDat}/lastknocks.dat"
@@ -56,9 +56,10 @@ kurenma-update-firehol::main() {
   mkdir -p $pathDat || on error throw NotExistNotCreated $pathDat
   touch $fnLock     || on error throw NotExistNotCreated $fnLock
 
-  eval set -- $( _ sArg )
+  aArg=( $0 $( _ sArg ) )
 
-  s=$( net::ipv4.host $1 ) || on error echo+exit InvalidArgument "IP or hostname required"
+  s=$( net::ipv4.host ${aArg[1]} ) || on error echo+exit InvalidArgument       \
+                           "${aArg[1]:-first argument}: IP or hostname required"
 
   if [[ ! $_kurenma_flock ]]; then
 
@@ -72,28 +73,24 @@ kurenma-update-firehol::main() {
 
   fi
 
-  if [[ "$_kurenma_flock" != "$2" ]]; then
+  if [[ "$_kurenma_flock" != "${aArg[2]}" ]]; then
 
-    on error echo+return NotPermitted "invalid process $2"
+    on error echo+return NotPermitted "invalid process ${aArg[2]}"
 
   fi
 
-  err::debug 0 "starting from $s $2"
+  err::debug 0 "starting from $s with pid ${aArg[2]}"
   echo "${s}:$( exec -c date +%s )" >> $fnKnock
 
   pathIni=$( _ pathIni )
 
-  for s in $pathDat $patIni; do
-
-    [[ $s && -d "$s" ]] || on error throw NoSuchFileOrDir "$s"
-
-  done
+  throw on NoSuchFileOrDir "$pathDat" "$patIni"
 
   cnf="/etc/firehol/firehol.conf"
   ini="${pathIni}/ipslist.ini"
 
   INI ini
-  ini.load $ini [ipv4White]= : [ipv4Black]=
+  ini.load $ini [ipv4White]= [ipv4Black]=
 
   ## TODO get array ?
   eval "$( ini.get [ ipv4 white list ] )" && ipv4White="${a[@]}"
@@ -161,16 +158,16 @@ kurenma-update-firehol::main() {
     echo "restore old configuration:"
     mv -v ${cnf:0:-3}bak $cnf
 
-    on error warn+exit InvalidArgument "$* and/or $ini"
+    on error warn+exit InvalidArgument "${aArg[@]} and/or $ini"
 
   else
 
     echo " OK!"
     echo "Starting new configuration:"
 
-    if echo commit | firehol try; then
+    if firehol try <<< commit; then
 
-      [[ $* ]] && kurenmactl start
+      [[ ${aArg[@]} ]] && kurenmactl start
 
       echo " OK."
 
@@ -182,7 +179,7 @@ kurenma-update-firehol::main() {
 
   fi
 
-  std::finally "service down"
+  std::finally "finished"
 
 }
 #

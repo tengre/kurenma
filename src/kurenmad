@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 173 2017-06-14 17:10:06+04:00 toor $"
+# $Id: kurenmad 174 2017-06-16 14:46:18+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -86,11 +86,9 @@ kurenma-daemon::waitSignal() {
 
   fi
 
-  local i=$1
+  std::isDecimal $1 || on error return NotDecimal "${1:-first argument}"
 
-  [[ $i =~ ^[0-9]+(\.[0-9]+)?$ ]] || on error return NotNumber "$i"
-
-  sleep $i &
+  sleep ${1//-/} &
   wait $!
 
   if [[ $_kurenma_sSignal == "stop" ]]; then

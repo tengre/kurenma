@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 172 2017-06-11 20:51:51+04:00 toor $"
+# $Id: server.kurenma.src 174 2017-06-16 14:41:37+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -38,7 +38,7 @@ kurenma-server::revoked() {
 #
 kurenma-server::limitConnectionTime() {
 
-  std::isNumber $1       || on error return NotNumber "first argument"
+  std::isNumber $1       || on error return NotNumber "${1:-first argument}"
   std::isNumber $tsStart || on error return NotNumber "$tsStart"
 
   (( tsStart > 0 )) || return 0

@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 172 2017-06-11 20:33:40+04:00 toor $
+# $Id: client.kurenma.src 174 2017-12-30 23:53:37+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -232,7 +232,7 @@ kurenma-daemon::service() {
 
   throw on CommandNotFound false knock ping tee true
   throw on EmptyVariable   bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni  \
-                           portAuth tsPeerTimeout
+                           protocol portAuth tsPeerTimeout
 
   local bStart cmdSSL s
 
@@ -253,8 +253,18 @@ kurenma-daemon::service() {
   cmdSSL="$(                                                                   \
                                                                                \
     printf --                                                                  \
-      'openssl %s -connect %s:%d -CAfile %s -cert %s -key %s -verify 1 -quiet' \
-      's_client' "${host}" "${portAuth}" "$fnCA" "$fnCrt" "$fnKey"             \
+      'openssl s_client -verify 1 -quiet                                       \
+       -connect %s:%d                                                          \
+       -%s                                                                     \
+       -CAfile %s                                                              \
+       -cert %s                                                                \
+       -key %s                                                                 \
+      '                                                                        \
+      "${host}" "${portAuth}"                                                  \
+      "$protocol"                                                              \
+      "$fnCA"                                                                  \
+      "$fnCrt"                                                                 \
+      "$fnKey"                                                                 \
                                                                                \
   )"
 

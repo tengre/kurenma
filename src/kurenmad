@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 173 2017-06-14 17:10:06+04:00 toor $"
+# $Id: kurenmad 174 2017-12-30 23:53:37+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -132,7 +132,7 @@ kurenma-daemon::main() {
   local -a aId aIpsAllowed
   local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
   local bDefaultRoute pool port portAuth role tsKeepalive tsPeerTimeout
-  local aReqOptByRole ca cn dh dev host server
+  local aReqOptByRole ca cn dh dev host server protocol
 
 
   pathDat=$( _ pathDat )
@@ -152,7 +152,7 @@ kurenma-daemon::main() {
                  IP lease method,persistent keepalive,pause between checks,    \
                  default route                                                 \
                                                                                \
-            [ssl]ca,cn,dh,port                                                 \
+            [ssl]ca,cn,dh,port,protocol                                        \
                                                                                \
     [ips allowed]=
 
@@ -223,11 +223,13 @@ kurenma-daemon::main() {
 
   err::debug 1 "start ${0##*/} as ${role}${s}"
 
-       dev=$( ini.get tunnel name )
-  portAuth=$( ini.get [ssl]port   )
+       dev=$( ini.get tunnel name   )
+  portAuth=$( ini.get [ssl]port     )
+  protocol=$( ini.get [ssl]protocol )
 
   :      ${dev:=wg0}
   : ${portAuth:=42912}
+  : ${protocol:=dtls1_2}
 
   tsKeepalive=$( ini.get persistent keepalive )
   std::isNumber $tsKeepalive || tsKeepalive=0

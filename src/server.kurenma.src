@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 172 2017-06-11 20:51:51+04:00 toor $"
+# $Id: server.kurenma.src 174 2017-12-30 23:53:37+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -352,8 +352,8 @@ kurenma-daemon::service() {
 
   exit+warn on CommandNotFound cut kill ps sort
 
-  throw on EmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey port        \
-                         portAuth server
+  throw on EmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey protocol    \
+                         port portAuth server
 
   local cmdSSL fn fnDH
 
@@ -366,10 +366,25 @@ kurenma-daemon::service() {
 
   fnDH=${pathCrt}/dh2048.pem
 
-  cmdSSL="                                                                     \
-    openssl s_server -cert $fnCrt -key $fnKey -accept $portAuth                \
-      -CApath $pathCA -Verify 2 -crl_check_all -dhparam $fnDH                  \
-  "
+  cmdSSL="$(                                                                   \
+                                                                               \
+    printf --                                                                  \
+      'openssl s_server -Verify 2 -crl_check_all                               \
+       -accept %s                                                              \
+       -%s                                                                     \
+       -dhparam %s                                                             \
+       -CApath %s                                                              \
+       -cert %s                                                                \
+       -key %s                                                                 \
+      '                                                                        \
+      "$portAuth"                                                              \
+      "$protocol"                                                              \
+      "$fnDH"                                                                  \
+      "$pathCA"                                                                \
+      "$fnCrt"                                                                 \
+      "$fnKey"                                                                 \
+                                                                               \
+  )"
 
   pid::stop $cmdSSL
 

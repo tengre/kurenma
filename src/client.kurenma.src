@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 174 2017-12-30 23:53:37+04:00 toor $
+# $Id: client.kurenma.src 175 2017-12-31 01:15:33+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -253,13 +253,13 @@ kurenma-daemon::service() {
   cmdSSL="$(                                                                   \
                                                                                \
     printf --                                                                  \
-      'openssl s_client -verify 1 -quiet                                       \
+      "openssl s_client -verify 1 -quiet                                       \
        -connect %s:%d                                                          \
        -%s                                                                     \
        -CAfile %s                                                              \
        -cert %s                                                                \
        -key %s                                                                 \
-      '                                                                        \
+      "                                                                        \
       "${host}" "${portAuth}"                                                  \
       "$protocol"                                                              \
       "$fnCA"                                                                  \
@@ -267,6 +267,10 @@ kurenma-daemon::service() {
       "$fnKey"                                                                 \
                                                                                \
   )"
+
+  cmdSSL=$( std::trim $cmdSSL )
+
+  err::debug 6 "openssl command line: $cmdSSL"
 
   err::debug 1 && printf -- "client %s configuration started\n" "$cn"
 

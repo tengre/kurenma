@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 174 2017-12-30 23:53:37+04:00 toor $"
+# $Id: kurenmad 177 2017-12-31 11:09:51+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -229,7 +229,7 @@ kurenma-daemon::main() {
 
   :      ${dev:=wg0}
   : ${portAuth:=42912}
-  : ${protocol:=dtls1_2}
+  : ${protocol:=dtls1}
 
   tsKeepalive=$( ini.get persistent keepalive )
   std::isNumber $tsKeepalive || tsKeepalive=0

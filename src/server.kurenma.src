@@ -38,7 +38,7 @@ kurenma-server::revoked() {
 #
 kurenma-server::limitConnectionTime() {
 
-  std::isNumber $1       || on error return NotNumber "first argument"
+  std::isNumber $1       || on error return NotNumber "${1:-first argument}"
   std::isNumber $tsStart || on error return NotNumber "$tsStart"
 
   (( tsStart > 0 )) || return 0

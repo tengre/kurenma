@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 183 2018-01-03 00:02:30+04:00 toor $
+# $Id: update-firehol 184 2018-01-03 00:25:23+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -82,19 +82,6 @@ kurenma-update-firehol::main() {
   err::debug 0 "starting from $s with pid $2"
   echo "${s}:$( exec -c date +%s )" >> $fnKnock
 
-  #
-  # temporary fix for openssl "gethostbyname failure"
-  #
-  sHost="$( printf -- "%s\t%s%s" "$s" $( md5sum <<< $s) )"
-  if ! grep "^${sHost//-/}$" /etc/hosts >/dev/null 2>&1; then
-
-    echo "$sHost" >> /etc/hosts
-
-  fi
-  #
-  #
-  #
-
   pathIni=$( _ pathIni )
 
   throw on NoSuchFileOrDir "$pathDat" "$pathIni"
@@ -150,6 +137,23 @@ kurenma-update-firehol::main() {
   : ${ipv4White:='127.0.0.1'}
   err::debug 2 "new white list $s"
   sed -i -re "s/ipv4White=.*/$s/" $cnf
+
+  #
+  # temporary fix for openssl "gethostbyname failure"
+  #
+  for sHost in $s; do
+
+    sHost="$( printf -- "%s\t%s%s" "$sHost" $( md5sum <<< $sHost ) )"
+    if ! grep "^${sHost//-/}$" /etc/hosts >/dev/null 2>&1; then
+
+      echo "${sHost//-/}" >> /etc/hosts
+
+    fi
+
+  done
+  #
+  #
+  #
 
   s=$(                                                                         \
                                                                                \

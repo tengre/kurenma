@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 184 2018-01-03 00:25:23+04:00 toor $
+# $Id: update-firehol 185 2018-01-03 00:45:01+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -46,8 +46,8 @@ kurenma-update-firehol::main() {
   exit+warn on CommandNotFound cp date diff firehol flock grep kurenmactl      \
                                md5sum mkdir mv rm sed sort touch uniq wg xargs
 
-  local cnf csv fn fnKnock fnLock ini ipv4Black ipv4Client ipv4White pathDat
-  local pathIni s sDig sHost
+  local ahost cnf fn fnKnock fnLock ini ipv4Black ipv4Client ipv4White pathDat
+  local pathIni s
   local -a a
 
   pathDat=$( _ pathDat )
@@ -128,12 +128,10 @@ kurenma-update-firehol::main() {
   done < $fnKnock > $fn
   mv -f $fn $fnKnock
 
-  s=$(                                                                         \
-                                                                               \
-    printf -- 'ipv4White="%s"'                                                 \
-      "$( net::ipv4.host ${ipv4White//[,;]/ } ${1//[,;]/ } $ipv4Client )"      \
-                                                                               \
-  )
+  ahost="$( net::ipv4.host ${ipv4White//[,;]/ } ${1//[,;]/ } $ipv4Client )"
+
+  s="$( printf -- 'ipv4White="%s"' "$ahost" )"
+
   : ${ipv4White:='127.0.0.1'}
   err::debug 2 "new white list $s"
   sed -i -re "s/ipv4White=.*/$s/" $cnf
@@ -141,12 +139,13 @@ kurenma-update-firehol::main() {
   #
   # temporary fix for openssl "gethostbyname failure"
   #
-  for sHost in $s; do
 
-    sHost="$( printf -- "%s\t%s%s" "$sHost" $( md5sum <<< $sHost ) )"
-    if ! grep "^${sHost//-/}$" /etc/hosts >/dev/null 2>&1; then
+  for s in $ahost; do
 
-      echo "${sHost//-/}" >> /etc/hosts
+    s="$( printf -- "%s\t%s%s" "$s" $( md5sum <<< $s ) )"
+    if ! grep "^${s//-/}$" /etc/hosts >/dev/null 2>&1; then
+
+      echo "${s//-/}" >> /etc/hosts
 
     fi
 

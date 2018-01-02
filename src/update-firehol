@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 178 2018-01-01 22:14:38+04:00 toor $
+# $Id: update-firehol 183 2018-01-03 00:02:30+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -44,10 +44,10 @@ kurenma-update-firehol::main() {
   pid::onStarted.exit
 
   exit+warn on CommandNotFound cp date diff firehol flock grep kurenmactl      \
-                               mkdir mv rm sed sort touch uniq wg xargs
+                               md5sum mkdir mv rm sed sort touch uniq wg xargs
 
   local cnf csv fn fnKnock fnLock ini ipv4Black ipv4Client ipv4White pathDat
-  local pathIni s sDig
+  local pathIni s sDig sHost
   local -a a
 
   pathDat=$( _ pathDat )
@@ -81,6 +81,19 @@ kurenma-update-firehol::main() {
 
   err::debug 0 "starting from $s with pid $2"
   echo "${s}:$( exec -c date +%s )" >> $fnKnock
+
+  #
+  # temporary fix for openssl "gethostbyname failure"
+  #
+  sHost="$( printf -- "%s\t%s%s" "$s" $( md5sum <<< $s) )"
+  if ! grep "^${sHost//-/}$" /etc/hosts >/dev/null 2>&1; then
+
+    echo "$sHost" >> /etc/hosts
+
+  fi
+  #
+  #
+  #
 
   pathIni=$( _ pathIni )
 

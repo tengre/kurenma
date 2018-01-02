@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 181 2018-01-02 20:18:49+04:00 toor $
+# $Id: client.kurenma.src 182 2018-01-02 20:56:01+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -261,7 +261,7 @@ kurenma-daemon::service() {
   cmdSSL="$(                                                                   \
                                                                                \
     printf --                                                                  \
-      "openssl s_client -verify 1 -quiet                                       \
+      "openssl s_client -verify 1 -bugs -quiet                                 \
        -connect %s:%d                                                          \
        -%s                                                                     \
        -CAfile %s                                                              \

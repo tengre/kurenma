@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 177 2017-12-31 11:09:51+04:00 toor $"
+# $Id: kurenmad 181 2018-01-02 20:18:49+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -125,7 +125,7 @@ kurenma-daemon::main() {
 
   pid::onStarted.exit
 
-  exit+warn on CommandNotFound grep ip mkdir nc openssl sed sleep tail wg
+  exit+warn on CommandNotFound grep ip mkdir nc openssl ping sed sleep tail wg
 
   local -a aId aIpsAllowed
   local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
@@ -227,7 +227,7 @@ kurenma-daemon::main() {
 
   :      ${dev:=wg0}
   : ${portAuth:=42912}
-  : ${protocol:=dtls1}
+  : ${protocol:=tls1_2}
 
   tsKeepalive=$( ini.get persistent keepalive )
   std::isNumber $tsKeepalive || tsKeepalive=0

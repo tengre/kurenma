@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 178 2018-01-01 22:14:38+04:00 toor $
+# $Id: client.kurenma.src 181 2018-01-02 20:18:49+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -32,7 +32,15 @@ kurenma-client::knocking() {
 
   while true; do
 
-    ping -c 3 $host >/dev/null 2>&1 && break
+    if [[ $protocol =~ ^dtls ]]; then
+
+      ping -c 3 $host            >/dev/null 2>&1 && break
+
+    else
+
+      nc -w 3 -z $host $portAuth >/dev/null 2>&1 && break
+
+    fi
 
     ! (( i % 32 )) && echo ""
 

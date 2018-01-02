@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 175 2017-12-31 01:15:33+04:00 toor $"
+# $Id: server.kurenma.src 181 2018-01-02 20:18:49+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -75,6 +75,9 @@ kurenma-server::waitRequest() {
       if (( tsStart == 0 )); then
 
         err::debug 3 "wait ${tsWait}sec"
+
+        (( tsWait > 1800 )) && kurenma-server::checkConnections
+
         tsWait=$(( tsWait + 10 ))
 
       fi
@@ -148,21 +151,13 @@ kurenma-server::waitRequest() {
 
 }
 #
-kurenma-server::handleRequest() {
+kurenma-server::checkConnections() {
 
-  throw on MissingArgument "$1" "$2"
+  throw on EmptyVariable cn dev pathDat tsKeepalive tsPeerTimeout
 
-  throw on EmptyVariable dev pathDat pathIni pool tsKeepalive tsPeerTimeout server
-
-  local aCIDR cmdWG cnClient fmt fn fnLeased i ip ipClient peer s
-
-  cnClient=$1
-  peer=$2
-  fmt="\n%s - prepare tunnel settings (client public key=%s) on %s:\n"
+  local i fn fnLeased s
 
   fnLeased=${pathDat}/${cn}.${dev}.leased
-
-  err::debug 4 && printf -- "$fmt" "$cnClient" "${peer:0:10}<skip>" "$dev" >&2
 
   for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
 
@@ -188,6 +183,45 @@ kurenma-server::handleRequest() {
     fi
 
   done
+
+  std::temp fn
+
+  [[ -f $fnLeased ]] || touch $fnLeased
+
+  for s in $( exec -c wg show $dev peers ); do
+
+    grep ":${s:0:10}$" $fnLeased
+
+  done > $fn
+
+  mv -f $fn $fnLeased
+
+  for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
+
+    wg set $dev peer $s remove
+    err::debug 3 "${dev}: peer ${s:0:10}<skip> is removed as unused .. $?"
+
+  done
+
+}
+#
+kurenma-server::handleRequest() {
+
+  throw on MissingArgument "$1" "$2"
+
+  throw on EmptyVariable dev pathDat pathIni pool tsKeepalive tsPeerTimeout server
+
+  local aCIDR cmdWG cnClient fmt fn fnLeased i ip ipClient peer s
+
+  cnClient=$1
+  peer=$2
+  fmt="\n%s - prepare tunnel settings (client public key=%s) on %s:\n"
+
+  fnLeased=${pathDat}/${cn}.${dev}.leased
+
+  err::debug 4 && printf -- "$fmt" "$cnClient" "${peer:0:10}<skip>" "$dev" >&2
+
+  kurenma-server::checkConnections
 
   if [[ "$pool" == "commonname" ]]; then
 
@@ -284,13 +318,6 @@ kurenma-server::handleRequest() {
               "${ipClient}"                                                    \
               "${server%/*}"
 
-    for s in $( exec -c wg show $dev peers ); do
-
-      grep ":${s:0:10}$" $fnLeased
-
-    done > $fn
-
-    mv -f $fn $fnLeased
     echo "${cnClient}:${ipClient}:$(exec -c date +%s):${peer:0:10}" >> $fnLeased
 
   else
@@ -299,13 +326,6 @@ kurenma-server::handleRequest() {
     rm -f $fn
 
   fi
-
-  for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
-
-    wg set $dev peer $s remove
-    err::debug 3 "${dev}: peer ${s:0:10}<skip> is removed as unused .. $?"
-
-  done
 
   err::debug 1 "server configuration updated."
 

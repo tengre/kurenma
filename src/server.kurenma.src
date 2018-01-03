@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 182 2018-01-02 20:56:01+04:00 toor $"
+# $Id: server.kurenma.src 186 2018-01-03 14:37:49+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -76,9 +76,16 @@ kurenma-server::waitRequest() {
 
         err::debug 3 "wait ${tsWait}sec"
 
-        (( tsWait > 1800 )) && kurenma-server::checkConnections
+        if (( (tsWait+60)/2*((tsWait-60)/10+1) > 28800 )); then
 
-        tsWait=$(( tsWait + 10 ))
+          kurenma-server::checkConnections
+          tsWait=60
+
+        else
+
+          tsWait=$(( tsWait + 10 ))
+
+        fi
 
       fi
 

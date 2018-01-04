@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 174 2017-12-30 23:53:37+04:00 toor $
+# $Id: kurenma.ini.example 188 2018-01-05 01:00:35+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -144,7 +144,7 @@
 # cn              = peer.common.name
   ca              = cacert.pem
   dh              = dh2048.pem
-  protocol        = dtls1_2
+  protocol        = tls1_2
 
 [ips allowed]
 

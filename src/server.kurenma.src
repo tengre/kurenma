@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 186 2018-01-03 14:37:49+04:00 toor $"
+# $Id: server.kurenma.src 188 2018-01-05 01:00:35+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -61,7 +61,19 @@ kurenma-server::limitConnectionTime() {
 #
 kurenma-server::waitRequest() {
 
-  local bIssuer='false' bRevoked=0 cn rc s tsStart=0 tsWait=60
+  local bIssuer='false' bRevoked=0 cn rc s tsCheck tsStart=0 tsWait=60
+
+  std::isNumber $tsPeerTimeout || tsPeerTimeout=0
+
+  if (( tsPeerTimeout == 0 )); then
+
+    tsCheck=28800
+
+  else
+
+    tsCheck=$(( tsPeerTimeout + 60 ))
+
+  fi
 
   while true; do
 
@@ -76,7 +88,7 @@ kurenma-server::waitRequest() {
 
         err::debug 3 "wait ${tsWait}sec"
 
-        if (( (tsWait+60)/2*((tsWait-60)/10+1) > 28800 )); then
+        if (( (tsWait+60)/2*((tsWait-60)/10+1) > tsCheck )); then
 
           kurenma-server::checkConnections
           tsWait=60
@@ -158,50 +170,45 @@ kurenma-server::waitRequest() {
 
 }
 #
-kurenma-server::checkConnections() {
+kurenma-server::inactivityConnections() {
 
-  throw on EmptyVariable cn dev pathDat tsKeepalive tsPeerTimeout
+  errorify on EmptyVariable dev || return
 
-  local i fn fnLeased s
+  std::isNumber $tsPeerTimeout || tsPeerTimeout=0
 
-  fnLeased=${pathDat}/${cn}.${dev}.leased
+  (( tsPeerTimeout == 0 )) && return 0
+
+  local i s
 
   for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
 
-    if std::isNumber ${s##*:}; then
+    ## TODO errorify
+    std::isNumber ${s##*:} || continue
 
-      #ignore too low timestamps
-      (( ${s##*:} < 1800 )) && continue
+    #ignore too low timestamps
+    (( ${s##*:} < 1800 )) && continue
 
-      i=$(( $( exec -c date +%s ) - ${s##*:} ))
+    i=$(( $( exec -c date +%s ) - ${s##*:} ))
 
-      if (( i >= tsPeerTimeout )); then
+    if (( i >= tsPeerTimeout )); then
 
-        wg set $dev peer ${s%%:*} remove
-        err::debug 2 \
-          "peer ${s:0:10}<skip> is removed due to inactivity over an ${i}s.. $?"
-
-      fi
-
-    else
-
-      on error warn InvalidArgument "${s##*:}"
+      wg set $dev peer ${s%%:*} remove
+      err::debug 2 \
+        "peer ${s:0:10}<skip> is removed due to inactivity over an ${i}s.. $?"
 
     fi
 
   done
 
-  std::temp fn
+}
+#
+kurenma-server::checkConnections() {
 
-  [[ -f $fnLeased ]] || touch $fnLeased
+  throw on EmptyVariable dev pathDat
 
-  for s in $( exec -c wg show $dev peers ); do
+  local fn fnLeased s
 
-    grep ":${s:0:10}$" $fnLeased
-
-  done > $fn
-
-  mv -f $fn $fnLeased
+  kurenma-server::inactivityConnections
 
   for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
 
@@ -210,13 +217,33 @@ kurenma-server::checkConnections() {
 
   done
 
+  if [[ $cn ]]; then
+
+    fnLeased=${pathDat}/${cn}.${dev}.leased
+
+    if [[ -f $fnLeased ]]; then
+
+      std::temp fn
+
+      for s in $( exec -c wg show $dev peers ); do
+
+        grep ":${s:0:10}$" $fnLeased
+
+      done > $fn
+
+      mv -f $fn $fnLeased
+
+    fi
+
+  fi
+
 }
 #
 kurenma-server::handleRequest() {
 
   throw on MissingArgument "$1" "$2"
 
-  throw on EmptyVariable dev pathDat pathIni pool tsKeepalive tsPeerTimeout server
+  throw on EmptyVariable dev pathDat pathIni pool tsKeepalive server
 
   local aCIDR cmdWG cnClient fmt fn fnLeased i ip ipClient peer s
 

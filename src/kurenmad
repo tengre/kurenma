@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 181 2018-01-02 20:18:49+04:00 toor $"
+# $Id: kurenmad 188 2018-01-05 01:00:35+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -130,7 +130,7 @@ kurenma-daemon::main() {
   local -a aId aIpsAllowed
   local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
   local bDefaultRoute pool port portAuth role tsKeepalive tsPeerTimeout
-  local aReqOptByRole ca cn dh dev host server protocol
+  local aReqOptByRole ca cn dh dev host server protocol tsPeerInactivity
 
 
   pathDat=$( _ pathDat )
@@ -169,6 +169,17 @@ kurenma-daemon::main() {
     : ${bDefaultRoute:=false}
     [[ ${aIpsAllowed[@]} ]] || aIpsAllowed[0]='0.0.0.0/0'
 
+    _bashlyk_OnError=return tsPeerTimeout=$(                                   \
+      std::getTimeInSec $( ini.get pause between checks ) "3min"               \
+    )
+
+    if (( tsPeerTimeout < 60 )); then
+
+      on error warn InvalidArgument "$tsPeerTimeout is too low, it increased to 60"
+      tsPeerTimeout=60
+
+    fi
+
     aReqOptByRole="host"
 
   ;;
@@ -182,6 +193,10 @@ kurenma-daemon::main() {
     :   ${pool:=dynamic}
     :   ${port:=12912}
     : ${server:=192.168.29.1/24}
+
+    _bashlyk_OnError=return tsPeerTimeout=$(                                   \
+      std::getTimeInSec $( ini.get pause between checks ) "0"                  \
+    )
 
     aReqOptByRole="server pool port"
 
@@ -232,20 +247,6 @@ kurenma-daemon::main() {
   tsKeepalive=$( ini.get persistent keepalive )
   std::isNumber $tsKeepalive || tsKeepalive=0
   (( tsKeepalive > 65355 )) && tsKeepalive=65355
-
-  _bashlyk_OnError=return tsPeerTimeout=$(                                     \
-                                                                               \
-    std::getTimeInSec $( ini.get pause between checks ) "32min"                \
-                                                                               \
-  )
-
-  if (( tsPeerTimeout < 30 )); then
-
-    on error warn InvalidArgument "$tsPeerTimeout is too low, it increased to 30"
-
-    tsPeerTimeout=30
-
-  fi
 
   if err::debug 3; then
 

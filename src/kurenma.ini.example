@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 137 2017-02-10 15:58:31+04:00 toor $
+# $Id: kurenma.ini.example 189 2018-01-08 00:35:21+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -34,7 +34,7 @@
 #
 #    GLOBAL UNNAMED SECTION contain global named parameters:
 #
-#    "role" constant STRING
+#    role constant STRING
 #        This parameter can be set to client or server and define  the  role
 #        of  kurenmad(8).  Service  for client role send requests for tunnel
 #        creating to the server and check tunnel state, for  server  role  -
@@ -73,7 +73,8 @@
 #        This parameter can be presented as a number (of seconds)  or  as  a
 #        presentation time string "number<sec|min|hour|day|week|month|year>"
 #
-#        Default: 32minutes
+#        Default: 180 (seconds  for the client role)
+#        Default: 0   (disabled for the server role)
 #
 #    "tunnel network" CIDR (ip/mask)
 #        Tunnel IP address and network mask of the server peer.
@@ -108,10 +109,19 @@
 #        Common Name (CN) that refers to the signed peer certificate
 #
 #    port NUMBER
-#        TCP port number that the daemon of the "server" role will listen on
-#        for auth and key exchange
+#        TCP port of the server side for secure channel organisation. This
+#        channel used for wireguard key exchange.
 #
 #        Default: 42912
+#
+#    ca STRING
+#        CA public certificate file
+#
+#    protocol STRING
+#        select the cryptographic protocol SSL\(D)TLS supported by openssl
+#        application (ssl2, ssl3, tls1, tls1_1, tls1_2, dtls1, dtls1_2)
+#
+#           Default: tls1_2
 #
 #  SEE ALSO
 #
@@ -144,6 +154,7 @@
 # cn              = peer.common.name
   ca              = cacert.pem
   dh              = dh2048.pem
+  protocol        = tls1_2
 
 [ips allowed]
 

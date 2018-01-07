@@ -1,12 +1,12 @@
 #
-# $Id: server.kurenma.src 170 2017-04-19 08:46:12+04:00 toor $"
+# $Id: server.kurenma.src 188 2018-01-05 01:00:35+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
 #
-udmResetCounters() {
+kurenma-server::resetCounters() {
 
   bRevoked=0
   cn=''
@@ -15,11 +15,11 @@ udmResetCounters() {
 
 }
 #
-udmCloseConnection() {
+kurenma-server::closeConnection() {
 
-  udfDebug 3 "client $cn - exchange completed"
+  err::debug 3 "client $cn - exchange completed"
 
-  udmResetCounters
+  kurenma-server::resetCounters
 
   echo "exchange completed"
   sleep 1
@@ -27,43 +27,53 @@ udmCloseConnection() {
 
 }
 #
-udmRevoked() {
+kurenma-server::revoked() {
 
-  udfDebug 3 "client $cn cert revoked"
+  err::debug 3 "client $cn cert revoked"
   echo "client cert revoked"
 
-  udmCloseConnection
+  kurenma-server::closeConnection
 
 }
 #
-udmLimitConnectionTime() {
+kurenma-server::limitConnectionTime() {
 
-  udfIsNumber $1 \
-    || eval $( udfOnError return InvalidArgument "$1 - number expected" )
-  udfIsNumber $tsStart \
-    || eval $( udfOnError return InvalidArgument "$tsStart - number expected" )
+  std::isNumber $1       || on error return NotNumber "${1:-first argument}"
+  std::isNumber $tsStart || on error return NotNumber "$tsStart"
 
   (( tsStart > 0 )) || return 0
-  [[ $cn ]] || eval $( udfOnError return EmptyArgument "cn" )
+  [[ $cn ]] || on error return EmptyArgument "cn"
 
-  local i=$(( $(date "+%s") - $tsStart ))
+  local i=$(( $( exec -c date "+%s" ) - $tsStart ))
 
-  (( i > 16 )) && udfDebug 3 "client $cn - exchange time is ${i}sec"
+  (( i > 16 )) && err::debug 3 "client $cn - exchange time is ${i}sec"
 
   if (( $i > $1 )); then
 
-    udfDebug 3 "client $cn - exchange down by timeout ${i}sec"
+    err::debug 3 "client $cn - exchange down by timeout ${i}sec"
     echo "client $cn - exchange down by timeout"
 
-    udmCloseConnection
+    kurenma-server::closeConnection
 
   fi
 
 }
 #
-udfWaitRequest() {
+kurenma-server::waitRequest() {
 
-  local bIssuer='false' bRevoked=0 cn rc s tsStart=0 tsWait=60
+  local bIssuer='false' bRevoked=0 cn rc s tsCheck tsStart=0 tsWait=60
+
+  std::isNumber $tsPeerTimeout || tsPeerTimeout=0
+
+  if (( tsPeerTimeout == 0 )); then
+
+    tsCheck=28800
+
+  else
+
+    tsCheck=$(( tsPeerTimeout + 60 ))
+
+  fi
 
   while true; do
 
@@ -72,23 +82,33 @@ udfWaitRequest() {
 
     if   (( rc > 128 )); then
 
-      (( bRevoked > 0 )) && udmRevoked
+      (( bRevoked > 0 )) && kurenma-server::revoked
 
       if (( tsStart == 0 )); then
 
-        udfDebug 3 "wait ${tsWait}sec"
-        tsWait=$(( tsWait + 10 ))
+        err::debug 3 "wait ${tsWait}sec"
+
+        if (( (tsWait+60)/2*((tsWait-60)/10+1) > tsCheck )); then
+
+          kurenma-server::checkConnections
+          tsWait=60
+
+        else
+
+          tsWait=$(( tsWait + 10 ))
+
+        fi
 
       fi
 
     elif (( rc > 0 )); then
 
-      udfDebug 3 "input closed"
+      err::debug 3 "input closed"
       break
 
     elif [[ $s =~ ^signalStop$ ]]; then
 
-      udfDebug 3 "SSL server down"
+      err::debug 3 "SSL server down"
 
       echo Q
       sleep 0.2
@@ -96,7 +116,7 @@ udfWaitRequest() {
 
     elif [[ $s =~ ^verify.*revoked.* ]]; then
 
-      udfDebug 3 "warn: $cn revoked certificate"
+      err::debug 3 "warn: $cn revoked certificate"
       bRevoked=1
       tsWait=2
 
@@ -108,53 +128,122 @@ udfWaitRequest() {
 
       [[ "$s" == "$cn" ]] && continue || cn=$s
 
-      udfDebug 3 "client $cn - exchange started"
-      udfDebug 3 "SSL: $rc"
+      err::debug 3 "client $cn - exchange started"
+      err::debug 3 "SSL: $rc"
       rc=0
 
-      tsStart=$(date "+%s")
+      tsStart=$( exec -c date "+%s" )
       tsWait=4
 
     elif [[ $bIssuer == 'false' && $s =~ depth=1.*CN.* ]]; then
 
-      udfDebug 3 "SSL: ${s/depth=1/ issuer:}"
+      err::debug 3 "SSL: ${s/depth=1/ issuer:}"
       bIssuer='true'
 
     elif [[ $s =~ client-data.* ]]; then
 
       if (( bRevoked > 0 )); then
 
-        udfDebug 3 "client data ignored"
+        err::debug 3 "client data ignored"
 
       else
 
         s=${s##*client-data}
-        udfDebug 5 "client data: ${s:1:10}<skip>"
-        udfHandleRequest $cn ${s:1:45}
+        err::debug 5 "client data: ${s:1:10}<skip>"
+        kurenma-server::handleRequest $cn ${s:1:45}
 
         sleep 0.1
-        udmCloseConnection
+        kurenma-server::closeConnection
 
       fi
 
     elif [[ $s =~ ^(CIPHER|ERROR|ACCEPT) ]];
     then
 
-      udfDebug 3 "SSL: $s"
+      err::debug 3 "SSL: $s"
 
     fi
 
-    udmLimitConnectionTime 32
+    kurenma-server::limitConnectionTime 32
 
   done
 
 }
 #
-udfHandleRequest() {
+kurenma-server::inactivityConnections() {
 
-  udfThrowOnEmptyOrMissingArgument "$1" "$2"
-  udfThrowOnEmptyVariable dev pathDat pathIni pool tsKeepalive tsPeerTimeout   \
-                          server
+  errorify on EmptyVariable dev || return
+
+  std::isNumber $tsPeerTimeout || tsPeerTimeout=0
+
+  (( tsPeerTimeout == 0 )) && return 0
+
+  local i s
+
+  for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
+
+    ## TODO errorify
+    std::isNumber ${s##*:} || continue
+
+    #ignore too low timestamps
+    (( ${s##*:} < 1800 )) && continue
+
+    i=$(( $( exec -c date +%s ) - ${s##*:} ))
+
+    if (( i >= tsPeerTimeout )); then
+
+      wg set $dev peer ${s%%:*} remove
+      err::debug 2 \
+        "peer ${s:0:10}<skip> is removed due to inactivity over an ${i}s.. $?"
+
+    fi
+
+  done
+
+}
+#
+kurenma-server::checkConnections() {
+
+  throw on EmptyVariable dev pathDat
+
+  local fn fnLeased s
+
+  kurenma-server::inactivityConnections
+
+  for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
+
+    wg set $dev peer $s remove
+    err::debug 3 "${dev}: peer ${s:0:10}<skip> is removed as unused .. $?"
+
+  done
+
+  if [[ $cn ]]; then
+
+    fnLeased=${pathDat}/${cn}.${dev}.leased
+
+    if [[ -f $fnLeased ]]; then
+
+      std::temp fn
+
+      for s in $( exec -c wg show $dev peers ); do
+
+        grep ":${s:0:10}$" $fnLeased
+
+      done > $fn
+
+      mv -f $fn $fnLeased
+
+    fi
+
+  fi
+
+}
+#
+kurenma-server::handleRequest() {
+
+  throw on MissingArgument "$1" "$2"
+
+  throw on EmptyVariable dev pathDat pathIni pool tsKeepalive server
 
   local aCIDR cmdWG cnClient fmt fn fnLeased i ip ipClient peer s
 
@@ -164,51 +253,29 @@ udfHandleRequest() {
 
   fnLeased=${pathDat}/${cn}.${dev}.leased
 
-  udfDebug 4 && printf -- "$fmt" "$cnClient" "${peer:0:10}<skip>" "$dev" >&2
+  err::debug 4 && printf -- "$fmt" "$cnClient" "${peer:0:10}<skip>" "$dev" >&2
 
-  if [[ $(wg show $dev | grep peer | wc -l) -ge 253 ]]; then
+  kurenma-server::checkConnections
 
-    wg set $dev peer $(                                                        \
-                                                                               \
-      wg show $dev latest-handshakes | sort -k 2 -b -n | head -n 1 | cut -f 1  \
-                                                                               \
-    ) remove
+  if [[ "$pool" == "commonname" ]]; then
 
-  fi
+    if ipClient=$( net::ipv4.host $cnClient ); then
 
-  for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
+      if grep -w $ipClient < <( net::ipv4.range $server ) >/dev/null 2>&1; then
 
-    if udfIsNumber ${s##*:}; then
+        err::debug 3 "$cnClient - lease of the IP by Common Name $ipClient"
 
-      #ignore too low timestamps
-      (( ${s##*:} < 1800 )) && continue
+      else
 
-      i=$(( $(date +%s) - ${s##*:} ))
-
-      if (( i >= tsPeerTimeout )); then
-
-        wg set $dev peer ${s%%:*} remove
-        udfDebug 2 \
-          "peer ${s:0:10}<skip> is removed due to inactivity over an ${i}s.. $?"
+        err::debug 3 "$cnClient - $ipClient is out of range for tunnel $server"
+        ipClient=''
 
       fi
 
     else
 
-      eval $( udfOnError warn InvalidArgument "${s##*:}" )
+      err::debug 3 "$cnClient - IP-address by Common Name not resolved.."
 
-    fi
-
-  done
-
-  if [[ "$pool" == "commonname" ]]; then
-
-    ## TODO IP must be in the server network - checking required
-    s="$cnClient - lease of the IP by Common Name"
-    if ipClient=$( udfGetValidIPsOnly $cnClient ); then
-      udfDebug 3 "$s - $ipClient"
-    else
-      udfDebug 3 "$s - not resolved.."
     fi
 
   fi
@@ -223,46 +290,36 @@ udfHandleRequest() {
                                                                                \
     )
 
-    ipClient=$( udfGetValidIPsOnly $ipClient )
-    s="$cnClient - lease of the already used IP"
-    udfDebug 3 "$s - $ipClient"
+    if ipClient=$( net::ipv4.host $ipClient ); then
+
+      err::debug 3 "$cnClient - lease of the early used IP $ipClient"
+
+    else
+
+      ipClient=''
+
+    fi
 
   fi
 
   if [[ ${server%/*} == $ipClient ]]; then
 
-    eval $(                                                                    \
-                                                                               \
-      udfOnError warn InvalidArgument                                          \
-        "the IP address $ipClient is already in use, skipped"                  \
-                                                                               \
-    )
+    err::debug 3 "the IP address $ipClient is already in use, skipped"
 
-    unset ipClient
+    ipClient=''
 
   fi
 
   if [[ ! $ipClient ]]; then
 
-    ipClient=$(( ${server%/*} ))
-    s="$( wg show $dev allowed-ips )"
-    ## TODO ip range for pool
-    for ((i=$(( ${ipClient##*.} + 1 )); i<=254; i++)); do
+    s="$( exec -c wg show $dev allowed-ips )"
 
-      ip="${ipClient%.*}.$i";
+    for ipClient in $( net::ipv4.range $server ); do
 
-      if [[ $s =~ ${ip}/32 ]]; then
+      [[ $s =~ ${ipClient}/32 ]] && continue
 
-        continue
-
-      else
-
-        ipClient=$( udfGetValidIPsOnly $ip )
-        s="$cnClient - lease of the dynamic IP"
-        udfDebug 3 "$s - $ipClient"
-        break
-
-      fi
+      err::debug 3 "$cnClient - lease of the dynamic IP - $ipClient"
+      break
 
     done
 
@@ -270,20 +327,15 @@ udfHandleRequest() {
 
   if [[ ! $ipClient || ${server%/*} == $ipClient ]]; then
 
-    echo "not allocated IP to the client"
-    eval $(                                                                    \
-                                                                               \
-      udfOnError retecho InvalidArgument "not allocated IP to the client"      \
-                                                                               \
-    )
+    on error warn+return InvalidArgument "not allocated IP to the client.."
 
   fi
 
-  aCIDR=$( udfGetValidCIDR ${ipClient}/32 ${aIpsAllowed[@]} )
+  aCIDR=$( net::ipv4.cidr ${ipClient}/32 ${aIpsAllowed[@]} )
 
-  udfDebug 3 "$cnClient - allowed ips - $aCIDR"
+  err::debug 3 "$cnClient - allowed ips - $aCIDR"
 
-  udfMakeTemp fn
+  std::temp fn
 
   cmdWG="$(                                                                    \
                                                                                \
@@ -296,18 +348,11 @@ udfHandleRequest() {
 
     printf -- 'OK:%s:%s:%s:%s\n'                                               \
               "$( wg show $dev private-key | wg pubkey )"                      \
-              "$( wg show $dev listen-port )"                                  \
+              "$( exec -c wg show $dev listen-port )"                          \
               "${ipClient}"                                                    \
               "${server%/*}"
 
-    for s in $( wg show $dev peers ); do
-
-      grep ":${s:0:10}$" $fnLeased
-
-    done > $fn
-
-    mv -f $fn $fnLeased
-    echo "${cnClient}:${ipClient}:$(date +%s):${peer:0:10}" >> $fnLeased
+    echo "${cnClient}:${ipClient}:$(exec -c date +%s):${peer:0:10}" >> $fnLeased
 
   else
 
@@ -316,25 +361,18 @@ udfHandleRequest() {
 
   fi
 
-  for s in $( wg show $dev allowed-ips | grep none | cut -f 1 | xargs ); do
-
-    wg set $dev peer $s remove
-    udfDebug 3 "${dev}: peer ${s:0:10}<skip> is removed as unused .. $?"
-
-  done
-
-  udfDebug 1 "server configuration updated."
+  err::debug 1 "server configuration updated."
 
   wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
   chmod 0600 ${pathIni}/${cn}.${dev}.conf
 
 }
 #
-udfSetupTunnel() {
+kurenma-server::setupTunnel() {
 
-  udfThrowOnEmptyVariable dev server port
+  throw on EmptyVariable dev server port
 
-  udfDebug 3 && printf -- "Init WireGuard device %s" "$dev"
+  err::debug 3 && printf -- "Init WireGuard device %s" "$dev"
 
   try {
 
@@ -346,63 +384,84 @@ udfSetupTunnel() {
 
   } catch {
 
-    ERR::exception.message
+    err::exception.message
     exit $?
 
   }
 
-  udfDebug 3 "init new server pub key: \
+  err::debug 3 "init new server pub key: \
     $( wg show $dev private-key | wg pubkey | head -c 10 )<skip>"
 
   return 0
 
 }
 #
-udfService() {
+# exported function
+#
+kurenma-daemon::service() {
 
   DEBUGLEVEL=5
 
-  [[ $UID == 0 ]] || eval $(                                                   \
-                                                                               \
-    udfOnError throw NotPermitted "You must be root to run this."              \
-                                                                               \
-  )
+  [[ $UID == 0 ]] || on error warn+exit NotPermitted "You must be root to run this."
 
-  udfThrowOnCommandNotFound cut kill ps sort
-  udfThrowOnEmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey port \
-                          portAuth server
+  exit+warn on CommandNotFound cut kill ps sort
+
+  throw on EmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey protocol    \
+                         port portAuth server
 
   local cmdSSL fn fnDH
 
   if [[ ! ( $( wg|grep $dev ) && $( ip addr show $dev|grep ${server%/*} ) ) ]];
   then
 
-    udfSetupTunnel
+    kurenma-server::setupTunnel
 
   fi
 
   fnDH=${pathCrt}/dh2048.pem
 
-  cmdSSL="                                                                     \
-    openssl s_server -cert $fnCrt -key $fnKey -accept $portAuth                \
-      -CApath $pathCA -Verify 2 -crl_check_all -dhparam $fnDH                  \
-  "
+  cmdSSL="$(                                                                   \
+                                                                               \
+    printf --                                                                  \
+      "openssl s_server -Verify 2 -crl_check_all -bugs -hack                   \
+       -accept %s                                                              \
+       -%s                                                                     \
+       -dhparam %s                                                             \
+       -CApath %s                                                              \
+       -cert %s                                                                \
+       -key %s                                                                 \
+      "                                                                        \
+      "$portAuth"                                                              \
+      "$protocol"                                                              \
+      "$fnDH"                                                                  \
+      "$pathCA"                                                                \
+      "$fnCrt"                                                                 \
+      "$fnKey"                                                                 \
+                                                                               \
+  )"
 
-  udfStopProcess $cmdSSL
+  cmdSSL=$( std::trim $cmdSSL )
+
+  err::debug 6 "openssl command line: $cmdSSL"
+
+  pid::stop openssl s_.*kurenma
 
   while true; do
 
-    udfDebug 3 "Daemon for WireGuard clients (re)started.."
+    err::debug 3 "Daemon for WireGuard clients (re)started.."
 
-    udfMakeTemp fn type=pipe
+    std::temp fn type=pipe
 
     export _kurenma_control_channel=$fn
-    udfWaitRequest < $fn | $cmdSSL > $fn 2>&1 &
-    udfAddPid2Clean $!
+
+    kurenma-server::waitRequest < $fn | $cmdSSL > $fn 2>&1 &
+
+    pid::onExit.stop $!
+
     wait $!
     rm -f $fn
 
-    udfWaitSignal 0.2 || break
+    kurenma-daemon::waitSignal 0.2 || break
 
   done
 

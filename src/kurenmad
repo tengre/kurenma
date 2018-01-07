@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 170 2017-04-19 08:46:12+04:00 toor $"
+# $Id: kurenmad 188 2018-01-05 01:00:35+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -77,67 +77,61 @@ _kurenma_sSignal=none
 #    kurenma(7), kurenmactl(8), kurenma.ini(5)
 #
 #******
-udfWaitSignal() {
+kurenma-daemon::waitSignal() {
 
   if [[ $_kurenma_sSignal == "stop" ]]; then
 
-    udfDebug 4 "Stop signal received before waiting"
-    return $(_ iErrorAbortedBySignal)
+    err::debug 4 "Stop signal received before waiting"
+    return $( _ iErrorAbortedBySignal )
 
   fi
 
-  [[ $1 =~ ^[0-9]+(\.[0-9]+)?$ ]] || eval $(                                   \
-                                                                               \
-    udfOnError return InvalidArgument "$1"                                     \
-                                                                               \
-  )
+  std::isDecimal $1 || on error return NotDecimal "${1:-first argument}"
 
-  sleep $1 &
+  sleep ${1//-/} &
   wait $!
 
   if [[ $_kurenma_sSignal == "stop" ]]; then
 
-    udfDebug 4 "Stop signal received after waiting"
-    return $(_ iErrorAbortedBySignal)
+    err::debug 4 "Stop signal is received while waiting"
+    return $( _ iErrorAbortedBySignal )
 
   fi
 
   return 0
+
 }
 #
-udfSignal() {
+kurenma-daemon::signal() {
 
   [[ $_kurenma_control_channel && -p $_kurenma_control_channel ]] \
     && echo "signalStop" > $_kurenma_control_channel
 
   _kurenma_sSignal='stop'
 
-  udfStopProcess childs sleep
+  pid::stop childs sleep
 
-  udfFinally "service down initiated by signal,"
+  std::finally "service down initiated by signal,"
 
   sleep 1.8
 
 }
 #
-udfMain() {
+kurenma-daemon::main() {
 
   DEBUGLEVEL=5
 
-  udfThrowOnCommandNotFound grep ip mkdir nc openssl sed sleep tail wg
+  [[ $UID == 0 ]] || on error warn+exit NotPermitted "You must be root to run this."
 
-  [[ $UID == 0 ]] || eval $(                                                   \
-                                                                               \
-    udfOnError throw NotPermitted "You must be root to run this."              \
-                                                                               \
-  )
+  pid::onStarted.exit
+
+  exit+warn on CommandNotFound grep ip mkdir nc openssl ping sed sleep tail wg
 
   local -a aId aIpsAllowed
   local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
   local bDefaultRoute pool port portAuth role tsKeepalive tsPeerTimeout
-  local aReqOptByRole ca cn dh dev host server
+  local aReqOptByRole ca cn dh dev host server protocol tsPeerInactivity
 
-  udfExitIfAlreadyStarted
 
   pathDat=$( _ pathDat )
   pathIni=$( _ pathIni )
@@ -148,7 +142,7 @@ udfMain() {
   pathKey=${pathIni}/ssl/private
   ini=${pathIni}/kurenma.ini
 
-  mkdir -p $pathDat || eval $( udfOnError retecho NotExistNotCreated $pathDat )
+  mkdir -p $pathDat || on error echo+return NotExistNotCreated $pathDat
 
   INI ini
   ini.load $ini                                                                \
@@ -156,7 +150,7 @@ udfMain() {
                  IP lease method,persistent keepalive,pause between checks,    \
                  default route                                                 \
                                                                                \
-            [ssl]ca,cn,dh,port                                                 \
+            [ssl]ca,cn,dh,port,protocol                                        \
                                                                                \
     [ips allowed]=
 
@@ -175,6 +169,17 @@ udfMain() {
     : ${bDefaultRoute:=false}
     [[ ${aIpsAllowed[@]} ]] || aIpsAllowed[0]='0.0.0.0/0'
 
+    _bashlyk_OnError=return tsPeerTimeout=$(                                   \
+      std::getTimeInSec $( ini.get pause between checks ) "3min"               \
+    )
+
+    if (( tsPeerTimeout < 60 )); then
+
+      on error warn InvalidArgument "$tsPeerTimeout is too low, it increased to 60"
+      tsPeerTimeout=60
+
+    fi
+
     aReqOptByRole="host"
 
   ;;
@@ -183,11 +188,15 @@ udfMain() {
 
       pool=$( ini.get IP lease method )
       port=$( ini.get listen port )
-    server=$( udfGetValidCIDR $( ini.get tunnel network ) )
+    server=$( net::ipv4.cidr $( ini.get tunnel network ) )
 
     :   ${pool:=dynamic}
     :   ${port:=12912}
     : ${server:=192.168.29.1/24}
+
+    _bashlyk_OnError=return tsPeerTimeout=$(                                   \
+      std::getTimeInSec $( ini.get pause between checks ) "0"                  \
+    )
 
     aReqOptByRole="server pool port"
 
@@ -195,11 +204,7 @@ udfMain() {
 
       *)
 
-    eval $(                                                                    \
-                                                                               \
-      udfOnError throw InvalidArgument "$role - must have client or server"    \
-                                                                               \
-    )
+    on error throw InvalidArgument "$role - must have client or server"
 
   ;;
 
@@ -213,14 +218,14 @@ udfMain() {
 
     s="$(                                                                      \
          printf -- ", %s.%s %s, (c) 2016-%s\n\n"                               \
-                   "${a[0]}" "${a[1]}" "${a[2]}" "$(date +%Y)"                 \
+                   "${a[0]}" "${a[1]}" "${a[2]}" "$( exec -c date +%Y )"       \
       )"
 
-  elif a=( $( grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 ) ); then
+  elif a=($( exec -c grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 )); then
 
     s="$(                                                                      \
           printf -- ", %s.%s %s, (c) 2016-%s\n\n"                              \
-                    "${a[2]}" "${a[3]}" "$(date +%Y)"                          \
+                    "${a[2]}" "${a[3]}" "$( exec -c date +%Y )"                \
       )"
 
   else
@@ -229,38 +234,21 @@ udfMain() {
 
   fi
 
-  udfDebug 1 "start ${0##*/} as ${role}${s}"
+  err::debug 1 "start ${0##*/} as ${role}${s}"
 
-       dev=$( ini.get tunnel name )
-  portAuth=$( ini.get [ssl]port   )
+       dev=$( ini.get tunnel name   )
+  portAuth=$( ini.get [ssl]port     )
+  protocol=$( ini.get [ssl]protocol )
 
   :      ${dev:=wg0}
   : ${portAuth:=42912}
+  : ${protocol:=tls1_2}
 
   tsKeepalive=$( ini.get persistent keepalive )
-  udfIsNumber $tsKeepalive || tsKeepalive=0
+  std::isNumber $tsKeepalive || tsKeepalive=0
   (( tsKeepalive > 65355 )) && tsKeepalive=65355
 
-  _bashlyk_OnError=return tsPeerTimeout=$(                                     \
-                                                                               \
-    udfGetTimeInSec $( ini.get pause between checks ) "32min"                  \
-                                                                               \
-  )
-
-  if (( tsPeerTimeout < 30 )); then
-
-    eval $(                                                                    \
-                                                                               \
-      udfOnError warn InvalidArgument                                          \
-        "$tsPeerTimeout is too low, it increased to 30"                        \
-                                                                               \
-    )
-
-    tsPeerTimeout=30
-
-  fi
-
-  if udfDebug 3; then
+  if err::debug 3; then
 
     printf -- "configuration:\n~~~~~~~~~~~~~~\n"
     ini.show | sed -re "s/^[[:space:]]/\xc2\xa0/"
@@ -268,36 +256,28 @@ udfMain() {
 
   fi
 
-  udfThrowOnEmptyVariable cn dev pathCrt pathDat pathIni pathKey pathRun       \
-    portAuth role tsPeerTimeout $aReqOptByRole
+  throw on EmptyVariable cn dev pathCrt pathDat pathIni pathKey pathRun        \
+                         portAuth role tsPeerTimeout $aReqOptByRole
 
   fnCA=${pathCrt}/cacert.pem
   fnCrt=${pathCrt}/${cn}.crt
   fnKey=${pathKey}/${cn}.key
 
-  [[ -d $_kurenma_pathLib ]] || eval $(                                        \
-                                                                               \
-    udfOnError throw NoSuchFileOrDir "$_kurenma_pathLib"                       \
-                                                                               \
-  )
+  [[ -d $_kurenma_pathLib ]] || on error throw NoSuchFileOrDir $_kurenma_pathLib
 
-  [[ -s ${_kurenma_pathLib}/${role}.kurenma.src ]] || eval $(                  \
-                                                                               \
-    udfOnError throw NoSuchFileOrDir "${role}.kurenma.src"                     \
-                                                                               \
-  )
+  [[ -s ${_kurenma_pathLib}/${role}.kurenma.src ]] || on error throw NoSuchFileOrDir "${role}.kurenma.src"
 
   . ${_kurenma_pathLib}/${role}.kurenma.src
 
-  trap udfSignal 31
+  trap kurenma-daemon::signal 31
 
-  udfService
+  kurenma-daemon::service
 
-  udfFinally "service down,"
+  std::finally "service down,"
 
 }
 #
 #
 #
-udfMain
+kurenma-daemon::main
 #

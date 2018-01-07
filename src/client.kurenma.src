@@ -1,13 +1,13 @@
 #
-# $Id: client.kurenma.src 169 2017-03-16 16:07:09+04:00 toor $
+# $Id: client.kurenma.src 182 2018-01-02 20:56:01+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
-udfKnocking() {
+kurenma-client::knocking() {
 
-  udfThrowOnEmptyVariable fnCA host portAuth
+  throw on EmptyVariable fnCA host portAuth
 
   local i s
 
@@ -20,52 +20,52 @@ udfKnocking() {
                                                                                \
   )
 
-  [[ $s ]] || eval $(                                                          \
-                                                                               \
-    udfOnError throw EmptyResult "$fnCA - not valid format"                    \
-                                                                               \
-  )
+  [[ $s ]] || on error throw EmptyResult "$fnCA - not valid format"
 
-  udfDebug 5 "CA cert fingerprint header: $s"
+  err::debug 5 "CA cert fingerprint header: $s"
 
-  s=$( printf -- "%d %d %d" $s ) || eval $(                                    \
-                                                                               \
-    udfOnError throw InvalidArgument "$fnCA - hexadecimal data expected"       \
-                                                                               \
-  )
+  s=$( printf -- "%d %d %d" $s ) || on error throw InvalidArgument "$fnCA - hexadecimal data expected"
 
-  udfDebug 4 "knock ports sequence: $s"
+  err::debug 4 "knock ports sequence: $s"
 
-  udfDebug 2 && printf -- "check server %s availibity: " "$host"
+  err::debug 2 && printf -- "check server %s availibity: " "$host"
 
   while true; do
 
-    nc -w 3 -z ${host} ${portAuth} 2>/dev/null && break
+    if [[ $protocol =~ ^dtls ]]; then
+
+      ping -c 3 $host            >/dev/null 2>&1 && break
+
+    else
+
+      nc -w 3 -z $host $portAuth >/dev/null 2>&1 && break
+
+    fi
 
     ! (( i % 32 )) && echo ""
 
-    udfDebug 2 && echo -n "."
+    err::debug 2 && echo -n "."
 
     if ! (( i % 8 )); then
 
       knock $host $s >/dev/null 2>&1
-      udfDebug 2 && echo -n "!"
+      err::debug 2 && echo -n "!"
 
     fi
 
-    if ! udfWaitSignal 1; then
+    if ! kurenma-daemon::waitSignal 1; then
 
       echo "x"
-      return $(_ iErrorAbortedBySignal)
+      return $( _ iErrorAbortedBySignal )
 
     fi
 
-    i=$((i-1))
+    i=$(( i-1 ))
 
     if (( $i <= 0 )); then
 
       printf -- "\nfail after 256 attempts.. try again\n"
-      eval $( udfOnError warn NotAvailable "${host}:${portAuth}" )
+      on error warn NotAvailable "${host}:${portAuth}"
       i=256
 
     fi
@@ -76,62 +76,57 @@ udfKnocking() {
 
 }
 #
-udfGetTunnelSettings() {
+kurenma-client::getTunnelSettings() {
 
-  udfThrowOnEmptyVariable cmdSSL cn fnKey host portAuth
+  throw on EmptyVariable cmdSSL cn fnKey host portAuth
 
   local fmt fnAns pidWatch sKey sPub s
 
   fmt="\nclient %s - prepare new session with public key = %s<skip>\n"
 
-  s="$(_ iErrorAbortedBySignal) stop signal received"
+  s="$( _ iErrorAbortedBySignal ) stop signal received"
 
-  udfMakeTemp fnAns
+  std::temp fnAns
 
   while true; do
 
-    udfKnocking || break
+    kurenma-client::knocking || break
 
-    udfDebug 2 "ok."
+    err::debug 2 "ok."
 
-    udfWaitSignal 4 || break
+    kurenma-daemon::waitSignal 4 || break
 
-    sKey=$( wg genkey )
+    sKey=$( exec -c wg genkey )
     sPub=$( echo $sKey | wg pubkey )
-    udfDebug 5 && printf "$fmt" "$cn" "${sPub:0:10}"
+    err::debug 5 && printf "$fmt" "$cn" "${sPub:0:10}"
 
-    udfDebug 1 "server ${host}:${portAuth} - SSL exchange started"
+    err::debug 1 "server ${host}:${portAuth} - SSL exchange started"
 
     (                                                                          \
                                                                                \
-      udfDebug 5 "watchdog of the SSL exchange started";                       \
+      err::debug 5 "watchdog of the SSL exchange started";                     \
       sleep 32;                                                                \
-      udfStopProcess ${cmdSSL//:/ };                                           \
-      udfDebug 5 "watchdog of the SSL exchange completed with status $?"       \
+      pid::stop openssl s_client.*kurenma;                                     \
+      err::debug 5 "watchdog of the SSL exchange completed with status $?"     \
                                                                                \
     ) &
     pidWatch=$!
 
     s="$( echo "client-data $sPub" | $cmdSSL | tee $fnAns | grep '^OK:' )"
 
-    udfStopProcess pid=$pidWatch $0 && \
-			udfDebug 5 "watchdog of the SSL exchange forced stopped"
+    pid::stop pid=$pidWatch $0 && \
+      err::debug 5 "watchdog of the SSL exchange forced stopped"
 
-    udfDebug 1 "server ${host}:${portAuth} - SSL exchange completed"
+    err::debug 1 "server ${host}:${portAuth} - SSL exchange completed"
 
     [[ $s =~ ^OK: ]] && break
 
     [[ $s ]] || s="$(< $fnAns)"
 
-    eval $(                                                                    \
-                                                                               \
-      udfOnError warn InvalidArgument                                          \
-        "malformed answer from ${host}:${portAuth} $s"                         \
-                                                                               \
-    )
+    on error warn InvalidArgument "malformed answer from ${host}:${portAuth} $s"
 
-    s="$(_ iErrorAbortedBySignal ) stop signal received"
-    udfWaitSignal 8 || break
+    s="$( _ iErrorAbortedBySignal ) stop signal received"
+    kurenma-daemon::waitSignal 8 || break
 
   done >&2
 
@@ -143,9 +138,9 @@ udfGetTunnelSettings() {
 
 }
 #
-udfSetupTunnel() {
+kurenma-client::setupTunnel() {
 
-  udfThrowOnEmptyVariable dev host aIpsAllowed
+  throw on EmptyVariable dev host aIpsAllowed
 
   local ipClient ipServer peer port sKey
 
@@ -155,23 +150,23 @@ udfSetupTunnel() {
 
   shift
 
-  peer=$( echo $1 | grep -P "^[a-zA-Z0-9+/]+={0,2}$" )
-  udfIsNumber $2 && port=$2 || port=''
-  ipClient=$( udfGetValidIPsOnly $3 )
-  ipServer=$( udfGetValidIPsOnly $4 )
+  peer=$( grep -P "^[a-zA-Z0-9+/]+={0,2}$" <<< "$1" )
+  std::isNumber $2 && port=$2 || port=''
+  ipClient=$( net::ipv4.host $3 )
+  ipServer=$( net::ipv4.host $4 )
   sKey=$5
 
-  udfDebug 5 && printf "server %s:%s public key - %s<skip>\n" \
+  err::debug 5 && printf "server %s:%s public key - %s<skip>\n" \
                        "$host" "$port" "${peer:0:10}" >&2
-  udfDebug 3 && printf "server %s:%s tunnel leased/remote IPs - %s/%s\n" \
+  err::debug 3 && printf "server %s:%s tunnel leased/remote IPs - %s/%s\n" \
                        "$host" "$port" "$ipClient" "$ipServer" >&2
 
-  udfThrowOnEmptyVariable peer port ipClient ipServer
+  throw on EmptyVariable peer port ipClient ipServer
 
-  udfDebug 0 && printf "setup tunnel %s to server %s:%s: " \
+  err::debug 0 && printf "setup tunnel %s to server %s:%s: " \
                        "$dev" "$host" "$port"
 
-  s="$( udfGetValidCIDR ${aIpsAllowed[@]} )"
+  s="$( net::ipv4.cidr ${aIpsAllowed[@]} )"
   : ${s:=0.0.0.0/0}
 
   try {
@@ -191,7 +186,7 @@ udfSetupTunnel() {
 
    } catch {
 
-      ERR::exception.message
+      err::exception.message
       exit $?
 
    }
@@ -200,17 +195,17 @@ udfSetupTunnel() {
 
 }
 #
-udfSetDefaultRoute() {
+kurenma-client::defaultRoute() {
 
-  udfThrowOnEmptyVariable dev _peIPv4
+  throw on EmptyVariable dev _peIPv4
 
   local s
 
   s="$( wg show $dev endpoints | sed -re 's/.*\t(.*):.*/\1/' )"
-  udfDebug 4 "server endpoint: $s"
+  err::debug 4 "server endpoint: $s"
 
   s="$( ip route get $s | grep -Po "$_peIPv4 via $_peIPv4" )"
-  udfDebug 4 "route rule for server: $s"
+  err::debug 4 "route rule for server: $s"
 
   if [[ $s ]]; then
 
@@ -222,16 +217,16 @@ udfSetDefaultRoute() {
 
    } catch {
 
-      ERR::exception.message
+      err::exception.message
       exit $?
 
    }
 
-    udfDebug 2 "tunnel $dev used as default route ($s)"
+    err::debug 2 "tunnel $dev used as default route ($s)"
 
   else
 
-    eval $( udfOnError throw MissingArgument "default route fail" )
+    on error throw MissingArgument "default route fail"
 
   fi
 
@@ -239,21 +234,23 @@ udfSetDefaultRoute() {
 
 }
 #
-udfService() {
+# exported function
+#
+kurenma-daemon::service() {
 
-  udfThrowOnCommandNotFound false knock ping tee true
-  udfThrowOnEmptyVariable   bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni \
-                            portAuth tsPeerTimeout
+  throw on CommandNotFound false knock ping tee true
+  throw on EmptyVariable   bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni  \
+                           protocol portAuth tsPeerTimeout
 
   local bStart cmdSSL s
 
   for s in "$fnCrt" "$fnKey" "$fnCA"; do
 
-    [[ -f $s ]] || eval $( udfOnError exitecho NoSuchFileOrDir "$s" )
+    [[ -f $s ]] || on error echo+exit NoSuchFileOrDir "$s"
 
     if ! grep -P '^-----(BEGIN|END)' $s >/dev/null 2>&1; then
 
-      eval $( udfOnError exitecho InvalidArgument "$s - bad format" )
+      on error echo+exit InvalidArgument "$s - bad format"
 
     fi
 
@@ -264,12 +261,26 @@ udfService() {
   cmdSSL="$(                                                                   \
                                                                                \
     printf --                                                                  \
-      'openssl %s -connect %s:%d -CAfile %s -cert %s -key %s -verify 1 -quiet' \
-      's_client' "${host}" "${portAuth}" "$fnCA" "$fnCrt" "$fnKey"             \
+      "openssl s_client -verify 1 -bugs -quiet                                 \
+       -connect %s:%d                                                          \
+       -%s                                                                     \
+       -CAfile %s                                                              \
+       -cert %s                                                                \
+       -key %s                                                                 \
+      "                                                                        \
+      "${host}" "${portAuth}"                                                  \
+      "$protocol"                                                              \
+      "$fnCA"                                                                  \
+      "$fnCrt"                                                                 \
+      "$fnKey"                                                                 \
                                                                                \
   )"
 
-  udfDebug 1 && printf -- "client %s configuration started\n" "$cn"
+  cmdSSL=$( std::trim $cmdSSL )
+
+  err::debug 6 "openssl command line: $cmdSSL"
+
+  err::debug 1 && printf -- "client %s configuration started\n" "$cn"
 
   bStart=true
 
@@ -280,16 +291,16 @@ udfService() {
       ## TODO try first use saved wg config
       ## TODO bad error handling
 
-      udfSetupTunnel $( udfGetTunnelSettings ) || {
+      kurenma-client::setupTunnel $( kurenma-client::getTunnelSettings ) || {
 
-        eval $( udfOnError warn $? "setup tunnel settings" )
+        on error warn "setup tunnel settings"
         break
 
       }
 
-      $bDefaultRoute && udfSetDefaultRoute
+      $bDefaultRoute && kurenma-client::defaultRoute
 
-      udfDebug 1 && printf -- "\nclient %s configuration done.\n" "$cn"
+      err::debug 1 && printf -- "\nclient %s configuration done.\n" "$cn"
 
       wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
       chmod 0600 ${pathIni}/${cn}.${dev}.conf
@@ -298,17 +309,17 @@ udfService() {
 
     fi
 
-    udfDebug 2 "check connection every $tsPeerTimeout sec.."
-    udfWaitSignal $tsPeerTimeout || break
+    err::debug 2 "check connection every $tsPeerTimeout sec.."
+    kurenma-daemon::waitSignal $tsPeerTimeout || break
 
     for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
 
-      if udfIsNumber ${s##*:}; then
+      if std::isNumber ${s##*:}; then
 
-        if (( $(date +%s) - ${s##*:} >= tsPeerTimeout )); then
+        if (( $( exec -c date +%s ) - ${s##*:} >= tsPeerTimeout )); then
 
           wg set $dev peer ${s%%:*} remove
-          udfDebug 3 "peer ${s:0:10}<skip> removed .. $?"
+          err::debug 3 "peer ${s:0:10}<skip> removed .. $?"
           bStart=true
 
         else
@@ -319,7 +330,7 @@ udfService() {
 
       else
 
-        eval $( udfOnError warn InvalidArgument "${s##*:}" )
+        on error warn InvalidArgument "${s##*:}"
 
       fi
 

@@ -7,7 +7,7 @@ Standards-Version: 3.9.5
 
 Package: kurenma
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, bashlyk (>= 1.90.739~), wireguard-tools (>= 0.0.20160808~), openssl (>= 1.0.1f~), firehol (>= 1.297~), knockd (>= 0.5~), iproute2(>= 3.12.0), iputils-ping (>= 3:20121221~), diffutils (>= 1:3.3~), logrotate (>= 3.8.7)
+Depends: ${shlibs:Depends}, ${misc:Depends}, bashlyk (>= 1.91.780~), wireguard-tools (>= 0.0.20160808~), openssl (>= 1.0.1f~), firehol (>= 1.297~), knockd (>= 0.5~), iproute2(>= 3.12.0), iputils-ping (>= 3:20121221~), diffutils (>= 1:3.3~), logrotate (>= 3.8.7)
 Description: WireGuard devices management tools
  This package allows you to use OpenSSL for authentication
  as well as in OpenVPN. Additional security is provided by

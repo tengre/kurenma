@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 145 2017-02-19 00:56:23+04:00 toor $
+# $Id: gen-ssl-kurenma 171 2017-06-09 15:26:27+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -33,23 +33,20 @@ _bashlyk=kurenma . bashlyk
 #    kurenma(7), openssl(1)
 #
 #******
-udfMain() {
+kurenma-ssl-gen::main() {
 
-  udfExitIfAlreadyStarted
+  [[ $UID == 0 ]] || on error warn+exit NotPermitted "You must be root to run this."
 
-  [[ $UID == 0 ]] || eval $(                                                   \
-                                                                               \
-    udfOnError throw NotPermitted "You must be root to run this."              \
-                                                                               \
-  )
+  pid::onStarted.exit
 
-  udfThrowOnCommandNotFound chmod cp date echo mkdir openssl rm sed tee touch wg
+  exit+warn on CommandNotFound chmod cp date echo mkdir openssl rm sed tee touch wg
 
   local conf confDN fnTemplate path pathCnf pathCrt pathCsr pathIni pathKey s
   local C ST L O OU CN EA
 
   pathIni=$( _ pathIni )
-  udfThrowOnEmptyVariable pathIni
+
+  throw on EmptyVariable pathIni
 
   path=${pathIni}/ssl
   pathCsr=${path}/csr
@@ -60,8 +57,8 @@ udfMain() {
   fnTemplate=/usr/share/kurenma/openssl.cnf.template
 
   INI ini
-  ini.load $confDN Common Name, Country, State, Locality, Organizational,      \
-                   Organizational Unit,
+  ini.load $confDN                                                             \
+         []Common Name,Country,State,Locality,Organizational,Organizational Unit
 
    C=$( ini.get Country             ) ||  C=XX
   ST=$( ini.get State               ) || ST=State
@@ -74,7 +71,7 @@ udfMain() {
 
   for s in "$confDN" "$fnTemplate"; do
 
-    udfOn NoSuchFileOrDir throw $s
+    throw on NoSuchFileOrDir $s
 
   done
 
@@ -86,12 +83,8 @@ udfMain() {
 
     if [[ -s ${pathKey}/cakey.pem && -s ${pathCrt}/cacert.pem ]]; then
 
-      eval $(                                                                  \
-                                                                               \
-        udfOnError exitecho Unexpected                                         \
-          "Already exist ${pathKey}/cakey.pem and/or ${pathCrt}/cacert.pem"    \
-                                                                               \
-      )
+      ## TODO add state AlreadyExist
+      on error echo+exit Unexpected "Already exist ${pathKey}/cakey.pem and/or ${pathCrt}/cacert.pem"
 
     fi
 
@@ -112,22 +105,17 @@ udfMain() {
 
    client|server)
 
-    [[ $2 ]] || eval $( udfOnError exitecho MissingArgument "see usage" )
+    exit+echo on MissingArgument $2 "see usage"
 
     if [[ -s ${pathKey}/${2}.key && -s ${pathCrt}/${2}.crt ]]; then
 
-      eval $(                                                                  \
-                                                                               \
-        udfOnError exitecho Unexpected                                         \
-          "Already exist ${pathKey}/${2}.key and/or ${pathCrt}/${2}.crt"       \
-                                                                               \
-      )
+      on error echo+exit Unexpected "Already exist ${pathKey}/${2}.key and/or ${pathCrt}/${2}.pem"
 
     fi
 
     for s in "$path" "$pathKey" "$pathCrt" "$pathCsr" "$pathCnf"; do
 
-      [[ -d "$s" ]] || eval $( udfOnError throw NoSuchFileOrDir "$s" )
+      [[ -d "$s" ]] || on error throw NoSuchFileOrDir "$s"
 
     done
 
@@ -148,7 +136,7 @@ udfMain() {
 
   esac
 
-  cp $fnTemplate $conf || eval $( udfOnError throw NoSuchFileOrDir $conf )
+  cp $fnTemplate $conf || on error throw NotExistNotCreated $conf
 
   for s in C ST L O OU CN EA; do
 
@@ -187,5 +175,5 @@ udfMain() {
 #
 #
 #
-udfMain
+kurenma-ssl-gen::main
 #

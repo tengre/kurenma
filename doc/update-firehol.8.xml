@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- $Id: update-firehol.8.xml 100 2016-10-12 12:43:59+04:00 toor $ -->
+<!-- $Id: update-firehol.8.xml 189 2018-01-08 00:35:21+04:00 toor $ -->
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
@@ -47,7 +47,8 @@
         the Free Software Foundation.</para>
       <para>On Debian systems, the complete text of the GNU General Public
         License can be found in
-        <filename>/usr/share/common-licenses/GPL</filename>.</para>
+        <filename>/usr/share/common-licenses/GPL</filename>.
+      </para>
     </legalnotice>
   </refentryinfo>
   <refmeta>
@@ -56,22 +57,30 @@
   </refmeta>
   <refnamediv>
     <refname>&dhname;</refname>
-    <refpurpose>part of the &dhlpackage; package, tool to configure the third-party application.</refpurpose>
+    <refpurpose>
+      part of the &dhlpackage; package, tool to configure the third-party
+      application.
+    </refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>&dhname;</command>
       <group choice="opt">
         <arg choice="plain">
-         <arg choice="plain"><option> IP-address</option></arg>
+          <arg choice="plain"><option> IP-address</option></arg>
         </arg>
       </group>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1 id="description">
     <title>DESCRIPTION</title>
-    <para><command>&dhname;</command>
-     adds the IP-address to the white list of the &dhlfirehol; firewall. It's designed to run from the service &dhlknockd; to allow WireGuard client access.
+    <para>
+      <command>&dhname;</command>
+      adds the IP-address to the white list of the &dhlfirehol; firewall. It's
+      designed to run from the service &dhlknockd; to allow WireGuard client
+      access. Also adds this IP address to /etc/hosts, as a temporary fix bug
+      "s_server crashes with gethostbyname failure" of the openssl s_server
+      command
     </para>
   </refsect1>
   <refsect1 id="options">
@@ -81,7 +90,7 @@
         <term><option> IP-address </option></term>
         <listitem>
          <para>
-          valid IPv4 address
+           valid IPv4 address
          </para>
         </listitem>
       </varlistentry>
@@ -91,19 +100,17 @@
     <title>FILES</title>
     <variablelist>
       <varlistentry>
-	<term><filename>/etc/firehol/firehol.conf</filename></term>
+        <term><filename>/etc/firehol/firehol.conf</filename></term>
         <listitem>
-          <para>
-           Configuration file for &dhlfirehol;.
-	  </para>
+          <para>Configuration file for &dhlfirehol;</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-	<term><filename>/etc/knockd.conf</filename></term>
+        <term><filename>/etc/knockd.conf</filename></term>
         <listitem>
           <para>
-           Configuration file for &dhlknockd;.
-	  </para>
+            Configuration file for &dhlknockd;
+          </para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -111,19 +118,24 @@
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
     <para>
-     &dhlfirehol;
-     &nbsp;
-	 &dhlfireholconf;
-     &nbsp;
-	 &dhlknockd;
-     &nbsp;
-	 &dhlknockdconf;
-     &nbsp;
-	 &dhlsetupknockd;
+      &dhlfirehol;
+      &nbsp;
+      &dhlfireholconf;
+      &nbsp;
+      &dhlknockd;
+      &nbsp;
+      &dhlknockdconf;
+      &nbsp;
+      &dhlsetupknockd;
     </para>
-    <para>The programs are documented fully by <citetitle>Damir Sh. Yakupov</citetitle> available via the <citerefentry>
+    <para>
+      The programs are documented fully by
+      <citetitle>Damir Sh. Yakupov</citetitle>
+      available via the
+      <citerefentry>
         <refentrytitle>info</refentrytitle>
         <manvolnum>1</manvolnum>
-      </citerefentry> system.</para>
+      </citerefentry> system.
+    </para>
   </refsect1>
 </refentry>

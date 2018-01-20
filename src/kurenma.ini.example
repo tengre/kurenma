@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 189 2018-01-08 00:35:21+04:00 toor $
+# $Id: kurenma.ini.example 191 2018-01-21 02:26:59+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -118,8 +118,9 @@
 #        CA public certificate file
 #
 #    protocol STRING
-#        select the cryptographic protocol SSL\(D)TLS supported by openssl
-#        application (ssl2, ssl3, tls1, tls1_1, tls1_2, dtls1, dtls1_2)
+#       enable or disable the cryptographic protocol SSL\(D)TLS supported by
+#       openssl application:
+#       (no)ssl2, (no)ssl3, (no)tls1, (no)tls1_1, (no)tls1_2, dtls1, dtls1_2
 #
 #           Default: tls1_2
 #

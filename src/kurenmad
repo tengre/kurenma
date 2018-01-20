@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 188 2018-01-05 01:00:35+04:00 toor $"
+# $Id: kurenmad 191 2018-01-21 02:26:59+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -131,6 +131,7 @@ kurenma-daemon::main() {
   local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
   local bDefaultRoute pool port portAuth role tsKeepalive tsPeerTimeout
   local aReqOptByRole ca cn dh dev host server protocol tsPeerInactivity
+  local -r reProtocol='^((no)?ssl[23]|(no)?tls(1|1_1|1_2)|dtls1(_2)?)$'
 
 
   pathDat=$( _ pathDat )
@@ -242,7 +243,7 @@ kurenma-daemon::main() {
 
   :      ${dev:=wg0}
   : ${portAuth:=42912}
-  : ${protocol:=tls1_2}
+  [[ $protocol =~ $reProtocol ]] || protocol='tls1_2'
 
   tsKeepalive=$( ini.get persistent keepalive )
   std::isNumber $tsKeepalive || tsKeepalive=0

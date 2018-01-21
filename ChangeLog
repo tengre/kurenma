@@ -1,39 +1,39 @@
-Wed, 01 Mar 2017 12:35:53 +0400
+Sun, 21 Jan 2018 13:33:47 +0400
 	New upstream release
 	Version 0.9
-- acceptance of naming convention for functions from the bashlyk version 1.91
-  that allows to use a clearer description of the configuration and code
-- add prevents for openssl hangups (watching), improved control of the SSL/TLS
-  exchange, reduced time of the exchange, added handling of the 'ips allowed'
-  section for client role
-- option 'pause between checks' also used in the server role for removing
-  obsolete connections in the global cycle, disabled by default
-- added new option 'protocol' for secure channel transport setting, default
-  value is tls1_2
-- redesigned openssl command line, fixed format line, added debug message of the
-  6 level for openssl command line
-- update-firehol - temporary fix for openssl server code "gethostbyname failure"
-  by using /etc/hosts for generating fake names of the knocked IP-addresses
-- improved logging
-- updated man and robodoc guides
-
-details
+ - acceptance of naming convention for functions from the bashlyk version 1.91.XX
+   that allows to use a clearer description of the configuration and code
+ - add prevents for openssl hangups (watching), improved control of the SSL/TLS
+   exchange, reduced time of the exchange, added handling of the [ips allowed]
+   section for the client role
+ - option 'pause between checks' also used in the server code for removing
+   obsolete connections in the global cycle, disabled by default
+ - added new option 'protocol' for secure channel transport setting. By default
+   the initial handshake uses a version-flexible method which will negotiate the
+   highest mutually supported protocol version
+ - redesigned openssl command line, fixed format line, added a debugging message
+   (level 6) to display the openssl command line
+ - update-firehol - temporary fix for openssl error "gethostbyname failure" on
+   the server side by  using fake names of the knocked IP-addresses in the
+   /etc/hosts
+ - improved logging
+ - updated man and robodoc guides
 
 client.kurenma.src:
-- udfSetupTunnel - 'ip link del dev ..' supress stderr
-- added checking SSL command stopping status
-- removed unused functions for extended control of the SSL exchange
-- udfGetTunnelSettings - watchdog forced stopped if not required
-- 'openssl s_client ...' - for ps ':' replaced by ' ' (!)
-- server availibity checked by ping for DTLS and netcat for other
-  protocol
+ - udfSetupTunnel - 'ip link del dev ..' supress stderr
+ - added checking SSL command stopping status
+ - removed unused functions for extended control of the SSL exchange
+ - udfGetTunnelSettings - watchdog forced stopped if not required
+ - 'openssl s_client ...' - for ps ':' replaced by ' ' (!)
+ - server availibity checked by ping for DTLS and netcat for other
+   protocol
 
 server.kurenma.src:
-- show subject and issuer from depth={0,1}
-- kurenma-server::handleRequest - removed deprecated code
-- used simple template for openssl command stopping
-- added functions kurenma-server::{checkConnections,inactivityConnections} for
-  extended control of the connections
+ - show subject and issuer from depth={0,1}
+ - kurenma-server::handleRequest - removed deprecated code
+ - used simple template for openssl command stopping
+ - added functions kurenma-server::{checkConnections,inactivityConnections} for
+   extended control of the connections
 
 
 Wed, 01 Mar 2017 12:35:53 +0400
@@ -412,4 +412,4 @@ Sun, 10 Jul 2016 17:47:51 +0400
 	Version 0.1
 
 --
-$Id: ChangeLog 193 2018-01-21 03:13:16+04:00 toor $
+$Id: ChangeLog 194 2018-01-21 13:42:25+04:00 toor $

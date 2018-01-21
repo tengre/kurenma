@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 191 2018-01-21 02:26:59+04:00 toor $
+# $Id: kurenma.ini.example 194 2018-01-21 13:47:48+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -122,7 +122,7 @@
 #       openssl application:
 #       (no)ssl2, (no)ssl3, (no)tls1, (no)tls1_1, (no)tls1_2, dtls1, dtls1_2
 #
-#           Default: tls1_2
+#           Default: auto
 #
 #  SEE ALSO
 #
@@ -155,7 +155,7 @@
 # cn              = peer.common.name
   ca              = cacert.pem
   dh              = dh2048.pem
-  protocol        = tls1_2
+# protocol        = auto
 
 [ips allowed]
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 191 2018-01-21 02:26:59+04:00 toor $"
+# $Id: kurenmad 194 2018-01-21 13:42:25+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -131,7 +131,7 @@ kurenma-daemon::main() {
   local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
   local bDefaultRoute pool port portAuth role tsKeepalive tsPeerTimeout
   local aReqOptByRole ca cn dh dev host server protocol tsPeerInactivity
-  local -r reProtocol='^((no)?ssl[23]|(no)?tls(1|1_1|1_2)|dtls1(_2)?)$'
+  local -r reProtocol='^((no)?ssl[23]|(no)?tls(1|1_1|1_2)|dtls1(_2)?|auto)$'
 
 
   pathDat=$( _ pathDat )
@@ -243,7 +243,14 @@ kurenma-daemon::main() {
 
   :      ${dev:=wg0}
   : ${portAuth:=42912}
-  [[ $protocol =~ $reProtocol ]] || protocol='tls1_2'
+  : ${protocol:=auto}
+
+  if [[ $protocol !=~ $reProtocol ]]; then
+
+    on error warn InvalidArgument "protocol \"$protocol\" is bad, used default"
+    protocol='auto'
+
+  fi
 
   tsKeepalive=$( ini.get persistent keepalive )
   std::isNumber $tsKeepalive || tsKeepalive=0
@@ -256,6 +263,8 @@ kurenma-daemon::main() {
     printf -- "~~~~~~~~~~~~~~\n"
 
   fi
+
+  [[ $protocol =~ ^auto$ ]] && protocol='' || protocol="-${protocol}"
 
   throw on EmptyVariable cn dev pathCrt pathDat pathIni pathKey pathRun        \
                          portAuth role tsPeerTimeout $aReqOptByRole

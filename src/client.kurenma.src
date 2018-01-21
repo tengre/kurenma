@@ -240,7 +240,7 @@ kurenma-daemon::service() {
 
   throw on CommandNotFound false knock ping tee true
   throw on EmptyVariable   bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni  \
-                           protocol portAuth tsPeerTimeout
+                           portAuth tsPeerTimeout
 
   local bStart cmdSSL s
 

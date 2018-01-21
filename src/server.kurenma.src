@@ -406,8 +406,8 @@ kurenma-daemon::service() {
 
   exit+warn on CommandNotFound cut kill ps sort
 
-  throw on EmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey protocol    \
-                         port portAuth server
+  throw on EmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey port        \
+                         portAuth server
 
   local cmdSSL fn fnDH
 

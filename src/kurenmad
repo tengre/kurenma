@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 194 2018-01-21 13:42:25+04:00 toor $"
+# $Id: kurenmad 195 2018-01-21 14:14:51+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -245,7 +245,7 @@ kurenma-daemon::main() {
   : ${portAuth:=42912}
   : ${protocol:=auto}
 
-  if [[ $protocol !=~ $reProtocol ]]; then
+  if [[ ! $protocol =~ $reProtocol ]]; then
 
     on error warn InvalidArgument "protocol \"$protocol\" is bad, used default"
     protocol='auto'

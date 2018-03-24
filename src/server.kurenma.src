@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 194 2018-01-21 13:42:25+04:00 toor $"
+# $Id: server.kurenma.src 196 2018-03-24 21:17:48+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -261,7 +261,7 @@ kurenma-server::handleRequest() {
 
     if ipClient=$( net::ipv4.host $cnClient ); then
 
-      if grep -w $ipClient < <( net::ipv4.range $server ) >/dev/null 2>&1; then
+      if grep -qsw $ipClient < <( net::ipv4.range $server ); then
 
         err::debug 3 "$cnClient - lease of the IP by Common Name $ipClient"
 

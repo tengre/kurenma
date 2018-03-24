@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 194 2018-01-21 13:42:25+04:00 toor $
+# $Id: client.kurenma.src 196 2018-03-24 21:17:48+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -207,7 +207,7 @@ kurenma-client::defaultRoute() {
   s="$( ip route get $s | grep -Po "$_peIPv4 via $_peIPv4" )"
   err::debug 4 "route rule for server: $s"
 
-  if [[ $s ]]; then
+  [[ $s ]] || on error throw MissingArgument "default route fail"
 
   try {
 
@@ -222,13 +222,7 @@ kurenma-client::defaultRoute() {
 
    }
 
-    err::debug 2 "tunnel $dev used as default route ($s)"
-
-  else
-
-    on error throw MissingArgument "default route fail"
-
-  fi
+  err::debug 2 "tunnel $dev used as default route ($s)"
 
   return 0
 
@@ -248,7 +242,7 @@ kurenma-daemon::service() {
 
     [[ -f $s ]] || on error echo+exit NoSuchFileOrDir "$s"
 
-    if ! grep -P '^-----(BEGIN|END)' $s >/dev/null 2>&1; then
+    if ! grep -Pqs '^-----(BEGIN|END)' $s; then
 
       on error echo+exit InvalidArgument "$s - bad format"
 
@@ -314,23 +308,22 @@ kurenma-daemon::service() {
 
     for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
 
-      if std::isNumber ${s##*:}; then
+      if ! std::isNumber ${s##*:}; then
 
-        if (( $( exec -c date +%s ) - ${s##*:} >= tsPeerTimeout )); then
+        on error warn InvalidArgument "${s##*:}"
+        continue
 
-          wg set $dev peer ${s%%:*} remove
-          err::debug 3 "peer ${s:0:10}<skip> removed .. $?"
-          bStart=true
+      fi
 
-        else
+      if (( $( exec -c date +%s ) - ${s##*:} >= tsPeerTimeout )); then
 
-          bStart=false
-
-        fi
+        wg set $dev peer ${s%%:*} remove
+        err::debug 3 "peer ${s:0:10}<skip> removed .. $?"
+        bStart=true
 
       else
 
-        on error warn InvalidArgument "${s##*:}"
+        bStart=false
 
       fi
 

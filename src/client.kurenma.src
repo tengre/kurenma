@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 196 2018-03-24 21:17:48+04:00 toor $
+# $Id: client.kurenma.src 198 2018-03-31 15:53:43+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -299,7 +299,7 @@ kurenma-daemon::service() {
       wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
       chmod 0600 ${pathIni}/${cn}.${dev}.conf
 
-      ping -q -W 1 -с 3 $ipServer >/dev/null 2>&1
+      ping -q -W 1 -c 3 $ipServer >/dev/null 2>&1
 
     fi
 

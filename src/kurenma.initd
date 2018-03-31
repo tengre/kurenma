@@ -1,11 +1,11 @@
 #! /bin/sh
 #
-# $Id: kurenma.initd 85 2016-09-28 15:06:52+04:00 toor $
+# $Id: kurenma.initd 197 2018-03-31 14:58:56+04:00 toor $
 #
 ### BEGIN INIT INFO
 # Provides:          skeleton
-# Required-Start:    $remote_fs $syslog
-# Required-Stop:     $remote_fs $syslog
+# Required-Start:    $local_fs $network $remote_fs $named
+# Required-Stop:     $local_fs $network $remote_fs $named
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Kurenma Service

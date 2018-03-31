@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 198 2018-03-31 15:53:43+04:00 toor $
+# $Id: client.kurenma.src 199 2018-03-31 23:52:19+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -156,15 +156,15 @@ kurenma-client::setupTunnel() {
   ipServer=$( net::ipv4.host $4 )
   sKey=$5
 
-  err::debug 5 && printf "server %s:%s public key - %s<skip>\n" \
-                       "$host" "$port" "${peer:0:10}" >&2
-  err::debug 3 && printf "server %s:%s tunnel leased/remote IPs - %s/%s\n" \
-                       "$host" "$port" "$ipClient" "$ipServer" >&2
+  err::debug 5 && printf -- "%s: tunnel public key - %s<skip>\n"               \
+                            "$dev" "${peer:0:10}" >&2
+  err::debug 3 && printf -- "%s: tunnel leased/remote IPs - %s/%s\n"           \
+                            "$dev" "$ipClient" "$ipServer" >&2
 
   throw on EmptyVariable peer port ipClient ipServer
 
-  err::debug 0 && printf "setup tunnel %s to server %s:%s: " \
-                       "$dev" "$host" "$port"
+  err::debug 0 && printf -- "%s: setup tunnel to the server %s:%s - "          \
+                            "$dev" "$host" "$port" >&2
 
   s="$( net::ipv4.cidr ${aIpsAllowed[@]} )"
   : ${s:=0.0.0.0/0}
@@ -236,7 +236,7 @@ kurenma-daemon::service() {
   throw on EmptyVariable   bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni  \
                            portAuth tsPeerTimeout
 
-  local bStart cmdSSL s
+  local bStart cmdSSL iLastHandshake s
 
   for s in "$fnCrt" "$fnKey" "$fnCA"; do
 
@@ -274,60 +274,79 @@ kurenma-daemon::service() {
 
   err::debug 6 "openssl command line: $cmdSSL"
 
-  err::debug 1 && printf -- "client %s configuration started\n" "$cn"
+  err::debug 1 && \
+    printf -- "%s: client %s configuration started\n" "$dev" "$cn" >&2
 
   bStart=true
 
   while true; do
 
-    if $bStart; then
+    if [[ $bStart =~ ^true$ ]]; then
 
       ## TODO try first use saved wg config
       ## TODO bad error handling
+      bStart=false
 
       kurenma-client::setupTunnel $( kurenma-client::getTunnelSettings ) || {
 
-        on error warn "setup tunnel settings"
+        on error warn "$dev setup tunnel settings"
         break
 
       }
 
       $bDefaultRoute && kurenma-client::defaultRoute
 
-      err::debug 1 && printf -- "\nclient %s configuration done.\n" "$cn"
+      err::debug 1 &&  printf --                                               \
+        "\n%s: client %s configuration done, check peer every %d sec.\n"       \
+        "$dev"                                                                 \
+        "$cn"                                                                  \
+        "$tsPeerTimeout" >&2
 
       wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
       chmod 0600 ${pathIni}/${cn}.${dev}.conf
 
+      # don't requred
       ping -q -W 1 -c 3 $ipServer >/dev/null 2>&1
 
     fi
 
-    err::debug 2 "check connection every $tsPeerTimeout sec.."
-    kurenma-daemon::waitSignal $tsPeerTimeout || break
+    s="$( wg show $dev latest-handshakes )"
 
-    for s in $( wg show $dev latest-handshakes | tr '\t' ':' | xargs ); do
+    if   (( $? > 0 )) || ! std::isNumber ${s:45}; then
 
-      if ! std::isNumber ${s##*:}; then
+      err::debug 2 "${dev}: unexpected state of the tunnel ${s}"
+      bStart=true
 
-        on error warn InvalidArgument "${s##*:}"
-        continue
+    elif (( ${s:45} == 0 )); then
 
-      fi
+      iLastHandshake=0
 
-      if (( $( exec -c date +%s ) - ${s##*:} >= tsPeerTimeout )); then
+    else
 
-        wg set $dev peer ${s%%:*} remove
-        err::debug 3 "peer ${s:0:10}<skip> removed .. $?"
+      iLastHandshake=$(( $( exec -c date +%s ) - ${s:45} ))
+      err::debug 2 && printf -- "%s: last handshake - %5d sec\n" \
+                                "$dev" "$iLastHandshake" >&2
+
+      if (( iLastHandshake >= tsPeerTimeout )); then
+
+        wg set $dev peer ${s:0:44} remove
+        err::debug 3 "${dev}: peer ${s:0:10}<skip> removed .. $?"
         bStart=true
 
-      else
-
-        bStart=false
-
       fi
 
-    done
+    fi
+
+    if [[ $bStart =~ ^true$ ]]; then
+
+      kurenma-daemon::waitSignal 8 || break
+
+    else
+
+      bStart=false
+      kurenma-daemon::waitSignal $tsPeerTimeout || break
+
+    fi
 
   done
 

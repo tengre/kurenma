@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 199 2018-03-31 23:52:19+04:00 toor $
+# $Id: client.kurenma.src 200 2018-04-01 13:01:44+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -22,12 +22,12 @@ kurenma-client::knocking() {
 
   [[ $s ]] || on error throw EmptyResult "$fnCA - not valid format"
 
-  err::debug 5 "CA cert fingerprint header: $s"
+  err::debug 6 "CA cert fingerprint header: $s"
 
-  s=$( printf -- "%d %d %d" $s ) || on error throw InvalidArgument "$fnCA - hexadecimal data expected"
+  s=$( printf -- "%d %d %d" $s ) || \
+    on error throw InvalidArgument "$fnCA - hexadecimal data expected"
 
-  err::debug 4 "knock ports sequence: $s"
-
+  err::debug 5 "knock ports sequence: $s"
   err::debug 2 && printf -- "check server %s availibity: " "$host"
 
   while true; do
@@ -97,7 +97,7 @@ kurenma-client::getTunnelSettings() {
     kurenma-daemon::waitSignal 4 || break
 
     sKey=$( exec -c wg genkey )
-    sPub=$( echo $sKey | wg pubkey )
+    sPub=$( exec -c wg pubkey <<< $sKey )
     err::debug 5 && printf "$fmt" "$cn" "${sPub:0:10}"
 
     err::debug 1 "server ${host}:${portAuth} - SSL exchange started"
@@ -274,9 +274,6 @@ kurenma-daemon::service() {
 
   err::debug 6 "openssl command line: $cmdSSL"
 
-  err::debug 1 && \
-    printf -- "%s: client %s configuration started\n" "$dev" "$cn" >&2
-
   bStart=true
 
   while true; do
@@ -286,6 +283,8 @@ kurenma-daemon::service() {
       ## TODO try first use saved wg config
       ## TODO bad error handling
       bStart=false
+      err::debug 1 && \
+        printf -- "%s: client %s configuration started\n" "$dev" "$cn" >&2
 
       kurenma-client::setupTunnel $( kurenma-client::getTunnelSettings ) || {
 
@@ -330,7 +329,7 @@ kurenma-daemon::service() {
       if (( iLastHandshake >= tsPeerTimeout )); then
 
         wg set $dev peer ${s:0:44} remove
-        err::debug 3 "${dev}: peer ${s:0:10}<skip> removed .. $?"
+        err::debug 3 "${dev}: peer ${s:0:10}<skip> deleted as outdated.. $?"
         bStart=true
 
       fi

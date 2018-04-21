@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 196 2018-03-24 21:17:48+04:00 toor $"
+# $Id: server.kurenma.src 201 2018-04-10 18:33:38+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -38,11 +38,11 @@ kurenma-server::revoked() {
 #
 kurenma-server::limitConnectionTime() {
 
-  std::isNumber $1       || on error return NotNumber "${1:-first argument}"
-  std::isNumber $tsStart || on error return NotNumber "$tsStart"
+  std::isNumber $1       || error NotNumber return "${1:-first argument}"
+  std::isNumber $tsStart || error NotNumber return "$tsStart"
 
   (( tsStart > 0 )) || return 0
-  [[ $cn ]] || on error return EmptyArgument "cn"
+  [[ $cn ]] || error EmptyArgument return "cn"
 
   local i=$(( $( exec -c date "+%s" ) - $tsStart ))
 
@@ -193,8 +193,8 @@ kurenma-server::inactivityConnections() {
     if (( i >= tsPeerTimeout )); then
 
       wg set $dev peer ${s%%:*} remove
-      err::debug 2 \
-        "peer ${s:0:10}<skip> is removed due to inactivity over an ${i}s.. $?"
+      err::debugf 2 "peer %s is removed due to inactivity over an %d sec.. %d" \
+                    "${s:0:10}<skip>" "${i}" "$?"
 
     fi
 
@@ -253,7 +253,7 @@ kurenma-server::handleRequest() {
 
   fnLeased=${pathDat}/${cn}.${dev}.leased
 
-  err::debug 4 && printf -- "$fmt" "$cnClient" "${peer:0:10}<skip>" "$dev" >&2
+  err::debugf 4 "$fmt" "$cnClient" "${peer:0:10}<skip>" "$dev"
 
   kurenma-server::checkConnections
 
@@ -327,7 +327,7 @@ kurenma-server::handleRequest() {
 
   if [[ ! $ipClient || ${server%/*} == $ipClient ]]; then
 
-    on error warn+return InvalidArgument "not allocated IP to the client.."
+    error InvalidArgument warn+return "not allocated IP to the client.."
 
   fi
 
@@ -372,7 +372,7 @@ kurenma-server::setupTunnel() {
 
   throw on EmptyVariable dev server port
 
-  err::debug 3 && printf -- "Init WireGuard device %s" "$dev"
+  err::debugf 3 && "Init WireGuard device %s" "$dev"
 
   try {
 
@@ -389,8 +389,8 @@ kurenma-server::setupTunnel() {
 
   }
 
-  err::debug 3 "init new server pub key: \
-    $( wg show $dev private-key | wg pubkey | head -c 10 )<skip>"
+  err::debugf 3 "init new server pub key: %s<skip>\n" \
+                "$( wg show $dev private-key | wg pubkey | head -c 10 )"
 
   return 0
 
@@ -402,7 +402,8 @@ kurenma-daemon::service() {
 
   DEBUGLEVEL=5
 
-  [[ $UID == 0 ]] || on error warn+exit NotPermitted "You must be root to run this."
+  [[ $UID == 0 ]] || \
+    error NotPermitted warn+exit "You must be root to run this."
 
   exit+warn on CommandNotFound cut kill ps sort
 

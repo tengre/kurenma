@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 171 2017-06-09 15:26:28+04:00 toor $
+# $Id: setup-knockd 201 2018-04-10 18:33:38+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -23,7 +23,8 @@ _bashlyk=kurenma . bashlyk
 #******
 kurenma-setup-knockd::main() {
 
-  [[ $UID == 0 ]] || on error warn+exit NotPermitted "You must be root to run this."
+  [[ $UID == 0 ]] || \
+    error NotPermitted warn+exit "You must be root to run this."
 
   pid::onStarted.exit
 
@@ -38,7 +39,7 @@ kurenma-setup-knockd::main() {
   #
   fnCA=${pathIni}/ssl/public/cacert.pem
 
-  [[ -s $fnCA ]] || on error throw NoSuchFileOrDir $fnCA
+  [[ -s $fnCA ]] || error NoSuchFileOrDir throw $fnCA
 
   s=$(                                                                         \
     openssl x509 -sha1 -in $fnCA -noout -fingerprint | sed -r -e               \

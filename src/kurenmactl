@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 172 2017-06-11 20:33:40+04:00 toor $
+# $Id: kurenmactl 201 2018-04-10 18:33:38+04:00 toor $
 #
 _kurenma_pathLib=/usr/share/kurenma
 #
@@ -74,7 +74,8 @@ kurenmactl::main() {
 
   DEBUGLEVEL=3
 
-  [[ $UID == 0 ]] || on error warn+exit NotPermitted "You must be root to run this."
+  [[ $UID == 0 ]] || \
+    error NotPermitted warn+exit "You must be root to run this."
 
   if [[ $START_KURENMA =~ ^([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|0)$ ]]; then
 
@@ -92,7 +93,7 @@ kurenmactl::main() {
 
   throw on EmptyVariable pathRun
 
-  mkdir -p $pathRun || on error throw NotExistNotCreated "$pathRun"
+  mkdir -p $pathRun || error NotExistNotCreated throw "$pathRun"
 
   eval set -- $( _ sArg )
 
@@ -108,7 +109,7 @@ kurenmactl::main() {
     ;;
 
      stop)
-      err::debug 1 && echo -n "service $cmd stopping.."
+      err::debugf 1 "service %s stopping.." "$cmd"
 
       fnPid="${pathRun}/${cmd}.pid"
       [[ -s $fnPid ]] && pid=$( exec -c head -n 1 $fnPid ) || pid=''
@@ -121,7 +122,7 @@ kurenmactl::main() {
 
           std::isNumber $pid || break
 
-          sleep 0.75 && err::debug 1 && echo -n "."
+          sleep 0.75 && err::debugf 1 "."
 
       done
 

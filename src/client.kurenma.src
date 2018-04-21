@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 200 2018-04-01 13:01:44+04:00 toor $
+# $Id: client.kurenma.src 201 2018-04-10 18:33:38+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -20,15 +20,15 @@ kurenma-client::knocking() {
                                                                                \
   )
 
-  [[ $s ]] || on error throw EmptyResult "$fnCA - not valid format"
+  [[ $s ]] || error EmptyResult throw "$fnCA - not valid format"
 
-  err::debug 6 "CA cert fingerprint header: $s"
+  err::debugf 6 "CA cert fingerprint header: %s\n" "$s"
 
   s=$( printf -- "%d %d %d" $s ) || \
-    on error throw InvalidArgument "$fnCA - hexadecimal data expected"
+    error InvalidArgument throw "$fnCA - hexadecimal data expected"
 
-  err::debug 5 "knock ports sequence: $s"
-  err::debug 2 && printf -- "check server %s availibity: " "$host"
+  err::debugf 5 "knock ports sequence: %s\n" "$s"
+  err::debugf 2 "check server %s availibity: " "$host"
 
   while true; do
 
@@ -65,7 +65,7 @@ kurenma-client::knocking() {
     if (( $i <= 0 )); then
 
       printf -- "\nfail after 256 attempts.. try again\n"
-      on error warn NotAvailable "${host}:${portAuth}"
+      error NotAvailable warn "${host}:${portAuth}"
       i=256
 
     fi
@@ -98,9 +98,9 @@ kurenma-client::getTunnelSettings() {
 
     sKey=$( exec -c wg genkey )
     sPub=$( exec -c wg pubkey <<< $sKey )
-    err::debug 5 && printf "$fmt" "$cn" "${sPub:0:10}"
+    err::debugf 5 && "$fmt" "$cn" "${sPub:0:10}"
 
-    err::debug 1 "server ${host}:${portAuth} - SSL exchange started"
+    err::debugf 1 "server %s:%s - SSL exchange started\n" "$host" "$portAuth"
 
     (                                                                          \
                                                                                \
@@ -123,7 +123,7 @@ kurenma-client::getTunnelSettings() {
 
     [[ $s ]] || s="$(< $fnAns)"
 
-    on error warn InvalidArgument "malformed answer from ${host}:${portAuth} $s"
+    error InvalidArgument warn "malformed answer from ${host}:${portAuth} $s"
 
     s="$( _ iErrorAbortedBySignal ) stop signal received"
     kurenma-daemon::waitSignal 8 || break
@@ -156,15 +156,12 @@ kurenma-client::setupTunnel() {
   ipServer=$( net::ipv4.host $4 )
   sKey=$5
 
-  err::debug 5 && printf -- "%s: tunnel public key - %s<skip>\n"               \
-                            "$dev" "${peer:0:10}" >&2
-  err::debug 3 && printf -- "%s: tunnel leased/remote IPs - %s/%s\n"           \
-                            "$dev" "$ipClient" "$ipServer" >&2
+  err::debugf 5 "%s: tunnel public key - %s<skip>\n" "$dev" "${peer:0:10}"
+  err::debugf 3 "%s: tunnel leased/remote IPs - %s/%s\n" "$dev" "$ipClient" "$ipServer"
 
   throw on EmptyVariable peer port ipClient ipServer
 
-  err::debug 0 && printf -- "%s: setup tunnel to the server %s:%s - "          \
-                            "$dev" "$host" "$port" >&2
+  err::debugf 0 "%s: setup tunnel to the server %s:%s - " "$dev" "$host" "$port"
 
   s="$( net::ipv4.cidr ${aIpsAllowed[@]} )"
   : ${s:=0.0.0.0/0}
@@ -207,7 +204,7 @@ kurenma-client::defaultRoute() {
   s="$( ip route get $s | grep -Po "$_peIPv4 via $_peIPv4" )"
   err::debug 4 "route rule for server: $s"
 
-  [[ $s ]] || on error throw MissingArgument "default route fail"
+  [[ $s ]] || error MissingArgument throw "default route fail"
 
   try {
 
@@ -240,11 +237,11 @@ kurenma-daemon::service() {
 
   for s in "$fnCrt" "$fnKey" "$fnCA"; do
 
-    [[ -f $s ]] || on error echo+exit NoSuchFileOrDir "$s"
+    [[ -f $s ]] || error NoSuchFileOrDir echo+exit "$s"
 
     if ! grep -Pqs '^-----(BEGIN|END)' $s; then
 
-      on error echo+exit InvalidArgument "$s - bad format"
+      error InvalidArgument echo+exit "$s - bad format"
 
     fi
 
@@ -283,23 +280,22 @@ kurenma-daemon::service() {
       ## TODO try first use saved wg config
       ## TODO bad error handling
       bStart=false
-      err::debug 1 && \
-        printf -- "%s: client %s configuration started\n" "$dev" "$cn" >&2
+      err::debugf 1 "%s: client %s configuration started\n" "$dev" "$cn"
 
       kurenma-client::setupTunnel $( kurenma-client::getTunnelSettings ) || {
 
-        on error warn "$dev setup tunnel settings"
+        error warn "$dev setup tunnel settings"
         break
 
       }
 
       $bDefaultRoute && kurenma-client::defaultRoute
 
-      err::debug 1 &&  printf --                                               \
+      err::debugf 1                                                            \
         "\n%s: client %s configuration done, check peer every %d sec.\n"       \
         "$dev"                                                                 \
         "$cn"                                                                  \
-        "$tsPeerTimeout" >&2
+        "$tsPeerTimeout"
 
       wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
       chmod 0600 ${pathIni}/${cn}.${dev}.conf
@@ -323,8 +319,7 @@ kurenma-daemon::service() {
     else
 
       iLastHandshake=$(( $( exec -c date +%s ) - ${s:45} ))
-      err::debug 2 && printf -- "%s: last handshake - %5d sec\n" \
-                                "$dev" "$iLastHandshake" >&2
+      err::debugf 2 "%s: last handshake - %5d sec\n" "$dev" "$iLastHandshake"
 
       if (( iLastHandshake >= tsPeerTimeout )); then
 

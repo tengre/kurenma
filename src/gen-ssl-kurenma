@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 201 2018-04-10 18:33:38+04:00 toor $
+# $Id: gen-ssl-kurenma 203 2018-04-24 22:52:51+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -57,9 +57,9 @@ kurenma-ssl-gen::main() {
   confDN=${pathIni}/dn.kurenma.ini
   fnTemplate=/usr/share/kurenma/openssl.cnf.template
 
-  INI ini
-  ini.load $confDN                                                             \
-         []Common Name,Country,State,Locality,Organizational,Organizational Unit
+  CFG ini
+  ini.storage.use $confDN
+  ini.load Common Name,Country,State,Locality,Organizational,Organizational Unit
 
    C=$( ini.get Country             ) ||  C=XX
   ST=$( ini.get State               ) || ST=State

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 201 2018-04-10 18:33:38+04:00 toor $"
+# $Id: kurenmad 203 2018-04-24 22:52:51+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -146,9 +146,11 @@ kurenma-daemon::main() {
 
   mkdir -p $pathDat || error NotExistNotCreated echo+return $pathDat
 
-  INI ini
-  ini.load $ini                                                                \
-               []role,tunnel name,server,listen port,tunnel network,           \
+  CFG ini
+
+  ini.storage.use $ini
+
+  ini.load     []role,tunnel name,server,listen port,tunnel network,           \
                  IP lease method,persistent keepalive,pause between checks,    \
                  default route                                                 \
                                                                                \
@@ -285,6 +287,8 @@ kurenma-daemon::main() {
   trap kurenma-daemon::signal 31
 
   kurenma-daemon::service
+
+  ini.free
 
   std::finally "service down,"
 

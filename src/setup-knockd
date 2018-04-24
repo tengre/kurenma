@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 201 2018-04-10 18:33:38+04:00 toor $
+# $Id: setup-knockd 203 2018-04-24 22:52:51+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -50,11 +50,12 @@ kurenma-setup-knockd::main() {
   s=$( printf -- "%d,%d,%d" $s )
   err::debug 2 "knock ports sequence: $s"
 
-  INI ini
+  CFG ini
   ini.settings.section.padding = false
   ini.settings chComment       = '#'
 
-  ini.load $conf
+  ini.storage.use $conf
+  ini.load
 
   ini.set [ kurenma ] sequence    = $s
   ini.set [ kurenma ] seq_timeout = 5

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: update-firehol 201 2018-04-10 18:33:38+04:00 toor $
+# $Id: update-firehol 203 2018-04-24 22:52:51+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -92,8 +92,9 @@ kurenma-update-firehol::main() {
   cnf="/etc/firehol/firehol.conf"
   ini="${pathIni}/ipslist.ini"
 
-  INI ini
-  ini.load $ini [ipv4White]= [ipv4Black]=
+  CFG ini
+  ini.storage.use $ini
+  ini.load [ipv4White]= [ipv4Black]=
 
   ## TODO get array ?
   eval "$( ini.get [ ipv4 white list ] )" && ipv4White="${a[@]}"

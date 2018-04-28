@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 203 2018-04-24 22:52:51+04:00 toor $
+# $Id: gen-ssl-kurenma 205 2018-04-28 15:23:14+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -42,19 +42,21 @@ kurenma-ssl-gen::main() {
 
   exit+warn on CommandNotFound chmod cp date echo mkdir openssl rm sed tee touch wg
 
-  local conf confDN fnTemplate path pathCnf pathCrt pathCsr pathIni pathKey s
-  local C ST L O OU CN EA
+  local conf confDN fnTemplate path pathCnf pathCrt pathCsr pathKey s
+  local C ST L O OU CN EA pathCfg pathDat
 
-  pathIni=$( _ pathIni )
+  pathCfg=$( _ pathCfg )
+  pathDat=$( _ pathDat )
+  
+  throw on EmptyVariable      pathCfg pathDat
+  throw on NotExistNotCreated $pathDat
 
-  throw on EmptyVariable pathIni
-
-  path=${pathIni}/ssl
+  path=${pathCfg}/ssl
   pathCsr=${path}/csr
   pathCrt=${path}/public
   pathCnf=${path}/configs
   pathKey=${path}/private
-  confDN=${pathIni}/dn.kurenma.ini
+  confDN=${pathCfg}/dn.kurenma.ini
   fnTemplate=/usr/share/kurenma/openssl.cnf.template
 
   CFG ini
@@ -139,32 +141,30 @@ kurenma-ssl-gen::main() {
 
   cp $fnTemplate $conf || error NotExistNotCreated throw $conf
 
-  for s in C ST L O OU CN EA; do
+  for s in C ST L O OU CN EA pathCfg pathDat; do
 
     sed -i -r -e "s/%${s}%/${!s}/ig" $conf
 
   done
 
-  case "$1" in
+  case "${1,,}" in
 
     ca)
 
-      openssl req -nodes -new -x509 -keyout ${pathKey}/cakey.pem \
-        -out ${pathCrt}/cacert.pem -days 3650 -config $conf -verbose
+      openssl req -nodes -new -x509 -verbose -days 3650 -extensions v3_ca \
+        -config $conf -keyout ${pathKey}/cakey.pem -out ${pathCrt}/cacert.pem
 
     ;;
 
     client|server)
 
-      sed -i -r -e "s/%nsCertType%/${1}/ig" $conf
+      [[ "${1,,}" == "server" ]] && openssl dhparam -out ${pathCrt}/dh2048.pem 2048
 
-      [[ "$1" == "server" ]] && openssl dhparam -out ${pathCrt}/dh2048.pem 2048
+      openssl req -nodes -new -verbose -days 3650 -extensions v3_${1,,} \
+        -config $conf -keyout ${pathKey}/${2}.key -out ${pathCsr}/${2}.csr 
 
-      openssl req -new -nodes -keyout ${pathKey}/${2}.key \
-        -out ${pathCsr}/${2}.csr -config $conf -verbose
-
-      openssl ca  -in ${pathCsr}/${2}.csr -out ${pathCrt}/${2}.crt \
-        -config $conf -verbose
+      openssl ca -verbose -days 3650 -extensions v3_${1,,} \
+        -config $conf -in ${pathCsr}/${2}.csr -out ${pathCrt}/${2}.crt
 
     ;;
 

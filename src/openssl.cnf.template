@@ -1,5 +1,5 @@
 #
-# $Id: openssl.cnf.template 205 2018-04-28 15:23:14+04:00 toor $
+# $Id: openssl.cnf.template 207 2018-05-01 23:05:25+04:00 toor $
 #
 # OpenSSL example configuration file.
 # This is mostly being used for generation of certificate requests.
@@ -161,7 +161,7 @@ emailAddress_default = %EA%
 [ req_attributes ]
 challengePassword         = A challenge password
 challengePassword_min     = 4
-challengePassword_max     = 20
+challengePassword_max     = 64
 challengePassword_default = %CN%
 
 unstructuredName         = An optional company name

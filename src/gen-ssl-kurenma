@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 205 2018-04-28 15:23:14+04:00 toor $
+# $Id: gen-ssl-kurenma 207 2018-05-01 23:05:25+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -47,8 +47,8 @@ kurenma-ssl-gen::main() {
 
   pathCfg=$( _ pathCfg )
   pathDat=$( _ pathDat )
-  
-  throw on EmptyVariable      pathCfg pathDat
+
+  throw on EmptyVariable       pathCfg pathDat
   throw on NotExistNotCreated $pathDat
 
   path=${pathCfg}/ssl
@@ -141,9 +141,11 @@ kurenma-ssl-gen::main() {
 
   cp $fnTemplate $conf || error NotExistNotCreated throw $conf
 
+  err::debug 6 && std::showVariable C ST L O OU CN EA pathCfg pathDat
+
   for s in C ST L O OU CN EA pathCfg pathDat; do
 
-    sed -i -r -e "s/%${s}%/${!s}/ig" $conf
+    sed -i -r -e "s/%${s}%/${!s//\//\\/}/ig" $conf
 
   done
 

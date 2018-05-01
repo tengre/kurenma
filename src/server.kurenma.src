@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 201 2018-04-10 18:33:38+04:00 toor $"
+# $Id: server.kurenma.src 207 2018-05-01 23:05:25+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -157,10 +157,17 @@ kurenma-server::waitRequest() {
 
       fi
 
-    elif [[ $s =~ ^(CIPHER|ERROR|ACCEPT) ]];
-    then
+    else
 
-      err::debug 3 "SSL: $s"
+      if (( DEBUGLEVEL >= 6 )); then
+
+        err::debug 6 "SSL: $s"
+
+      elif [[ ${s,,} =~ ^cipher|error|accept|unable ]]; then
+
+        err::debug 3 "SSL: $s"
+
+      fi
 
     fi
 
@@ -193,8 +200,9 @@ kurenma-server::inactivityConnections() {
     if (( i >= tsPeerTimeout )); then
 
       wg set $dev peer ${s%%:*} remove
-      err::debugf 2 "peer %s is removed due to inactivity over an %d sec.. %d" \
-                    "${s:0:10}<skip>" "${i}" "$?"
+      err::debugf 2                                                            \
+        "peer %s is removed due to inactivity over an %d sec.. %d\n"           \
+        "${s:0:10}<skip>" "${i}" "$?"
 
     fi
 
@@ -400,8 +408,6 @@ kurenma-server::setupTunnel() {
 #
 kurenma-daemon::service() {
 
-  DEBUGLEVEL=5
-
   [[ $UID == 0 ]] || \
     error NotPermitted warn+exit "You must be root to run this."
 
@@ -450,6 +456,9 @@ kurenma-daemon::service() {
   while true; do
 
     err::debug 3 "Daemon for WireGuard clients (re)started.."
+
+    ## TODO throw log
+    throw on NoSuchFileOrDir $fnCrt $fnKey $pathCA $pathCrt $pathKey
 
     std::temp fn type=pipe
 

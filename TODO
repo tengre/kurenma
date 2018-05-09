@@ -21,4 +21,6 @@ kurenmad:
 -#0000f - check all eval on safety
 -#00010 - more safety wireguard keys handling
 -#00011 - gen-ssl-kurenma - mkdir /var/lib/kurenma
+-#00012 - using pkcs#12 files for clients
+
 

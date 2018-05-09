@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 201 2018-04-10 18:33:38+04:00 toor $
+# $Id: client.kurenma.src 208 2018-05-10 00:10:01+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -143,23 +143,24 @@ kurenma-client::setupTunnel() {
   throw on EmptyVariable dev host aIpsAllowed
 
   local ipClient ipServer peer port sKey
+  local -a a
+  
+  read -t 32 -a a || error MissingArgument warn+return "arguments expected from stdin..."
 
-  [[ $1 == $(_ iErrorAbortedBySignal) ]] && return $(_ iErrorAbortedBySignal)
+  [[ ${a[0]} == $(_ iErrorAbortedBySignal) ]] && error AbortedBySignal warn+return
 
-  [[ $1 != "OK" ]] && return $( _ iErrorInvalidArgument )
+  [[ ${a[0]} != "OK" ]] && error InvalidArgument warn+return
 
-  shift
-
-  peer=$( grep -P "^[a-zA-Z0-9+/]+={0,2}$" <<< "$1" )
-  std::isNumber $2 && port=$2 || port=''
-  ipClient=$( net::ipv4.host $3 )
-  ipServer=$( net::ipv4.host $4 )
-  sKey=$5
+  peer=$( grep -P "^[a-zA-Z0-9+/]+={0,2}$" <<< "${a[1]}" )
+  std::isNumber ${a[2]} && port=${a[2]} || port=''
+  ipClient=$( net::ipv4.host ${a[3]} )
+  ipServer=$( net::ipv4.host ${a[4]} )
+  sKey=${a[5]}
 
   err::debugf 5 "%s: tunnel public key - %s<skip>\n" "$dev" "${peer:0:10}"
   err::debugf 3 "%s: tunnel leased/remote IPs - %s/%s\n" "$dev" "$ipClient" "$ipServer"
 
-  throw on EmptyVariable peer port ipClient ipServer
+  warn+errorify on EmptyVariable peer port ipClient ipServer || return
 
   err::debugf 0 "%s: setup tunnel to the server %s:%s - " "$dev" "$host" "$port"
 
@@ -282,7 +283,7 @@ kurenma-daemon::service() {
       bStart=false
       err::debugf 1 "%s: client %s configuration started\n" "$dev" "$cn"
 
-      kurenma-client::setupTunnel $( kurenma-client::getTunnelSettings ) || {
+      kurenma-client::setupTunnel< <( kurenma-client::getTunnelSettings ) || {
 
         error warn "$dev setup tunnel settings"
         break

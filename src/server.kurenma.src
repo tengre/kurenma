@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 207 2018-05-01 23:05:25+04:00 toor $"
+# $Id: server.kurenma.src 211 2018-05-17 23:13:22+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -324,6 +324,7 @@ kurenma-server::handleRequest() {
 
     for ipClient in $( net::ipv4.range $server ); do
 
+      [[ ${server%/*} == $ipClient ]] && continue
       [[ $s =~ ${ipClient}/32 ]] && continue
 
       err::debug 3 "$cnClient - lease of the dynamic IP - $ipClient"
@@ -354,11 +355,12 @@ kurenma-server::handleRequest() {
 
   if $cmdWG 2>$fn; then
 
-    printf -- 'OK:%s:%s:%s:%s\n'                                               \
+    printf -- 'OK:%s:%s:%s:%s:%s\n'                                            \
               "$( wg show $dev private-key | wg pubkey )"                      \
               "$( exec -c wg show $dev listen-port )"                          \
               "${ipClient}"                                                    \
-              "${server%/*}"
+              "${server%/*}"                                                   \
+              "${server#*/}
 
     echo "${cnClient}:${ipClient}:$(exec -c date +%s):${peer:0:10}" >> $fnLeased
 

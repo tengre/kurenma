@@ -1,5 +1,5 @@
 #
-# $Id: kurenma.ini.example 194 2018-01-21 13:47:48+04:00 toor $
+# $Id: kurenma.ini.example 212 2018-05-18 01:24:31+04:00 toor $
 #
 #****h* configuration/kurenma.ini.example
 #
@@ -164,7 +164,7 @@
 #~~~~~~~~ for server role ~~~~~~~~~~~~~~~~
 
 #~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
-  0.0.0.0/24
+  0.0.0.0/0
 #~~~~~~~~ for client role ~~~~~~~~~~~~~~~~
 
 #******

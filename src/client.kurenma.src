@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 211 2018-05-17 23:13:22+04:00 toor $
+# $Id: client.kurenma.src 212 2018-05-18 01:24:31+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -159,7 +159,8 @@ kurenma-client::setupTunnel() {
       sKey=${a[6]}
 
   err::debugf 5 "%s: tunnel public key - %s<skip>\n" "$dev" "${peer:0:10}"
-  err::debugf 3 "%s: tunnel leased/bits, remote IPs - %s/%s, %s\n" "$dev" "$ipClient" "$ipBits" "$ipServer"
+  err::debugf 3 "%s: tunnel network: leased IP/netmask %s/%s, remote IP %s\n" \
+     "$dev" "$ipClient" "$( net::ipv4.mask 1.1.1.1/${ipBits} )" "$ipServer" 
 
   errorify+warn on EmptyVariable peer port ipBits ipClient ipServer || return
 

@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 211 2018-05-17 23:13:22+04:00 toor $"
+# $Id: server.kurenma.src 212 2018-05-18 01:24:31+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -360,7 +360,7 @@ kurenma-server::handleRequest() {
               "$( exec -c wg show $dev listen-port )"                          \
               "${ipClient}"                                                    \
               "${server%/*}"                                                   \
-              "${server#*/}
+              "${server#*/}"
 
     echo "${cnClient}:${ipClient}:$(exec -c date +%s):${peer:0:10}" >> $fnLeased
 

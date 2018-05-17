@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 208 2018-05-10 00:10:01+04:00 toor $
+# $Id: client.kurenma.src 209 2018-05-17 22:33:05+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -145,7 +145,7 @@ kurenma-client::setupTunnel() {
   local ipClient ipServer peer port sKey
   local -a a
   
-  read -t 32 -a a || error MissingArgument warn+return "arguments expected from stdin..."
+  read -a a || error MissingArgument warn+return "arguments expected from stdin..."
 
   [[ ${a[0]} == $(_ iErrorAbortedBySignal) ]] && error AbortedBySignal warn+return
 
@@ -160,7 +160,7 @@ kurenma-client::setupTunnel() {
   err::debugf 5 "%s: tunnel public key - %s<skip>\n" "$dev" "${peer:0:10}"
   err::debugf 3 "%s: tunnel leased/remote IPs - %s/%s\n" "$dev" "$ipClient" "$ipServer"
 
-  warn+errorify on EmptyVariable peer port ipClient ipServer || return
+  errorify+warn on EmptyVariable peer port ipClient ipServer || return
 
   err::debugf 0 "%s: setup tunnel to the server %s:%s - " "$dev" "$host" "$port"
 

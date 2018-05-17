@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 209 2018-05-17 22:33:05+04:00 toor $
+# $Id: client.kurenma.src 212 2018-05-18 01:24:31+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -142,7 +142,7 @@ kurenma-client::setupTunnel() {
 
   throw on EmptyVariable dev host aIpsAllowed
 
-  local ipClient ipServer peer port sKey
+  local ipBits ipClient ipServer peer port sKey
   local -a a
   
   read -a a || error MissingArgument warn+return "arguments expected from stdin..."
@@ -155,12 +155,14 @@ kurenma-client::setupTunnel() {
   std::isNumber ${a[2]} && port=${a[2]} || port=''
   ipClient=$( net::ipv4.host ${a[3]} )
   ipServer=$( net::ipv4.host ${a[4]} )
-  sKey=${a[5]}
+    ipBits=${a[5]}
+      sKey=${a[6]}
 
   err::debugf 5 "%s: tunnel public key - %s<skip>\n" "$dev" "${peer:0:10}"
-  err::debugf 3 "%s: tunnel leased/remote IPs - %s/%s\n" "$dev" "$ipClient" "$ipServer"
+  err::debugf 3 "%s: tunnel network: leased IP/netmask %s/%s, remote IP %s\n" \
+     "$dev" "$ipClient" "$( net::ipv4.mask 1.1.1.1/${ipBits} )" "$ipServer" 
 
-  errorify+warn on EmptyVariable peer port ipClient ipServer || return
+  errorify+warn on EmptyVariable peer port ipBits ipClient ipServer || return
 
   err::debugf 0 "%s: setup tunnel to the server %s:%s - " "$dev" "$host" "$port"
 
@@ -179,7 +181,7 @@ kurenma-client::setupTunnel() {
       endpoint "${host}:${port}"
 
     ## TODO netmask hardcoded
-    ip address add "${ipClient}"/24 dev $dev
+    ip address add "${ipClient}/${ipBits}" dev $dev
     ip link set up dev $dev
 
    } catch {

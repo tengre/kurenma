@@ -24,3 +24,4 @@ kurenmad:
 -#00012 - using pkcs#12 files for clients
 -#00013 - SSL - stop exchange on the errors 20,26,21
 -#00014 - 'ca' option not used from config file
+-#00014 - reverse -#00013 - add enabled errors to [ssl] section, for example - 'enable self signed = true', or 'ignore abcent of the crl = true'

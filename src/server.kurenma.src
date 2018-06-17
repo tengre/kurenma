@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 212 2018-05-18 01:24:31+04:00 toor $
+# $Id: server.kurenma.src 214 2018-05-25 00:26:07+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -110,6 +110,15 @@ kurenma-server::waitRequest() {
 
       err::debug 3 "SSL server down"
 
+      echo Q
+      sleep 0.2
+      break
+
+    elif [[ $s =~ ^verify.error:num=2[016]: ]]; then
+
+      err::debug 3 $s
+      echo $s
+      sleep 0.8
       echo Q
       sleep 0.2
       break

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 207 2018-05-01 23:05:25+04:00 toor $
+# $Id: gen-ssl-kurenma 216 2018-08-08 23:45:38+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -36,7 +36,7 @@ _bashlyk=kurenma . bashlyk
 kurenma-ssl-gen::main() {
 
   [[ $UID == 0 ]] || \
-    error NotPermitted warn+exit "You must be root to run this."
+    error NotPermitted warn+exit -- You must be root to run this.
 
   pid::onStarted.exit
 
@@ -87,7 +87,7 @@ kurenma-ssl-gen::main() {
     if [[ -s ${pathKey}/cakey.pem && -s ${pathCrt}/cacert.pem ]]; then
 
       ## TODO add state AlreadyExist
-      error Unexpected echo+exit "Already exist ${pathKey}/cakey.pem and/or ${pathCrt}/cacert.pem"
+      error Unexpected echo+exit -- Already exist ${pathKey}/cakey.pem and/or ${pathCrt}/cacert.pem
 
     fi
 
@@ -112,13 +112,13 @@ kurenma-ssl-gen::main() {
 
     if [[ -s ${pathKey}/${2}.key && -s ${pathCrt}/${2}.crt ]]; then
 
-      error Unexpected echo+exit "Already exist ${pathKey}/${2}.key and/or ${pathCrt}/${2}.pem"
+      error Unexpected echo+exit -- Already exist ${pathKey}/${2}.key and/or ${pathCrt}/${2}.pem
 
     fi
 
     for s in "$path" "$pathKey" "$pathCrt" "$pathCsr" "$pathCnf"; do
 
-      [[ -d "$s" ]] || error NoSuchFileOrDir throw "$s"
+      [[ -d "$s" ]] || error NoSuchFileOrDir throw -- $s
 
     done
 
@@ -139,7 +139,7 @@ kurenma-ssl-gen::main() {
 
   esac
 
-  cp $fnTemplate $conf || error NotExistNotCreated throw $conf
+  cp $fnTemplate $conf || error NotExistNotCreated throw -- $conf
 
   err::debug 6 && std::showVariable C ST L O OU CN EA pathCfg pathDat
 

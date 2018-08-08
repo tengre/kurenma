@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 201 2018-04-10 18:33:38+04:00 toor $
+# $Id: kurenmactl 216 2018-08-08 23:45:38+04:00 yds $
 #
 _kurenma_pathLib=/usr/share/kurenma
 #
@@ -75,7 +75,7 @@ kurenmactl::main() {
   DEBUGLEVEL=3
 
   [[ $UID == 0 ]] || \
-    error NotPermitted warn+exit "You must be root to run this."
+    error NotPermitted warn+exit -- You must be root to run this.
 
   if [[ $START_KURENMA =~ ^([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|0)$ ]]; then
 
@@ -93,7 +93,7 @@ kurenmactl::main() {
 
   throw on EmptyVariable pathRun
 
-  mkdir -p $pathRun || error NotExistNotCreated throw "$pathRun"
+  mkdir -p $pathRun || error NotExistNotCreated throw -- $pathRun
 
   eval set -- $( _ sArg )
 

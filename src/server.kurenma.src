@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 214 2018-05-25 00:26:07+04:00 toor $
+# $Id: server.kurenma.src 216 2018-08-08 23:49:44+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -38,11 +38,11 @@ kurenma-server::revoked() {
 #
 kurenma-server::limitConnectionTime() {
 
-  std::isNumber $1       || error NotNumber return "${1:-first argument}"
-  std::isNumber $tsStart || error NotNumber return "$tsStart"
+  std::isNumber $1       || error NotNumber return -- ${1:-first argument}
+  std::isNumber $tsStart || error NotNumber return -- $tsStart
 
   (( tsStart > 0 )) || return 0
-  [[ $cn ]] || error EmptyArgument return "cn"
+  [[ $cn ]] || error EmptyArgument return -- cn
 
   local i=$(( $( exec -c date "+%s" ) - $tsStart ))
 
@@ -345,7 +345,7 @@ kurenma-server::handleRequest() {
 
   if [[ ! $ipClient || ${server%/*} == $ipClient ]]; then
 
-    error InvalidArgument warn+return "not allocated IP to the client.."
+    error InvalidArgument warn+return -- not allocated IP to the client..
 
   fi
 
@@ -362,7 +362,7 @@ kurenma-server::handleRequest() {
                                                                                \
   )"
 
-  if $cmdWG 2>$fn; then
+  if $cmdWG >$fn 2>&1; then
 
     printf -- 'OK:%s:%s:%s:%s:%s\n'                                            \
               "$( wg show $dev private-key | wg pubkey )"                      \
@@ -375,7 +375,8 @@ kurenma-server::handleRequest() {
 
   else
 
-    echo "Error $(< $fn) $?"
+    echo "Server internal error - tunnel configuration aborted..."
+    error InvalidArgument warn -- invalid command $cmdWG - $(< $fn)
     rm -f $fn
 
   fi
@@ -420,7 +421,7 @@ kurenma-server::setupTunnel() {
 kurenma-daemon::service() {
 
   [[ $UID == 0 ]] || \
-    error NotPermitted warn+exit "You must be root to run this."
+    error NotPermitted warn+exit -- You must be root to run this.
 
   exit+warn on CommandNotFound cut kill ps sort
 

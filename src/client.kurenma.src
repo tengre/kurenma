@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 212 2018-05-18 01:24:31+04:00 toor $
+# $Id: client.kurenma.src 216 2018-08-08 23:45:38+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -20,12 +20,12 @@ kurenma-client::knocking() {
                                                                                \
   )
 
-  [[ $s ]] || error EmptyResult throw "$fnCA - not valid format"
+  [[ $s ]] || error EmptyResult throw -- $fnCA - not valid format
 
   err::debugf 6 "CA cert fingerprint header: %s\n" "$s"
 
   s=$( printf -- "%d %d %d" $s ) || \
-    error InvalidArgument throw "$fnCA - hexadecimal data expected"
+    error InvalidArgument throw -- $fnCA - hexadecimal data expected
 
   err::debugf 5 "knock ports sequence: %s\n" "$s"
   err::debugf 2 "check server %s availibity: " "$host"
@@ -65,7 +65,7 @@ kurenma-client::knocking() {
     if (( $i <= 0 )); then
 
       printf -- "\nfail after 256 attempts.. try again\n"
-      error NotAvailable warn "${host}:${portAuth}"
+      error NotAvailable warn -- ${host}:${portAuth}
       i=256
 
     fi
@@ -121,9 +121,9 @@ kurenma-client::getTunnelSettings() {
 
     [[ $s =~ ^OK: ]] && break
 
-    [[ $s ]] || s="$(< $fnAns)"
-
-    error InvalidArgument warn "malformed answer from ${host}:${portAuth} $s"
+    [[ $s ]] || s="$( < $fnAns )"
+    
+    error InvalidArgument warn -- malformed answer from ${host}:${portAuth} $s
 
     s="$( _ iErrorAbortedBySignal ) stop signal received"
     kurenma-daemon::waitSignal 8 || break
@@ -145,7 +145,7 @@ kurenma-client::setupTunnel() {
   local ipBits ipClient ipServer peer port sKey
   local -a a
   
-  read -a a || error MissingArgument warn+return "arguments expected from stdin..."
+  read -a a || error MissingArgument warn+return -- arguments expected from stdin...
 
   [[ ${a[0]} == $(_ iErrorAbortedBySignal) ]] && error AbortedBySignal warn+return
 
@@ -207,7 +207,7 @@ kurenma-client::defaultRoute() {
   s="$( ip route get $s | grep -Po "$_peIPv4 via $_peIPv4" )"
   err::debug 4 "route rule for server: $s"
 
-  [[ $s ]] || error MissingArgument throw "default route fail"
+  [[ $s ]] || error MissingArgument throw -- default route fail
 
   try {
 
@@ -240,11 +240,11 @@ kurenma-daemon::service() {
 
   for s in "$fnCrt" "$fnKey" "$fnCA"; do
 
-    [[ -f $s ]] || error NoSuchFileOrDir echo+exit "$s"
+    [[ -f $s ]] || error NoSuchFileOrDir echo+exit -- $s
 
     if ! grep -Pqs '^-----(BEGIN|END)' $s; then
 
-      error InvalidArgument echo+exit "$s - bad format"
+      error InvalidArgument echo+exit -- $s - bad format
 
     fi
 
@@ -287,7 +287,7 @@ kurenma-daemon::service() {
 
       kurenma-client::setupTunnel< <( kurenma-client::getTunnelSettings ) || {
 
-        error warn "$dev setup tunnel settings"
+        error warn -- $dev setup tunnel settings
         break
 
       }

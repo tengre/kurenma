@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- $Id: dn.kurenma.ini.5.xml 100 2016-10-12 12:43:58+04:00 toor $ -->
+<!-- $Id: dn.kurenma.ini.5.xml 218 2018-08-10 10:28:21+04:00 yds $ -->
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
@@ -13,7 +13,7 @@
   <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
   <!ENTITY dhNAME      "DN.KURENMA.INI">
   <!ENTITY dhname      "dn.kurenma.ini">
-  <!ENTITY dhlwizard   "<citerefentry><refentrytitle>gen-ssl-&dhpackage;</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
+  <!ENTITY dhlwizard   "<citerefentry><refentrytitle>&dhpackage;-ssl-gen</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
   <!ENTITY dhlconfig   "<citerefentry><refentrytitle>&dhpackage;.ini</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
 ]>
 

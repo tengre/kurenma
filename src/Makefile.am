@@ -1,12 +1,12 @@
 ##
-## $Id: Makefile.am 149 2017-02-20 23:21:47+04:00 toor $
+## $Id: Makefile.am 218 2018-08-10 10:28:21+04:00 yds $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
 #
 PACKAGE			= kurenma
 ETC			= /etc
-bin_SCRIPTS		= update-firehol gen-ssl-kurenma setup-knockd
+bin_SCRIPTS		= kurenma-firehol-update kurenma-ssl-gen kurenma-knockd-setup
 sbin_SCRIPTS		= kurenmactl kurenmad
 defaultdir		= ${ETC}/default
 default_DATA		= .${defaultdir}/${PACKAGE}

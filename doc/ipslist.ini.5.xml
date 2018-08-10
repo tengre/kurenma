@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- $Id: ipslist.ini.5.xml 100 2016-10-12 12:43:59+04:00 toor $ -->
+<!-- $Id: ipslist.ini.5.xml 218 2018-08-10 10:28:21+04:00 yds $ -->
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
@@ -13,7 +13,7 @@
   <!ENTITY dhlpackage  "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
   <!ENTITY dhNAME      "IPSLIST.INI">
   <!ENTITY dhname      "ipslist.ini">
-  <!ENTITY dhlupdate   "<citerefentry><refentrytitle>update-firehol</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlupdate   "<citerefentry><refentrytitle>kurenma-firehol-update</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
   <!ENTITY dhlfirehol  "<citerefentry><refentrytitle>firehol</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
   <!ENTITY dhlfireconf "<citerefentry><refentrytitle>firehol.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
 

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- $Id: kurenmad.8.xml 100 2016-10-12 12:43:59+04:00 toor $ -->
+<!-- $Id: kurenmad.8.xml 218 2018-08-10 10:28:21+04:00 yds $ -->
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
@@ -17,8 +17,8 @@
   <!ENTITY dhlcontrol       "<citerefentry><refentrytitle>&dhpackage;ctl</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
   <!ENTITY dhlknockd        "<citerefentry><refentrytitle>knockd</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
   <!ENTITY dhlknockdconf    "<citerefentry><refentrytitle>knockd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
-  <!ENTITY dhlupdatefirehol "<citerefentry><refentrytitle>update-firehol</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
-  <!ENTITY dhlgensslkurenma "<citerefentry><refentrytitle>gen-ssl-kurenma</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlupdatefirehol "<citerefentry><refentrytitle>kurenma-firehol-update</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
+  <!ENTITY dhlgensslkurenma "<citerefentry><refentrytitle>kurenma-ssl-gen</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
   <!ENTITY dhlconfig        "<citerefentry><refentrytitle>&dhpackage;.ini</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
 
 ]>

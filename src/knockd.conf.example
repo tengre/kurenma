@@ -3,11 +3,11 @@
 #  DESCRIPTION
 #
 #    Example configuration knockd.conf, that is updated by using the tool
-#    setup-knockd(8)
+#    kurenma-knockd-setup(8)
 #
 #  SEE ALSO
 #
-#    setup-knockd(8), update-firehol(8), knockd.conf(5)
+#    kurenma-knockd-setup(8), kurenma-firehol-update-(8), knockd.conf(5)
 #
 #  SOURCE
 
@@ -17,7 +17,7 @@
 [kurenma]
   sequence    = 1891,389,23489
   seq_timeout = 5
-  command     = /usr/bin/update-firehol %IP%
+  command     = /usr/bin/kurenma-firehol-update %IP%
   tcpflags    = syn
 
 #******

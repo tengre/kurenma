@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 97 2016-10-11 14:51:30+04:00 toor $
+## $Id: Makefile.am 218 2018-08-10 10:28:21+04:00 yds $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -11,8 +11,8 @@ man5_XMLS		= kurenma.ini.5.xml dn.kurenma.ini.5.xml ipslist.ini.5.xml
 man5_MANS		= kurenma.ini.5 dn.kurenma.ini.5 ipslist.ini.5
 man7_XMLS		= kurenma.7.xml
 man7_MANS		= kurenma.7
-man8_XMLS		= kurenmactl.8.xml kurenmad.8.xml gen-ssl-kurenma.8.xml setup-knockd.8.xml update-firehol.8.xml
-man8_MANS		= kurenmactl.8 kurenmad.8 gen-ssl-kurenma.8 setup-knockd.8 update-firehol.8
+man8_XMLS		= kurenmactl.8.xml kurenmad.8.xml kurenma-ssl-gen.8.xml kurenma-knockd-setup.8.xml kurenma-firehol-update.8.xml
+man8_MANS		= kurenmactl.8 kurenmad.8 kurenma-ssl-gen.8 kurenma-knockd-setup.8 kurenma-firehol-update.8
 DESTDIR			=
 DB2MAN 			= /usr/share/sgml/docbook/stylesheet/xsl/docbook-xsl/manpages/docbook.xsl
 XP     			= xsltproc -''-nonet -''-param man.charmap.use.subset "0" -param man.justify "1"

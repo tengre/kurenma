@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- $Id: kurenma.7.xml 100 2016-10-12 12:43:59+04:00 toor $ -->
+<!-- $Id: kurenma.7.xml 218 2018-08-10 10:28:21+04:00 yds $ -->
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
@@ -16,13 +16,13 @@
   <!ENTITY dhlcontrol       "<citerefentry><refentrytitle>&dhpackage;ctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
   <!ENTITY dhlservice       "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
   <!ENTITY dhlconfig        "<citerefentry><refentrytitle>&dhpackage;.ini</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
-  <!ENTITY dhlgenssl        "<citerefentry><refentrytitle>gen-ssl-&dhpackage;</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlgenssl        "<citerefentry><refentrytitle>kurenma-ssl-gen</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
   <!ENTITY dhlknockd        "<citerefentry><refentrytitle>knockd</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
   <!ENTITY dhlfirehol       "<citerefentry><refentrytitle>firehol</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
   <!ENTITY dhlfireholconf   "<citerefentry><refentrytitle>firehol.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
   <!ENTITY dhlknockdconf    "<citerefentry><refentrytitle>knockd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
-  <!ENTITY dhlsetupknockd   "<citerefentry><refentrytitle>setup-knockd</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
-  <!ENTITY dhlupdatefirehol "<citerefentry><refentrytitle>update-firehol</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlsetupknockd   "<citerefentry><refentrytitle>kurenma-knockd-setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlupdatefirehol "<citerefentry><refentrytitle>kurenma-firehol-update</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
 
 ]>
 
@@ -86,7 +86,7 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><filename>gen-ssl-kurenma</filename></term>
+     <term><filename>kurenma-ssl-gen</filename></term>
      <listitem>
       <para>
        generate CA infrastructure based on OpenSSL and x.509 certificate/key pair for
@@ -95,7 +95,7 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><filename>setup-knockd</filename></term>
+     <term><filename>kurenma-knockd-setup</filename></term>
      <listitem>
       <para>
        get knock-sequence of port numbers from the server's X.509-certificate and write the appropriate section of the settings in the &dhlknockdconf; configuration file. Only required for server roles.
@@ -103,7 +103,7 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><filename>update-firehol</filename></term>
+     <term><filename>kurenma-firehol-update</filename></term>
      <listitem>
       <para>
        adds the IP-address to the white list of the &dhlfirehol; firewall. It's designed to run from the service &dhlknockd; to allow WireGuard client access.

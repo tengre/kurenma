@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- $Id: gen-ssl-kurenma.8.xml 125 2016-10-30 13:23:51+04:00 toor $ -->
+<!-- $Id: kurenma-ssl-gen.8.xml 219 2018-08-10 10:35:33+04:00 yds $ -->
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
@@ -9,8 +9,8 @@
   <!ENTITY dhemail     "yds@bk.ru">
   <!ENTITY dhsection   "8">
   <!ENTITY dhpackage   "kurenma">
-  <!ENTITY dhNAME      "GEN-SSL-KURENMA">
-  <!ENTITY dhname      "gen-ssl-kurenma">
+  <!ENTITY dhNAME      "kurenma-ssl-gen">
+  <!ENTITY dhname      "kurenma-ssl-gen">
   <!ENTITY dhtitle     "&dhpackage; tools">
   <!ENTITY dhlpackage   "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
   <!ENTITY dhlopenssl   "<citerefentry><refentrytitle>openssl</refentrytitle><manvolnum>1</manvolnum></citerefentry>">

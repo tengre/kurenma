@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- $Id: setup-knockd.8.xml 125 2016-10-30 13:23:51+04:00 toor $ -->
+<!-- $Id: kurenma-knockd-setup.8.xml 219 2018-08-10 10:35:33+04:00 yds $ -->
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
@@ -10,14 +10,14 @@
   <!ENTITY dhsection        "8">
   <!ENTITY dhpackage        "kurenma">
   <!ENTITY dhtitle          "&dhpackage; tools">
-  <!ENTITY dhNAME           "SETUP-KNOCKD">
-  <!ENTITY dhname           "setup-knockd">
+  <!ENTITY dhNAME           "kurenma-knockd-setup">
+  <!ENTITY dhname           "kurenma-knockd-setup">
   <!ENTITY dhlpackage       "<citerefentry><refentrytitle>&dhpackage;</refentrytitle><manvolnum>7</manvolnum></citerefentry>">
   <!ENTITY dhlservice       "<citerefentry><refentrytitle>&dhpackage;d</refentrytitle><manvolnum>&dhsection;</manvolnum></citerefentry>">
   <!ENTITY dhlknockd        "<citerefentry><refentrytitle>knockd</refentrytitle><manvolnum>1</manvolnum></citerefentry>">
   <!ENTITY dhlknockdconf    "<citerefentry><refentrytitle>knockd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>">
-  <!ENTITY dhlupdatefirehol "<citerefentry><refentrytitle>update-firehol</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
-  <!ENTITY dhlgensslkurenma "<citerefentry><refentrytitle>gen-ssl-kurenma</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlupdatefirehol "<citerefentry><refentrytitle>kurenma-firehol-update</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
+  <!ENTITY dhlgensslkurenma "<citerefentry><refentrytitle>kurenma-ssl-gen</refentrytitle><manvolnum>8</manvolnum></citerefentry>">
 
 ]>
 

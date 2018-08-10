@@ -1,20 +1,20 @@
 #!/bin/bash
 #
-# $Id: gen-ssl-kurenma 216 2018-08-08 23:45:38+04:00 yds $
+# $Id: kurenma-ssl-gen 219 2018-08-10 10:35:33+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
-#****h* command/gen-ssl-kurenma
+#****h* command/kurenma-ssl-gen
 #
 #  USAGE
 #
-#    gen-ssl-kurenma ca | client|server <CommonName>
+#    kurenma-ssl-gen ca | client|server <CommonName>
 #
 #  DESCRIPTION
 #
-#    gen-ssl-kurenma generate CA infrastructure based on OpenSSL and x.509
+#    kurenma-ssl-gen generate CA infrastructure based on OpenSSL and x.509
 #    certificate/key pair for client and server peers.
 #
 #  OPTIONS

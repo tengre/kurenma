@@ -1,27 +1,27 @@
 #!/bin/bash
 #
-# $Id: setup-knockd 216 2018-08-08 23:45:38+04:00 yds $
+# $Id: kurenma-knockd-setup 219 2018-08-10 10:35:33+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
 #
 #
-#****h* command/setup-knockd
+#****h* command/kurenma-knockd-setup
 #
 #  DESCRIPTION
 #
 #    part of the kurenma(7) package, tool to configure the third-party
-#    application.
-#    setup-knockd get knock-sequence  of  port  numbers  from  the  server's
-#    X.509-certificate  and write the appropriate section of the settings in
-#    the knockd.conf(5) configuration file. Only required for server roles.
+#    application. kurenma-knockd-setup  get knock-sequence  of port numbers from
+#    the  server's X.509-certificate  and  write  the appropriate section of the 
+#    settings in the knockd.conf(5) configuration file. Only required for server
+#    roles.
 #
 #  SEE ALSO
 #
-#    update-firehol(8), knockd(1), gen-ssl-kurenma(8)
+#    kurenma-firehol-update(8), knockd(1), kurenma-ssl-gen(8)
 #
 #******
-kurenma-setup-knockd::main() {
+kurenma-knockd-setup::main() {
 
   [[ $UID == 0 ]] || \
     error NotPermitted warn+exit -- You must be root to run this.
@@ -59,7 +59,7 @@ kurenma-setup-knockd::main() {
 
   ini.set [ kurenma ] sequence    = $s
   ini.set [ kurenma ] seq_timeout = 5
-  ini.set [ kurenma ] command     = /usr/bin/update-firehol %IP%
+  ini.set [ kurenma ] command     = /usr/bin/kurenma-firehol-update %IP%
   ini.set [ kurenma ] tcpflags    = syn
 
   ini.save $conf
@@ -87,5 +87,5 @@ kurenma-setup-knockd::main() {
 #
 #
 #
-kurenma-setup-knockd::main
+kurenma-knockd-setup::main
 #

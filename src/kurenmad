@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 221 2018-08-19 15:56:40+04:00 toor $"
+# $Id: kurenmad 222 2018-08-20 01:11:10+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -172,8 +172,8 @@ kurenma-daemon::main() {
 
     [[ ${aIpsAllowed[@]} ]] || aIpsAllowed[0]='0.0.0.0/0'
 
-    tsPeerTimeout=$( std::getTimeInSec $(ini.get pause between checks) ||
-    tsPeerTimeout='3min'
+    tsPeerTimeout=$( std::getTimeInSec $( ini.get pause between checks ) ) ||
+    tsPeerTimeout='180'
 
     if (( tsPeerTimeout < 60 )); then
 
@@ -192,7 +192,7 @@ kurenma-daemon::main() {
       port=$(ini.get listen port)                      || port='12912'
     server=$(net::ipv4.cidr $(ini.get tunnel network)) || server='192.168.29.1/24'
 
-    tsPeerTimeout=$(std::getTimeInSec $(ini.get pause between checks) ||
+    tsPeerTimeout=$( std::getTimeInSec $( ini.get pause between checks ) ) ||
     tsPeerTimeout='0'
 
     aReqOptByRole="server pool port"

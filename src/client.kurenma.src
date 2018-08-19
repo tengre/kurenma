@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 221 2018-08-19 15:56:40+04:00 toor $
+# $Id: client.kurenma.src 224 2018-08-20 01:27:25+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -233,7 +233,7 @@ kurenma-client::defaultRoute() {
 kurenma-daemon::service() {
 
   throw on CommandNotFound false knock ping tee true
-  throw on EmptyVariable   bDefaultRoute cn dev host fnCA fnCrt fnKey pathIni  \
+  throw on EmptyVariable   bDefaultRoute cn dev host fnCA fnCrt fnKey pathCfg  \
                            portAuth tsPeerTimeout
 
   local bStart cmdSSL iLastHandshake s
@@ -300,8 +300,8 @@ kurenma-daemon::service() {
         "$cn"                                                                  \
         "$tsPeerTimeout"
 
-      wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
-      chmod 0600 ${pathIni}/${cn}.${dev}.conf
+      wg showconf $dev > ${pathCfg}/${cn}.${dev}.conf
+      chmod 0600 ${pathCfg}/${cn}.${dev}.conf
 
       # don't requred
       ping -q -W 1 -c 3 $ipServer >/dev/null 2>&1

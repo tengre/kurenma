@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenma-knockd-setup 219 2018-08-10 10:35:33+04:00 yds $
+# $Id: kurenma-knockd-setup 224 2018-08-20 01:27:25+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -12,7 +12,7 @@ _bashlyk=kurenma . bashlyk
 #
 #    part of the kurenma(7) package, tool to configure the third-party
 #    application. kurenma-knockd-setup  get knock-sequence  of port numbers from
-#    the  server's X.509-certificate  and  write  the appropriate section of the 
+#    the  server's X.509-certificate  and  write  the appropriate section of the
 #    settings in the knockd.conf(5) configuration file. Only required for server
 #    roles.
 #
@@ -30,14 +30,14 @@ kurenma-knockd-setup::main() {
 
   exit+warn on CommandNotFound openssl sed
 
-  local fnCA conf pathIni s
+  local fnCA conf pathCfg s
 
-  pathIni=$( _ pathIni )
-  throw on EmptyVariable pathIni
+  pathCfg=$( _ pathCfg )
+  throw on EmptyVariable pathCfg
 
   conf="/etc/knockd.conf"
   #
-  fnCA=${pathIni}/ssl/public/cacert.pem
+  fnCA=${pathCfg}/ssl/public/cacert.pem
 
   [[ -s $fnCA ]] || error NoSuchFileOrDir throw -- $fnCA
 

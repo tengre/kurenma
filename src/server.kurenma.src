@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 221 2018-08-19 15:56:41+04:00 toor $
+# $Id: server.kurenma.src 224 2018-08-20 01:27:25+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -260,7 +260,7 @@ kurenma-server::handleRequest() {
 
   throw on MissingArgument "$1" "$2"
 
-  throw on EmptyVariable dev pathDat pathIni pool tsKeepalive server
+  throw on EmptyVariable dev pathDat pathCfg pool tsKeepalive server
 
   local aCIDR cmdWG cnClient fmt fn fnLeased i ip ipClient peer s
 
@@ -383,8 +383,8 @@ kurenma-server::handleRequest() {
 
   err::debug 1 "server configuration updated."
 
-  wg showconf $dev > ${pathIni}/${cn}.${dev}.conf
-  chmod 0600 ${pathIni}/${cn}.${dev}.conf
+  wg showconf $dev > ${pathCfg}/${cn}.${dev}.conf
+  chmod 0600 ${pathCfg}/${cn}.${dev}.conf
 
 }
 #

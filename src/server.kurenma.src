@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 216 2018-08-08 23:49:44+04:00 yds $
+# $Id: server.kurenma.src 221 2018-08-19 15:56:41+04:00 toor $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -420,7 +420,7 @@ kurenma-server::setupTunnel() {
 #
 kurenma-daemon::service() {
 
-  [[ $UID == 0 ]] || \
+  [[ $UID == 0 ]] ||
     error NotPermitted warn+exit -- You must be root to run this.
 
   exit+warn on CommandNotFound cut kill ps sort

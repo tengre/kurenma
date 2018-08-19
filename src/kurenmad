@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmad 218 2018-08-10 10:28:21+04:00 yds $"
+# $Id: kurenmad 221 2018-08-19 15:56:40+04:00 toor $"
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -104,8 +104,8 @@ kurenma-daemon::waitSignal() {
 #
 kurenma-daemon::signal() {
 
-  [[ $_kurenma_control_channel && -p $_kurenma_control_channel ]] \
-    && echo "signalStop" > $_kurenma_control_channel
+  [[ $_kurenma_control_channel && -p $_kurenma_control_channel ]] &&
+    echo "signalStop" > $_kurenma_control_channel
 
   _kurenma_sSignal='stop'
 
@@ -121,7 +121,7 @@ kurenma-daemon::main() {
 
   DEBUGLEVEL=5
 
-  [[ $UID == 0 ]] || \
+  [[ $UID == 0 ]] ||
     error NotPermitted warn+exit -- You must be root to run this.
 
   pid::onStarted.exit
@@ -129,20 +129,20 @@ kurenma-daemon::main() {
   exit+warn on CommandNotFound grep ip mkdir nc openssl ping sed sleep tail wg
 
   local -a aId aIpsAllowed
-  local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathIni pathKey pathRun s
+  local ini fnCA fnCrt fnKey pathCA pathCrt pathDat pathCfg pathKey pathRun s
   local bDefaultRoute pool port portAuth role tsKeepalive tsPeerTimeout
   local aReqOptByRole ca cn dh dev host server protocol tsPeerInactivity
   local -r reProtocol='^((no)?ssl[23]|(no)?tls(1|1_1|1_2)|dtls1(_2)?|auto)$'
 
 
   pathDat=$( _ pathDat )
-  pathIni=$( _ pathIni )
+  pathCfg=$( _ pathCfg )
   pathRun=$( _ pathRun )
 
-  pathCA=${pathIni}/ssl/certs
-  pathCrt=${pathIni}/ssl/public
-  pathKey=${pathIni}/ssl/private
-  ini=${pathIni}/kurenma.ini
+  pathCA=${pathCfg}/ssl/certs
+  pathCrt=${pathCfg}/ssl/public
+  pathKey=${pathCfg}/ssl/private
+  ini=${pathCfg}/kurenma.ini
 
   mkdir -p $pathDat || error NotExistNotCreated echo+return -- $pathDat
 
@@ -168,14 +168,12 @@ kurenma-daemon::main() {
   client)
 
              host=$( ini.get server )
-    bDefaultRoute=$( ini.get default route )
+    bDefaultRoute=$( ini.get default route ) || bDefaultRoute='false'
 
-    : ${bDefaultRoute:=false}
     [[ ${aIpsAllowed[@]} ]] || aIpsAllowed[0]='0.0.0.0/0'
 
-    _bashlyk_OnError=return tsPeerTimeout=$(                                   \
-      std::getTimeInSec $( ini.get pause between checks ) "3min"               \
-    )
+    tsPeerTimeout=$( std::getTimeInSec $(ini.get pause between checks) ||
+    tsPeerTimeout='3min'
 
     if (( tsPeerTimeout < 60 )); then
 
@@ -190,17 +188,12 @@ kurenma-daemon::main() {
 
   server)
 
-      pool=$( ini.get IP lease method )
-      port=$( ini.get listen port )
-    server=$( net::ipv4.cidr $( ini.get tunnel network ) )
+      pool=$(ini.get IP lease method)                  || pool='dynamic'
+      port=$(ini.get listen port)                      || port='12912'
+    server=$(net::ipv4.cidr $(ini.get tunnel network)) || server='192.168.29.1/24'
 
-    :   ${pool:=dynamic}
-    :   ${port:=12912}
-    : ${server:=192.168.29.1/24}
-
-    _bashlyk_OnError=return tsPeerTimeout=$(                                   \
-      std::getTimeInSec $( ini.get pause between checks ) "0"                  \
-    )
+    tsPeerTimeout=$(std::getTimeInSec $(ini.get pause between checks) ||
+    tsPeerTimeout='0'
 
     aReqOptByRole="server pool port"
 
@@ -240,13 +233,9 @@ kurenma-daemon::main() {
 
   err::debug 1 "start ${0##*/} as ${role}${s}"
 
-       dev=$( ini.get tunnel name   )
-  portAuth=$( ini.get [ssl]port     )
-  protocol=$( ini.get [ssl]protocol )
-
-  :      ${dev:=wg0}
-  : ${portAuth:=42912}
-  : ${protocol:=auto}
+       dev=$( ini.get tunnel name   ) ||      dev=wg0
+  portAuth=$( ini.get [ssl]port     ) || portAuth=42912
+  protocol=$( ini.get [ssl]protocol ) || protocol=auto
 
   if [[ ! $protocol =~ $reProtocol ]]; then
 
@@ -269,18 +258,15 @@ kurenma-daemon::main() {
 
   [[ $protocol =~ ^auto$ ]] && protocol='' || protocol="-${protocol}"
 
-  throw on EmptyVariable cn dev pathCrt pathDat pathIni pathKey pathRun        \
+  throw on EmptyVariable cn dev pathCrt pathDat pathCfg pathKey pathRun        \
                          portAuth role tsPeerTimeout $aReqOptByRole
 
   fnCA=${pathCrt}/cacert.pem
   fnCrt=${pathCrt}/${cn}.crt
   fnKey=${pathKey}/${cn}.key
 
-  [[ -d $_kurenma_pathLib ]] || \
-    error NoSuchFileOrDir throw -- $_kurenma_pathLib
-
-  [[ -s ${_kurenma_pathLib}/${role}.kurenma.src ]] || \
-    error NoSuchFileOrDir throw -- ${role}.kurenma.src
+  throw on NoSuchDir  $_kurenma_pathLib
+  throw on NoSuchFile ${_kurenma_pathLib}/${role}.kurenma.src
 
   . ${_kurenma_pathLib}/${role}.kurenma.src
 

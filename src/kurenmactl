@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 216 2018-08-08 23:45:38+04:00 yds $
+# $Id: kurenmactl 221 2018-08-19 15:56:40+04:00 toor $
 #
 _kurenma_pathLib=/usr/share/kurenma
 #
@@ -74,10 +74,10 @@ kurenmactl::main() {
 
   DEBUGLEVEL=3
 
-  [[ $UID == 0 ]] || \
+  [[ $UID == 0 ]] ||
     error NotPermitted warn+exit -- You must be root to run this.
 
-  if [[ $START_KURENMA =~ ^([Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|0)$ ]]; then
+  if [[ ${START_KURENMA,,} =~ ^(no|false|0)$ ]]; then
 
     err::debug 1 "service starting disabled, see /etc/default/kurenma.."
     return 0
@@ -92,8 +92,7 @@ kurenmactl::main() {
   pathRun=$( _ pathRun )
 
   throw on EmptyVariable pathRun
-
-  mkdir -p $pathRun || error NotExistNotCreated throw -- $pathRun
+  throw on NotExistNotCreated $pathRun
 
   eval set -- $( _ sArg )
 

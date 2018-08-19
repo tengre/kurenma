@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: kurenma-firehol-update 219 2018-08-10 10:35:33+04:00 yds $
+# $Id: kurenma-firehol-update 221 2018-08-19 15:56:40+04:00 toor $
 #
 #
 _bashlyk=kurenma . bashlyk
@@ -22,9 +22,9 @@ _bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 #  DESCRIPTION
 #
 #    part of the kurenma(7) package, tool to configure the third-party
-#    application. kurenma-firehol-update adds the IP-address to the white list 
+#    application. kurenma-firehol-update adds the IP-address to the white list
 #    of the firehol(1) firewall. It's designed to run from the service knockd(1)
-#    to allow WireGuard client access. Also adds this IP address to /etc/hosts, 
+#    to allow WireGuard client access. Also adds this IP address to /etc/hosts,
 #    as a temporary fix bug "s_server crashes with gethostbyname failure" of the
 #    openssl s_server command
 #
@@ -39,7 +39,7 @@ _bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 #******
 kurenma-firehol-update::main() {
 
-  [[ $UID == 0 ]] || \
+  [[ $UID == 0 ]] ||
     error NotPermitted warn+exit -- You must be root to run this.
 
   pid::onStarted.exit
@@ -48,7 +48,7 @@ kurenma-firehol-update::main() {
                                md5sum mkdir mv rm sed sort touch uniq wg xargs
 
   local ahost cnf fn fnKnock fnLock ini ipv4Black ipv4Client ipv4White pathDat
-  local pathIni s
+  local pathCfg s
   local -a a
 
   pathDat=$( _ pathDat )
@@ -83,12 +83,12 @@ kurenma-firehol-update::main() {
   err::debug 0 "starting from $1 with pid $2"
   echo "${1}:$( exec -c date +%s )" >> $fnKnock
 
-  pathIni=$( _ pathIni )
+  pathCfg=$( _ pathCfg )
 
-  throw on NoSuchFileOrDir "$pathDat" "$pathIni"
+  throw on NoSuchFileOrDir "$pathDat" "$pathCfg"
 
   cnf="/etc/firehol/firehol.conf"
-  ini="${pathIni}/ipslist.ini"
+  ini="${pathCfg}/ipslist.ini"
 
   CFG ini
   ini.storage.use $ini

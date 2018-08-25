@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenmactl 221 2018-08-19 15:56:40+04:00 toor $
+# $Id: kurenmactl 225 2018-08-25 07:34:18+04:00 yds $
 #
 _kurenma_pathLib=/usr/share/kurenma
 #
@@ -43,12 +43,12 @@ kurenmactl::usage() {
 
     a=( $( < ${_kurenma_pathLib}/VERSION ) )
     printf -- "\t%s %s.%s %s, Kurenma Service Management Tool, (c) 2016-%s\n"  \
-              "${0##*/}" "${a[0]}" "${a[1]}" "${a[2]}" "$( exec -c date +%Y )"
+              "${0##*/}" "${a[0]}" "${a[1]}" "${a[2]}" "$( std::date %Y )"
 
   elif a=($( exec -c grep -Po '\044Id\072 \S+ \d+ \S+ \S+ \S+ \044' $0 )); then
 
     printf -- "\t%s rev%s %s, Kurenma Service Management Tool, (c) 2016-%s\n"  \
-              "${0##*/}" "${a[2]}" "${a[3]}" "$( exec -c date +%Y )"
+              "${0##*/}" "${a[2]}" "${a[3]}" "$( std::date %Y )"
 
   fi
 
@@ -84,7 +84,7 @@ kurenmactl::main() {
 
   fi
 
-  exit+warn on CommandNotFound cat echo grep head kurenmad mkdir nohup sleep tr
+  exit+warn on CommandNotFound cat grep head kurenmad mkdir nohup sleep tr
 
   local cmd fnPid ini pathRun pid portAuth s
 

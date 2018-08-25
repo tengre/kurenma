@@ -1,5 +1,5 @@
 #
-# $Id: client.kurenma.src 224 2018-08-20 01:27:25+04:00 yds $
+# $Id: client.kurenma.src 225 2018-08-24 23:25:02+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -321,7 +321,7 @@ kurenma-daemon::service() {
 
     else
 
-      iLastHandshake=$(( $( exec -c date +%s ) - ${s:45} ))
+      iLastHandshake=$(( $( std::date %s ) - ${s:45} ))
       err::debugf 2 "%s: last handshake - %5d sec\n" "$dev" "$iLastHandshake"
 
       if (( iLastHandshake >= tsPeerTimeout )); then

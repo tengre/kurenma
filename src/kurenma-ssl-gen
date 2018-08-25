@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: kurenma-ssl-gen 221 2018-08-19 15:56:40+04:00 toor $
+# $Id: kurenma-ssl-gen 225 2018-08-25 07:34:18+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -40,7 +40,7 @@ kurenma-ssl-gen::main() {
 
   pid::onStarted.exit
 
-  exit+warn on CommandNotFound chmod cp date echo mkdir openssl rm sed tee touch wg
+  exit+warn on CommandNotFound chmod cp mkdir openssl rm sed touch wg
 
   local conf confDN fnTemplate path pathCnf pathCrt pathCsr pathKey s
   local C ST L O OU CN EA pathCfg pathDat
@@ -85,8 +85,8 @@ kurenma-ssl-gen::main() {
     mkdir -p ${path}/{public,private,configs,certs,newcerts,crl,csr}
     chmod 0710 $pathKey
 
-    date "+%s" > ${path}/serial
-    date "+%s" > ${path}/crlnumber
+    std::date %s > ${path}/serial
+    std::date %s > ${path}/crlnumber
 
     rm -f ${path}/index.txt
     touch ${path}/index.txt

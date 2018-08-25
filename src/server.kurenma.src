@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 224 2018-08-20 01:27:25+04:00 yds $
+# $Id: server.kurenma.src 225 2018-08-24 23:25:02+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -44,7 +44,7 @@ kurenma-server::limitConnectionTime() {
   (( tsStart > 0 )) || return 0
   [[ $cn ]] || error EmptyArgument return -- cn
 
-  local i=$(( $( exec -c date "+%s" ) - $tsStart ))
+  local i=$(( $( std::date %s ) - $tsStart ))
 
   (( i > 16 )) && err::debug 3 "client $cn - exchange time is ${i}sec"
 
@@ -141,7 +141,7 @@ kurenma-server::waitRequest() {
       err::debug 3 "SSL: $rc"
       rc=0
 
-      tsStart=$( exec -c date "+%s" )
+      tsStart=$( std::date %s )
       tsWait=4
 
     elif [[ $bIssuer == 'false' && $s =~ depth=1.*CN.* ]]; then
@@ -204,7 +204,7 @@ kurenma-server::inactivityConnections() {
     #ignore too low timestamps
     (( ${s##*:} < 1800 )) && continue
 
-    i=$(( $( exec -c date +%s ) - ${s##*:} ))
+    i=$(( $( std::date %s ) - ${s##*:} ))
 
     if (( i >= tsPeerTimeout )); then
 
@@ -371,7 +371,7 @@ kurenma-server::handleRequest() {
               "${server%/*}"                                                   \
               "${server#*/}"
 
-    echo "${cnClient}:${ipClient}:$(exec -c date +%s):${peer:0:10}" >> $fnLeased
+    echo "${cnClient}:${ipClient}:$(std::date %s):${peer:0:10}" >> $fnLeased
 
   else
 

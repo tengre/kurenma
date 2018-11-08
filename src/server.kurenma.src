@@ -1,5 +1,5 @@
 #
-# $Id: server.kurenma.src 226 2018-11-06 23:15:50+04:00 yds $
+# $Id: server.kurenma.src 227 2018-11-08 22:54:14+04:00 yds $
 #
 _bashlyk=kurenma . bashlyk
 #
@@ -428,7 +428,7 @@ kurenma-daemon::service() {
   throw on EmptyVariable cn dev fnCrt fnKey pathCA pathCrt pathKey port        \
                          portAuth server
 
-  local cmdSSL fn fnDH
+  local cmdSSL dt fn fnDH
 
   if [[ ! ( $( wg|grep $dev ) && $( ip addr show $dev|grep ${server%/*} ) ) ]];
   then
@@ -476,12 +476,21 @@ kurenma-daemon::service() {
 
     export _kurenma_control_channel=$fn
 
+    dt=$( std::date %s )
+
     kurenma-server::waitRequest < $fn | $cmdSSL > $fn 2>&1 &
 
     pid::onExit.stop $!
 
     wait $!
     rm -f $fn
+
+    if (( ( $( std::date %s ) - dt ) < 3 )); then
+
+      err::debug 9 "command $cmdSSL failed.." && openssl version
+      (( DEBUGLEVEL > 8 )) && break || DEBUGLEVEL=$(( DEBUGLEVEL+1 ))
+
+    fi
 
     kurenma-daemon::waitSignal 0.2 || break
 

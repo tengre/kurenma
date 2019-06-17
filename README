@@ -1,0 +1,31 @@
+DESCRIPTION
+
+  kurenma  is a package that includes tools for configuration and control
+  WireGuard tunnels by using PKI infrastructure (OpenSSL).
+  Prepared debian packages can be found in the repository ppa:yds/bashlyk
+  (sudo add-apt-repository ppa:yds/bashlyk).
+
+COMMANDS
+
+  kurenmactl
+      management tool for kurenmad(8) daemon
+
+  kurenmad
+      daemon  for  automatic  configuration  and control of the WireGuard 
+      tunnels
+
+  kurenma-ssl-gen
+      generate   CA   infrastructure   based   on   OpenSSL   and   x.509
+      certificate/key pair for client and server peers
+
+  kurenma-knockd-setup
+      get   knock-sequence   of   port   numbers   from   the    server's
+      X.509-certificate and write the appropriate section of the settings
+      in the knockd.conf(5) configuration file. Only required for  server
+      roles
+
+  kurenma-firehol-update
+      adds  the  IP-address to the white list of the firehol(1) firewall.
+      It's designed to run from the service knockd(1) to allow  WireGuard
+      client access
+

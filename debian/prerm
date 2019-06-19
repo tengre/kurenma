@@ -39,7 +39,8 @@ esac
 
 if [ -d /run/systemd/system ]; then
 
-  deb-systemd-invoke stop $SERVICE || systemctl stop $SERVICE || true
+  #deb-systemd-invoke stop $SERVICE ||
+  systemctl stop $SERVICE || true
 
 fi
 

@@ -43,8 +43,8 @@ rm -f ${SYSTEMV}.disabled-by-systemd
 
 if [ -d /run/systemd/system ]; then
 
-  deb-systemd-helper disable $SERVICE || systemctl disable $SERVICE
-
+  #deb-systemd-helper disable $SERVICE ||
+  systemctl disable $SERVICE
   systemctl daemon-reload
 
 fi

@@ -41,11 +41,11 @@ esac
 
 while [ -d /run/systemd/system ]; do
 
-  deb-systemd-helper enable $SERVICE || systemctl enable $SERVICE || break
-
-  systemctl daemon-reload || break
-
-  deb-systemd-invoke  start $SERVICE || systemctl  start $SERVICE || break
+  #deb-systemd-helper enable $SERVICE ||
+  systemctl enable $SERVICE || break
+  systemctl daemon-reload   || break
+  #deb-systemd-invoke  start $SERVICE ||
+  systemctl  start $SERVICE || break
 
   if [ -f $SYSTEMV ]; then
 

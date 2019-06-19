@@ -1,4 +1,4 @@
-bashlyk source: configure-generated-file-in-source config.log
-bashlyk source: configure-generated-file-in-source config.status
+kurenma source: configure-generated-file-in-source config.log
+kurenma source: configure-generated-file-in-source config.status
 
 

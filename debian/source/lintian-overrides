@@ -1,4 +1,3 @@
 kurenma source: configure-generated-file-in-source config.log
 kurenma source: configure-generated-file-in-source config.status
-
-
+kurenma source: maintainer-script-calls-systemctl
